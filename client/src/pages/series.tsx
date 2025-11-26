@@ -19,7 +19,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useState } from "react";
+import { SeriesForm } from "@/components/forms/SeriesForm";
+import { useToast } from "@/hooks/use-toast";
 
 // Import images
 import poster1 from "@assets/stock_images/tv_show_poster_drama_7d8b8bd7.jpg";
@@ -40,10 +50,21 @@ const mockSeries = [
 export default function Series() {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const { toast } = useToast();
 
   const filteredSeries = mockSeries.filter(show => 
     show.title.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleAddSubmit = () => {
+    setIsAddOpen(false);
+    toast({
+      title: "Series Created",
+      description: "The series and episodes have been added to the library.",
+      className: "bg-green-600 border-green-700 text-white",
+    });
+  };
 
   return (
     <Layout>
@@ -52,12 +73,27 @@ export default function Series() {
           <h1 className="text-3xl font-bold text-white mb-2">TV Series</h1>
           <p className="text-muted-foreground">Manage TV shows, seasons, and episodes.</p>
         </div>
-        <Button className="bg-primary hover:bg-primary/90 text-white gap-2 shadow-lg shadow-primary/20" data-testid="button-add-series">
-          <Plus className="w-4 h-4" /> Add Series
-        </Button>
+        
+        <Sheet open={isAddOpen} onOpenChange={setIsAddOpen}>
+          <SheetTrigger asChild>
+            <Button className="bg-primary hover:bg-primary/90 text-white gap-2 shadow-lg shadow-primary/20" data-testid="button-add-series">
+              <Plus className="w-4 h-4" /> Add Series
+            </Button>
+          </SheetTrigger>
+          <SheetContent className="bg-card border-l border-white/10 text-foreground sm:max-w-md backdrop-blur-xl overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle className="text-white">Add New Series</SheetTitle>
+              <SheetDescription>
+                Create a new series and upload episodes directly to the server.
+              </SheetDescription>
+            </SheetHeader>
+            <SeriesForm onSubmit={handleAddSubmit} />
+          </SheetContent>
+        </Sheet>
       </div>
 
       <div className="bg-card/50 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden">
+        {/* ... rest of the component remains the same ... */}
         <div className="p-4 border-b border-white/5 flex items-center justify-between gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
