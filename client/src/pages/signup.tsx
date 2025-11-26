@@ -75,7 +75,7 @@ export default function Signup() {
       name: formData.name,
       email: formData.email,
       passwordHash: formData.password,
-      plan: plans.find(p => p.id === selectedPlan)?.name.toLowerCase() || 'free',
+      plan: plans.find((p: any) => p.id === selectedPlan)?.name.toLowerCase() || 'free',
     });
   };
 
