@@ -102,7 +102,7 @@ export default function Signup() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {plans.map((plan) => (
+              {plans.map((plan: any) => (
                 <div key={plan.id} className="relative group">
                   <div className={`absolute inset-0 rounded-xl blur transition-all ${selectedPlan === plan.id ? 'bg-blue-500/50' : 'bg-white/5'} group-hover:bg-white/10`} />
                   <div className="relative bg-black/80 backdrop-blur border border-white/10 rounded-xl p-6 flex flex-col h-full hover:border-white/20 transition-colors cursor-pointer"
@@ -122,7 +122,7 @@ export default function Signup() {
                         <Check className="w-4 h-4 text-green-500" />
                         <span className="text-sm text-white">Up to {plan.maxQuality}</span>
                       </div>
-                      {plan.features?.map((feature: string, i: number) => (
+                      {plan.features?.map((feature: any, i: number) => (
                         <div key={i} className="flex items-center gap-2">
                           <Check className="w-4 h-4 text-green-500" />
                           <span className="text-sm text-white">{feature}</span>
