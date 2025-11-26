@@ -9,7 +9,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Search, MoreVertical, Shield, ShieldAlert, CheckCircle, Ban } from "lucide-react";
+import { Search, MoreVertical, Shield, ShieldAlert, CheckCircle, Ban, Download } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -45,18 +45,18 @@ export default function Users() {
           <h1 className="text-3xl font-bold text-white mb-2">User Management</h1>
           <p className="text-muted-foreground">Monitor user activity and manage subscriptions.</p>
         </div>
-        <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
-          Export CSV
+        <Button variant="outline" className="border-white/10 hover:bg-white/5 text-primary gap-2">
+          <Download className="w-4 h-4" /> Export CSV
         </Button>
       </div>
 
-      <div className="bg-card border border-border rounded-lg overflow-hidden">
-        <div className="p-4 border-b border-border flex items-center gap-4">
+      <div className="bg-card/50 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden">
+        <div className="p-4 border-b border-white/5 flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
               placeholder="Search users by name or email..." 
-              className="pl-9 bg-background border-border"
+              className="pl-9 bg-black/20 border-white/10 focus:border-primary/50 transition-colors"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               data-testid="input-search-users"
@@ -65,8 +65,8 @@ export default function Users() {
         </div>
 
         <Table>
-          <TableHeader className="bg-muted/50">
-            <TableRow className="hover:bg-transparent border-border">
+          <TableHeader className="bg-black/20">
+            <TableRow className="hover:bg-transparent border-white/5">
               <TableHead className="w-[300px]">User</TableHead>
               <TableHead>Plan</TableHead>
               <TableHead>Joined Date</TableHead>
@@ -76,10 +76,10 @@ export default function Users() {
           </TableHeader>
           <TableBody>
             {filteredUsers.map((user) => (
-              <TableRow key={user.id} className="border-border hover:bg-muted/30">
+              <TableRow key={user.id} className="border-white/5 hover:bg-white/5 transition-colors">
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9 bg-muted border border-border">
+                    <Avatar className="h-9 w-9 bg-muted border border-white/10">
                       <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} />
                       <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
@@ -90,7 +90,11 @@ export default function Users() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="secondary" className="bg-muted hover:bg-muted">
+                  <Badge variant="secondary" className={`
+                    ${user.plan === 'Premium' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 
+                      user.plan === 'Standard' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 
+                      'bg-white/5 text-muted-foreground border-white/10'}
+                  `}>
                     {user.plan}
                   </Badge>
                 </TableCell>
@@ -110,18 +114,18 @@ export default function Users() {
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 p-0 hover:bg-white/10">
                         <span className="sr-only">Open menu</span>
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-popover border-border">
+                    <DropdownMenuContent align="end" className="bg-card border-white/10">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem className="cursor-pointer text-foreground focus:bg-muted">
+                      <DropdownMenuItem className="cursor-pointer hover:bg-white/10">
                         <Shield className="mr-2 h-4 w-4" /> Change Plan
                       </DropdownMenuItem>
-                      <DropdownMenuSeparator className="bg-border" />
-                      <DropdownMenuItem className="cursor-pointer text-destructive focus:bg-destructive/10">
+                      <DropdownMenuSeparator className="bg-white/10" />
+                      <DropdownMenuItem className="cursor-pointer text-destructive hover:bg-destructive/10">
                         <ShieldAlert className="mr-2 h-4 w-4" /> Ban User
                       </DropdownMenuItem>
                     </DropdownMenuContent>

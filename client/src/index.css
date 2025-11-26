@@ -46,51 +46,51 @@
 }
 
 :root {
-  /* Default to Dark Mode (Netflix Style) */
-  --background: 0 0% 8%; /* #141414 */
-  --foreground: 0 0% 95%;
+  /* Deep, cinematic dark mode */
+  --background: 240 10% 4%; /* #09090b - Almost black */
+  --foreground: 0 0% 98%;
 
-  --card: 0 0% 12%; /* #1f1f1f */
-  --card-foreground: 0 0% 95%;
+  --card: 240 10% 6%; /* Slightly lighter than bg */
+  --card-foreground: 0 0% 98%;
 
-  --popover: 0 0% 12%;
-  --popover-foreground: 0 0% 95%;
+  --popover: 240 10% 6%;
+  --popover-foreground: 0 0% 98%;
 
-  --primary: 357 92% 47%; /* Netflix Red #E50914 */
+  --primary: 357 92% 47%; /* Netflix Red */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 0 0% 20%;
+  --secondary: 240 5% 15%; /* Dark gray for secondary actions */
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 0 0% 20%;
-  --muted-foreground: 0 0% 65%;
+  --muted: 240 5% 15%;
+  --muted-foreground: 240 5% 65%;
 
-  --accent: 0 0% 25%;
+  --accent: 240 5% 20%; /* Hover states */
   --accent-foreground: 0 0% 100%;
 
   --destructive: 0 62% 30%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 0 0% 20%;
-  --input: 0 0% 20%;
+  --border: 240 5% 12%; /* Very subtle borders */
+  --input: 240 5% 12%;
   --ring: 357 92% 47%;
 
-  --radius: 0.5rem;
+  --radius: 0.75rem; /* More rounded modern feel */
 
-  --sidebar: 0 0% 6%; /* Darker sidebar */
-  --sidebar-foreground: 0 0% 90%;
+  --sidebar: 240 10% 3%; /* Darker than main content */
+  --sidebar-foreground: 240 5% 70%;
   --sidebar-primary: 357 92% 47%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 0 0% 15%;
+  --sidebar-accent: 240 5% 10%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-border: 0 0% 15%;
+  --sidebar-border: 240 5% 8%;
   --sidebar-ring: 357 92% 47%;
 
   --chart-1: 357 92% 47%;
-  --chart-2: 0 0% 30%;
-  --chart-3: 0 0% 50%;
-  --chart-4: 0 0% 70%;
-  --chart-5: 0 0% 90%;
+  --chart-2: 240 10% 20%;
+  --chart-3: 240 10% 30%;
+  --chart-4: 240 10% 40%;
+  --chart-5: 240 10% 50%;
 }
 
 @layer base {
@@ -98,6 +98,16 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-primary/30 selection:text-primary-foreground;
+  }
+}
+
+/* Custom Glass Utilities */
+@layer utilities {
+  .glass-panel {
+    @apply bg-card/80 backdrop-blur-xl border border-white/5 shadow-xl;
+  }
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-sm border border-white/5 hover:bg-white/10 transition-all duration-300;
   }
 }
