@@ -10,10 +10,14 @@ import Series from "@/pages/series";
 import Channels from "@/pages/channels";
 import Users from "@/pages/users";
 import Settings from "@/pages/settings";
+import Login from "@/pages/login";
 
 function Router() {
   return (
     <Switch>
+      <Route path="/auth" component={Login} />
+      <Route path="/login" component={Login} />
+      
       <Route path="/" component={Dashboard} />
       <Route path="/movies" component={Movies} />
       <Route path="/series" component={Series} />

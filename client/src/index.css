@@ -46,7 +46,7 @@
 }
 
 :root {
-  /* Deep, cinematic dark mode */
+  /* Deep, cinematic dark mode - Blue/Purple Shift */
   --background: 240 10% 4%; /* #09090b - Almost black */
   --foreground: 0 0% 98%;
 
@@ -56,38 +56,38 @@
   --popover: 240 10% 6%;
   --popover-foreground: 0 0% 98%;
 
-  --primary: 357 92% 47%; /* Netflix Red */
+  --primary: 217 91% 60%; /* Blue #3b82f6 to match Fenix button */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 240 5% 15%; /* Dark gray for secondary actions */
+  --secondary: 240 5% 15%;
   --secondary-foreground: 0 0% 100%;
 
   --muted: 240 5% 15%;
   --muted-foreground: 240 5% 65%;
 
-  --accent: 240 5% 20%; /* Hover states */
+  --accent: 217 20% 20%; 
   --accent-foreground: 0 0% 100%;
 
   --destructive: 0 62% 30%;
   --destructive-foreground: 0 0% 98%;
 
-  --border: 240 5% 12%; /* Very subtle borders */
+  --border: 240 5% 12%; 
   --input: 240 5% 12%;
-  --ring: 357 92% 47%;
+  --ring: 217 91% 60%;
 
-  --radius: 0.75rem; /* More rounded modern feel */
+  --radius: 0.75rem;
 
-  --sidebar: 240 10% 3%; /* Darker than main content */
+  --sidebar: 240 10% 3%; 
   --sidebar-foreground: 240 5% 70%;
-  --sidebar-primary: 357 92% 47%;
+  --sidebar-primary: 217 91% 60%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 240 5% 10%;
+  --sidebar-accent: 217 20% 10%;
   --sidebar-accent-foreground: 0 0% 100%;
   --sidebar-border: 240 5% 8%;
-  --sidebar-ring: 357 92% 47%;
+  --sidebar-ring: 217 91% 60%;
 
-  --chart-1: 357 92% 47%;
-  --chart-2: 240 10% 20%;
+  --chart-1: 217 91% 60%;
+  --chart-2: 260 91% 60%;
   --chart-3: 240 10% 30%;
   --chart-4: 240 10% 40%;
   --chart-5: 240 10% 50%;
