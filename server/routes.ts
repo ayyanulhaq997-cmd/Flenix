@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
-import { insertMovieSchema, insertSeriesSchema, insertEpisodeSchema, insertChannelSchema, insertAppUserSchema } from "@shared/schema";
+import { insertMovieSchema, insertSeriesSchema, insertEpisodeSchema, insertChannelSchema, insertAppUserSchema, insertSubscriptionPlanSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
@@ -274,6 +274,79 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       };
 
       res.json(stats);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Subscription Plans API
+  app.get("/api/subscription-plans", async (req, res) => {
+    try {
+      const plans = await storage.getSubscriptionPlans();
+      res.json(plans);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/subscription-plans", async (req, res) => {
+    try {
+      const result = insertSubscriptionPlanSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: fromZodError(result.error).message });
+      }
+      const plan = await storage.createSubscriptionPlan(result.data);
+      res.status(201).json(plan);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch("/api/subscription-plans/:id", async (req, res) => {
+    try {
+      const plan = await storage.updateSubscriptionPlan(Number(req.params.id), req.body);
+      if (!plan) {
+        return res.status(404).json({ error: "Plan not found" });
+      }
+      res.json(plan);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/subscription-plans/:id", async (req, res) => {
+    try {
+      await storage.deleteSubscriptionPlan(Number(req.params.id));
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // User registration endpoint
+  app.post("/api/users/register", async (req, res) => {
+    try {
+      const { name, email, passwordHash, plan } = req.body;
+      
+      if (!name || !email || !passwordHash) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const existingUser = await storage.getAppUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Email already registered" });
+      }
+
+      const user = await storage.createAppUser({
+        name,
+        email,
+        passwordHash,
+        plan: plan || "free",
+        status: "active",
+      });
+
+      const { passwordHash: _, ...safeUser } = user;
+      res.status(201).json(safeUser);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

@@ -142,3 +142,24 @@ export const insertAdminSchema = createInsertSchema(admins).omit({
 
 export type InsertAdmin = z.infer<typeof insertAdminSchema>;
 export type Admin = typeof admins.$inferSelect;
+
+// Subscription Plans table
+export const subscriptionPlans = pgTable("subscription_plans", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  price: integer("price").notNull(), // in cents
+  billingPeriod: text("billing_period").notNull(), // monthly, yearly
+  maxDevices: integer("max_devices").notNull(),
+  maxQuality: text("max_quality").notNull(), // 480p, 720p, 1080p, 4k
+  features: jsonb("features"), // array of feature strings
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
+export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
