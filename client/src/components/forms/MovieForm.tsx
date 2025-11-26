@@ -29,9 +29,11 @@ const formSchema = z.object({
     message: "Year must be a 4-digit number.",
   }),
   description: z.string().optional(),
+  posterUrl: z.string().optional(),
+  videoUrl: z.string().optional(),
 });
 
-export function MovieForm({ onSubmit }: { onSubmit: () => void }) {
+export function MovieForm({ onSubmit }: { onSubmit: (data: any) => void }) {
   const [uploadState, setUploadState] = useState<"idle" | "uploading" | "completed">("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [fileName, setFileName] = useState("");
@@ -70,12 +72,15 @@ export function MovieForm({ onSubmit }: { onSubmit: () => void }) {
 
   function handleSubmit(values: z.infer<typeof formSchema>) {
     if (uploadState !== "completed") {
-      // In a real app, you'd validate this
       alert("Please upload a video file first.");
       return;
     }
-    console.log({ ...values, fileName });
-    onSubmit();
+    onSubmit({ 
+      ...values, 
+      year: parseInt(values.year),
+      fileName,
+      status: "processing",
+    });
   }
 
   return (

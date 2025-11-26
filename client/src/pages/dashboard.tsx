@@ -9,10 +9,13 @@ import {
   AlertCircle,
   Database,
   ArrowUpRight,
-  PlayCircle
+  PlayCircle,
+  Radio
 } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const data = [
   { name: "Mon", users: 400, streams: 240 },
@@ -25,6 +28,15 @@ const data = [
 ];
 
 export default function Dashboard() {
+  const { data: stats, isLoading } = useQuery({
+    queryKey: ['stats'],
+    queryFn: async () => {
+      const response = await fetch('/api/stats');
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      return response.json();
+    },
+  });
+
   return (
     <Layout>
       <div className="mb-8 flex items-center justify-between">
@@ -38,7 +50,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Migration Alert */}
       <div className="mb-8 p-4 border border-yellow-500/20 bg-yellow-500/5 rounded-xl flex items-center justify-between gap-4 backdrop-blur-sm">
         <div className="flex items-start gap-4">
           <div className="p-2 bg-yellow-500/10 rounded-lg">
@@ -57,7 +68,6 @@ export default function Dashboard() {
         </Button>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <Card className="glass-card border-white/5 bg-card/40">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -67,13 +77,19 @@ export default function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">12,345</div>
-            <p className="text-xs text-muted-foreground flex items-center mt-2">
-              <span className="text-green-500 flex items-center mr-2 bg-green-500/10 px-1.5 py-0.5 rounded">
-                <TrendingUp className="w-3 h-3 mr-1" /> +15%
-              </span>
-              vs last month
-            </p>
+            {isLoading ? (
+              <Skeleton className="h-9 w-24 bg-white/5" />
+            ) : (
+              <>
+                <div className="text-3xl font-bold text-white">{stats?.totalUsers?.toLocaleString() || 0}</div>
+                <p className="text-xs text-muted-foreground flex items-center mt-2">
+                  <span className="text-green-500 flex items-center mr-2 bg-green-500/10 px-1.5 py-0.5 rounded">
+                    <TrendingUp className="w-3 h-3 mr-1" /> +15%
+                  </span>
+                  vs last month
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -85,13 +101,19 @@ export default function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">2,845</div>
-            <p className="text-xs text-muted-foreground flex items-center mt-2">
-              <span className="text-green-500 flex items-center mr-2 bg-green-500/10 px-1.5 py-0.5 rounded">
-                <ArrowUpRight className="w-3 h-3 mr-1" /> +12
-              </span>
-              new this week
-            </p>
+            {isLoading ? (
+              <Skeleton className="h-9 w-24 bg-white/5" />
+            ) : (
+              <>
+                <div className="text-3xl font-bold text-white">{stats?.totalMovies?.toLocaleString() || 0}</div>
+                <p className="text-xs text-muted-foreground flex items-center mt-2">
+                  <span className="text-green-500 flex items-center mr-2 bg-green-500/10 px-1.5 py-0.5 rounded">
+                    <ArrowUpRight className="w-3 h-3 mr-1" /> New this week
+                  </span>
+                  recently added
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -103,31 +125,42 @@ export default function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">432</div>
-            <p className="text-xs text-muted-foreground mt-2">
-              85 active shows
-            </p>
+            {isLoading ? (
+              <Skeleton className="h-9 w-24 bg-white/5" />
+            ) : (
+              <>
+                <div className="text-3xl font-bold text-white">{stats?.totalSeries?.toLocaleString() || 0}</div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Series in catalog
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
         <Card className="glass-card border-white/5 bg-card/40">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active Streams</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Live Channels</CardTitle>
             <div className="p-2 bg-primary/10 rounded-lg">
-              <Activity className="h-4 w-4 text-primary animate-pulse" />
+              <Radio className="h-4 w-4 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-white">573</div>
-            <p className="text-xs text-muted-foreground mt-2">
-              Current concurrent users
-            </p>
+            {isLoading ? (
+              <Skeleton className="h-9 w-24 bg-white/5" />
+            ) : (
+              <>
+                <div className="text-3xl font-bold text-white">{stats?.activeChannels || 0}/{stats?.totalChannels || 0}</div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Channels online
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7 mb-8">
-        {/* Chart */}
         <Card className="col-span-4 bg-card/40 border-white/5 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-white">Streaming Activity</CardTitle>
@@ -138,8 +171,8 @@ export default function Dashboard() {
                 <AreaChart data={data}>
                   <defs>
                     <linearGradient id="colorStreams" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#E50914" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#E50914" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
@@ -166,7 +199,7 @@ export default function Dashboard() {
                   <Area 
                     type="monotone" 
                     dataKey="streams" 
-                    stroke="#E50914" 
+                    stroke="#3b82f6" 
                     strokeWidth={2}
                     fillOpacity={1} 
                     fill="url(#colorStreams)" 
@@ -177,7 +210,6 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
         <Card className="col-span-3 bg-card/40 border-white/5 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-white">System Alerts</CardTitle>
@@ -199,7 +231,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <h4 className="text-sm font-semibold text-white mb-1">Content Processed</h4>
-                  <p className="text-xs text-muted-foreground">"Dune: Part Two" is now available for streaming.</p>
+                  <p className="text-xs text-muted-foreground">New content is now available for streaming.</p>
                 </div>
               </div>
               <div className="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group">
@@ -207,8 +239,8 @@ export default function Dashboard() {
                   <Users className="w-4 h-4 text-blue-500" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-white mb-1">New User Spike</h4>
-                  <p className="text-xs text-muted-foreground">150 new registrations in the last hour.</p>
+                  <h4 className="text-sm font-semibold text-white mb-1">New User Activity</h4>
+                  <p className="text-xs text-muted-foreground">Growing user engagement in the last hour.</p>
                 </div>
               </div>
             </div>

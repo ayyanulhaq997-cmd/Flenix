@@ -30,43 +30,91 @@ import {
 import { useState } from "react";
 import { MovieForm } from "@/components/forms/MovieForm";
 import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent } from "@/components/ui/card";
-
-// Import images - using placeholders if real ones aren't available
-// In a real app, these would come from the backend
-import poster1 from "@assets/stock_images/movie_poster_action__e218cd90.jpg";
-import poster2 from "@assets/stock_images/movie_poster_action__935d5c7f.jpg";
-import poster3 from "@assets/stock_images/movie_poster_action__05982a50.jpg";
-import poster4 from "@assets/stock_images/movie_poster_action__eff85d72.jpg";
-import poster5 from "@assets/stock_images/movie_poster_action__b7cb3e87.jpg";
-import poster6 from "@assets/stock_images/movie_poster_action__3003ddee.jpg";
-
-const mockMovies = [
-  { id: 1, title: "Inception Protocol", genre: "Sci-Fi", year: 2024, status: "Active", views: "1.2M", image: poster1 },
-  { id: 2, title: "Dark Knight Rises", genre: "Action", year: 2023, status: "Active", views: "2.4M", image: poster2 },
-  { id: 3, title: "Stellar Void", genre: "Sci-Fi", year: 2024, status: "Active", views: "1.8M", image: poster3 },
-  { id: 4, title: "Dune: Messiah", genre: "Sci-Fi", year: 2025, status: "Processing", views: "0", image: poster4 },
-  { id: 5, title: "Atomic Sky", genre: "Thriller", year: 2023, status: "Active", views: "900K", image: poster5 },
-  { id: 6, title: "Neon City", genre: "Action", year: 2024, status: "Active", views: "1.1M", image: poster6 },
-];
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Movies() {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const filteredMovies = mockMovies.filter(movie => 
+  const { data: movies = [], isLoading } = useQuery({
+    queryKey: ['movies'],
+    queryFn: async () => {
+      const response = await fetch('/api/movies');
+      if (!response.ok) throw new Error('Failed to fetch movies');
+      return response.json();
+    },
+  });
+
+  const addMovieMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch('/api/movies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Failed to add movie');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['movies'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      setIsAddOpen(false);
+      toast({
+        title: "Movie Added",
+        description: "The movie has been successfully added to the catalog.",
+        className: "bg-green-600 border-green-700 text-white",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add movie. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMovieMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/movies/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete movie');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['movies'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] });
+      toast({
+        title: "Movie Deleted",
+        description: "The movie has been removed from the catalog.",
+        className: "bg-green-600 border-green-700 text-white",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete movie. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const filteredMovies = movies.filter((movie: any) => 
     movie.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleAddSubmit = () => {
-    setIsAddOpen(false);
-    toast({
-      title: "Movie Added",
-      description: "The movie has been successfully added to the catalog.",
-      className: "bg-green-600 border-green-700 text-white",
-    });
+  const handleAddSubmit = (data: any) => {
+    addMovieMutation.mutate(data);
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this movie?")) {
+      deleteMovieMutation.mutate(id);
+    }
   };
 
   return (
@@ -129,7 +177,30 @@ export default function Movies() {
           </div>
         </div>
 
-        {viewMode === 'list' ? (
+        {isLoading ? (
+          <div className="p-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              {[...Array(10)].map((_, i) => (
+                <Skeleton key={i} className="aspect-[2/3] bg-white/5" />
+              ))}
+            </div>
+          </div>
+        ) : filteredMovies.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Film className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">No Movies Found</h3>
+            <p className="text-muted-foreground mb-4">
+              {search ? "No movies match your search criteria." : "Get started by adding your first movie."}
+            </p>
+            {!search && (
+              <Button onClick={() => setIsAddOpen(true)} className="bg-primary hover:bg-primary/90">
+                <Plus className="w-4 h-4 mr-2" /> Add Movie
+              </Button>
+            )}
+          </div>
+        ) : viewMode === 'list' ? (
           <Table>
             <TableHeader className="bg-black/20">
               <TableRow className="hover:bg-transparent border-white/5">
@@ -142,27 +213,28 @@ export default function Movies() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredMovies.map((movie) => (
+              {filteredMovies.map((movie: any) => (
                 <TableRow key={movie.id} className="border-white/5 hover:bg-white/5 transition-colors">
                   <TableCell className="font-medium text-white">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-14 bg-muted rounded-sm flex items-center justify-center shrink-0 overflow-hidden relative group">
-                        <img src={movie.image} alt={movie.title} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 hidden group-hover:flex items-center justify-center">
-                          <Film className="w-4 h-4 text-white" />
-                        </div>
+                        {movie.posterUrl ? (
+                          <img src={movie.posterUrl} alt={movie.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <Film className="w-4 h-4 text-muted-foreground" />
+                        )}
                       </div>
                       <span>{movie.title}</span>
                     </div>
                   </TableCell>
                   <TableCell>{movie.genre}</TableCell>
                   <TableCell>{movie.year}</TableCell>
-                  <TableCell>{movie.views}</TableCell>
+                  <TableCell>{movie.views?.toLocaleString() || 0}</TableCell>
                   <TableCell>
                     <Badge 
                       variant="outline" 
                       className={
-                        movie.status === "Active" 
+                        movie.status === "active" 
                           ? "bg-green-500/10 text-green-400 border-green-500/20" 
                           : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
                       }
@@ -184,7 +256,10 @@ export default function Movies() {
                           <Edit className="mr-2 h-4 w-4" /> Edit Details
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="bg-white/10" />
-                        <DropdownMenuItem className="cursor-pointer text-destructive hover:bg-destructive/10">
+                        <DropdownMenuItem 
+                          className="cursor-pointer text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDelete(movie.id)}
+                        >
                           <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -196,20 +271,31 @@ export default function Movies() {
           </Table>
         ) : (
           <div className="p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {filteredMovies.map((movie) => (
+            {filteredMovies.map((movie: any) => (
               <div key={movie.id} className="group relative flex flex-col gap-2">
                 <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-primary/20 group-hover:ring-2 ring-primary/50 ring-offset-2 ring-offset-background">
-                  <img 
-                    src={movie.image} 
-                    alt={movie.title} 
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
-                  />
+                  {movie.posterUrl ? (
+                    <img 
+                      src={movie.posterUrl} 
+                      alt={movie.title} 
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center bg-muted/20">
+                      <Film className="w-12 h-12 text-muted-foreground" />
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
                     <div className="flex gap-2 mb-2">
                       <Button size="icon" className="h-8 w-8 rounded-full bg-white text-black hover:bg-white/90">
                         <Edit className="w-4 h-4" />
                       </Button>
-                      <Button size="icon" variant="destructive" className="h-8 w-8 rounded-full">
+                      <Button 
+                        size="icon" 
+                        variant="destructive" 
+                        className="h-8 w-8 rounded-full"
+                        onClick={() => handleDelete(movie.id)}
+                      >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
@@ -220,7 +306,7 @@ export default function Movies() {
                   <div className="absolute top-2 right-2">
                     <Badge 
                       className={`backdrop-blur-md border-0 ${
-                        movie.status === "Active" ? "bg-green-500/80 text-white" : "bg-yellow-500/80 text-black"
+                        movie.status === "active" ? "bg-green-500/80 text-white" : "bg-yellow-500/80 text-black"
                       }`}
                     >
                       {movie.status}
@@ -229,7 +315,7 @@ export default function Movies() {
                 </div>
                 <div className="space-y-1">
                   <h3 className="font-medium text-white leading-none truncate">{movie.title}</h3>
-                  <p className="text-xs text-muted-foreground">{movie.views} views</p>
+                  <p className="text-xs text-muted-foreground">{movie.views?.toLocaleString() || 0} views</p>
                 </div>
               </div>
             ))}
