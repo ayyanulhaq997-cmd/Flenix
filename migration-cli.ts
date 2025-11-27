@@ -1,7 +1,7 @@
 #!/usr/bin/env tsx
 import * as readline from "readline";
 import * as path from "path";
-import { startR2Migration } from "./server/migration-r2";
+import { startWasabiMigration } from "./server/migration-wasabi";
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -16,19 +16,24 @@ function question(prompt: string): Promise<string> {
 
 async function main() {
   console.log("╔═══════════════════════════════════════════════════════╗");
-  console.log("║  Fenix CDN Migration Tool - Cloudflare R2             ║");
+  console.log("║  Fenix CDN Migration Tool - Wasabi Storage            ║");
   console.log("╚═══════════════════════════════════════════════════════╝\n");
 
   try {
-    // Get Cloudflare R2 credentials
-    console.log("📋 Cloudflare R2 Configuration:");
-    const r2AccountId = await question("  R2 Account ID: ");
-    const r2AccessKeyId = await question("  R2 Access Key ID: ");
-    const r2SecretAccessKey = await question("  R2 Secret Access Key: ");
-    const r2BucketName = await question("  R2 Bucket Name: ");
-    const r2Endpoint = await question(
-      "  R2 Endpoint (or press Enter for default): "
-    );
+    // Get Wasabi credentials
+    console.log("📋 Wasabi Storage Configuration:");
+    const wasabiAccessKeyId = await question("  Wasabi Access Key ID: ");
+    const wasabiSecretAccessKey = await question("  Wasabi Secret Access Key: ");
+    const wasabiBucketName = await question("  Wasabi Bucket Name: ");
+    
+    console.log("\n🌍 Available Wasabi Regions:");
+    console.log("  - us-east-1 (US East)");
+    console.log("  - us-west-1 (US West)");
+    console.log("  - eu-central-1 (Europe)");
+    console.log("  - ap-northeast-1 (Tokyo)");
+    console.log("  - ap-southeast-1 (Singapore)");
+    
+    const wasabiRegion = await question("  Wasabi Region: ");
 
     // Get source directory
     console.log("\n📁 Source Configuration:");
@@ -38,10 +43,10 @@ async function main() {
 
     // Confirm destination
     console.log("\n🎯 Migration Destination Confirmation:");
-    console.log(`  Bucket: ${r2BucketName}`);
-    console.log(
-      `  Endpoint: ${r2Endpoint || "https://r2.cloudflarestorage.com"}`
-    );
+    console.log(`  Provider: Wasabi Storage`);
+    console.log(`  Bucket: ${wasabiBucketName}`);
+    console.log(`  Region: ${wasabiRegion}`);
+    console.log(`  CDN URL Pattern: https://${wasabiBucketName}.s3.${wasabiRegion}.wasabisys.com/...`);
     console.log(`  Source: ${sourceDirectory}`);
 
     const confirmed = await question(
@@ -59,12 +64,11 @@ async function main() {
     );
 
     // Start migration
-    const report = await startR2Migration({
-      r2AccountId,
-      r2AccessKeyId,
-      r2SecretAccessKey,
-      r2BucketName,
-      r2Endpoint: r2Endpoint || "https://r2.cloudflarestorage.com",
+    const report = await startWasabiMigration({
+      wasabiAccessKeyId,
+      wasabiSecretAccessKey,
+      wasabiBucketName,
+      wasabiRegion,
       sourceDirectory,
       dryRun: dryRun.toLowerCase() === "yes",
     });
@@ -75,12 +79,11 @@ async function main() {
         "\n🚀 Dry run completed. Run actual migration? (yes/no): "
       );
       if (runActual.toLowerCase() === "yes") {
-        await startR2Migration({
-          r2AccountId,
-          r2AccessKeyId,
-          r2SecretAccessKey,
-          r2BucketName,
-          r2Endpoint: r2Endpoint || "https://r2.cloudflarestorage.com",
+        await startWasabiMigration({
+          wasabiAccessKeyId,
+          wasabiSecretAccessKey,
+          wasabiBucketName,
+          wasabiRegion,
           sourceDirectory,
           dryRun: false,
         });

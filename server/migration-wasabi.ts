@@ -6,11 +6,10 @@ import { movies, episodes } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 interface MigrationConfig {
-  r2AccountId: string;
-  r2AccessKeyId: string;
-  r2SecretAccessKey: string;
-  r2BucketName: string;
-  r2Endpoint: string;
+  wasabiAccessKeyId: string;
+  wasabiSecretAccessKey: string;
+  wasabiBucketName: string;
+  wasabiRegion: string;
   sourceDirectory: string;
   dryRun: boolean;
 }
@@ -42,7 +41,7 @@ interface MigrationReport {
   }[];
 }
 
-class R2Migrator {
+class WasabiMigrator {
   private config: MigrationConfig;
   private s3Client: S3Client;
   private mappings: MigrationMapping[] = [];
@@ -50,21 +49,25 @@ class R2Migrator {
 
   constructor(config: MigrationConfig) {
     this.config = config;
+    // Wasabi S3-compatible endpoint for the specified region
+    const wasabiEndpoint = `https://s3.${config.wasabiRegion}.wasabisys.com`;
+    
     this.s3Client = new S3Client({
-      region: "auto",
+      region: config.wasabiRegion,
       credentials: {
-        accessKeyId: config.r2AccessKeyId,
-        secretAccessKey: config.r2SecretAccessKey,
+        accessKeyId: config.wasabiAccessKeyId,
+        secretAccessKey: config.wasabiSecretAccessKey,
       },
-      endpoint: config.r2Endpoint,
+      endpoint: wasabiEndpoint,
     });
   }
 
   async migrate(): Promise<MigrationReport> {
     const startTime = new Date();
-    console.log("🚀 Starting Cloudflare R2 migration...");
+    console.log("🚀 Starting Wasabi Storage migration...");
     console.log(`📁 Source directory: ${this.config.sourceDirectory}`);
-    console.log(`🪣 R2 Bucket: ${this.config.r2BucketName}`);
+    console.log(`🪣 Wasabi Bucket: ${this.config.wasabiBucketName}`);
+    console.log(`🌍 Wasabi Region: ${this.config.wasabiRegion}`);
     console.log(`🏜️ Dry run mode: ${this.config.dryRun}`);
 
     try {
@@ -176,13 +179,13 @@ class R2Migrator {
 
       // Generate CDN URL path
       const cdnPath = this.generateCdnPath(content.type, content.id, file.fileName);
-      const cdnUrl = `https://${this.config.r2BucketName}.${this.config.r2AccountId}.r2.cloudflarestorage.com/${cdnPath}`;
+      const cdnUrl = `https://${this.config.wasabiBucketName}.s3.${this.config.wasabiRegion}.wasabisys.com/${cdnPath}`;
 
       console.log(`📤 Uploading to: ${cdnUrl}`);
 
       if (!this.config.dryRun) {
-        // Upload to R2
-        await this.uploadToR2(file.path, cdnPath, file.fileName);
+        // Upload to Wasabi
+        await this.uploadToWasabi(file.path, cdnPath, file.fileName);
       } else {
         console.log(`[DRY RUN] Would upload ${file.fileName} to ${cdnUrl}`);
       }
@@ -225,7 +228,7 @@ class R2Migrator {
     }
   }
 
-  private async uploadToR2(
+  private async uploadToWasabi(
     localPath: string,
     s3Key: string,
     fileName: string
@@ -234,7 +237,7 @@ class R2Migrator {
     const contentType = this.getContentType(fileName);
 
     const command = new PutObjectCommand({
-      Bucket: this.config.r2BucketName,
+      Bucket: this.config.wasabiBucketName,
       Key: s3Key,
       Body: fileContent,
       ContentType: contentType,
@@ -405,7 +408,7 @@ class R2Migrator {
   }
 }
 
-export async function startR2Migration(config: MigrationConfig) {
-  const migrator = new R2Migrator(config);
+export async function startWasabiMigration(config: MigrationConfig) {
+  const migrator = new WasabiMigrator(config);
   return migrator.migrate();
 }
