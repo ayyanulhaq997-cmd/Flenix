@@ -721,7 +721,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
           ContentType: mimeType,
           Metadata: {
             "original-name": fileName,
-            "uploaded-by": req.user?.username || "unknown",
+            "uploaded-by": req.user?.email || "unknown",
           },
         });
 
@@ -736,7 +736,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const file = await storage.createFile({
         storageKey,
         originalName: fileName,
-        ownerUserId: String(req.user?.id || "system"),
+        ownerUserId: String(req.user?.userId || "system"),
         mimeType,
         fileSizeBytes: fileSize,
         status: "available",
@@ -769,7 +769,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         files = await storage.getFilesByRelatedContent(Number(relatedContentId));
       } else {
         // Default: get files uploaded by current user
-        files = await storage.getFilesByOwner(String(req.user?.id || "system"));
+        files = await storage.getFilesByOwner(String(req.user?.userId || "system"));
       }
 
       res.json(files);
