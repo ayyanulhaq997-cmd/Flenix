@@ -2,7 +2,7 @@ import cluster from "cluster";
 import os from "os";
 import { log } from "./index";
 
-const numCPUs = process.env.CLUSTER_WORKERS || os.cpus().length;
+const numCPUs = parseInt(process.env.CLUSTER_WORKERS || String(os.cpus().length), 10);
 
 export function setupCluster() {
   if (cluster.isPrimary && process.env.NODE_ENV === "production") {
