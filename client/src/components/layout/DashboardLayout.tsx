@@ -8,7 +8,8 @@ import {
   LogOut, 
   Radio,
   Search,
-  Bell
+  Bell,
+  Key
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,6 +25,7 @@ export function Sidebar() {
     { icon: Tv, label: "Series", href: "/series" },
     { icon: Radio, label: "Channels", href: "/channels" },
     { icon: Users, label: "Users", href: "/users" },
+    { icon: Key, label: "API Keys", href: "/api-keys" },
     { icon: Settings, label: "Settings", href: "/settings" },
   ];
 

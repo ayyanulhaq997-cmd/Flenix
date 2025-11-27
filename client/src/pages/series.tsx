@@ -224,7 +224,7 @@ export default function Series() {
           </Table>
         ) : (
           <div className="p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {filteredSeries.map((show) => (
+            {filteredSeries.map((show: any) => (
               <div key={show.id} className="group relative flex flex-col gap-2">
                 <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-primary/20 group-hover:ring-2 ring-primary/50 ring-offset-2 ring-offset-background">
                   <img 

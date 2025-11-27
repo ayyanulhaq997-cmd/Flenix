@@ -11,6 +11,7 @@ import Series from "@/pages/series";
 import Channels from "@/pages/channels";
 import Users from "@/pages/users";
 import Settings from "@/pages/settings";
+import ApiKeys from "@/pages/api-keys";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/series" component={Series} />
       <Route path="/channels" component={Channels} />
       <Route path="/users" component={Users} />
+      <Route path="/api-keys" component={ApiKeys} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>

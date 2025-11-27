@@ -5,20 +5,23 @@ import { Plus, Search, Radio, PlayCircle, Settings2, Users } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-
-const mockChannels = [
-  { id: 1, name: "CNN International", category: "News", status: "Online", viewers: 1200 },
-  { id: 2, name: "ESPN", category: "Sports", status: "Online", viewers: 3400 },
-  { id: 3, name: "HBO", category: "Movies", status: "Online", viewers: 5600 },
-  { id: 4, name: "Discovery Channel", category: "Documentary", status: "Offline", viewers: 0 },
-  { id: 5, name: "Cartoon Network", category: "Kids", status: "Online", viewers: 890 },
-  { id: 6, name: "National Geographic", category: "Documentary", status: "Online", viewers: 650 },
-];
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Channels() {
   const [search, setSearch] = useState("");
+  const { toast } = useToast();
 
-  const filteredChannels = mockChannels.filter(channel => 
+  const { data: channels = [] } = useQuery({
+    queryKey: ['channels'],
+    queryFn: async () => {
+      const response = await fetch('/api/channels');
+      if (!response.ok) throw new Error('Failed to fetch channels');
+      return response.json();
+    },
+  });
+
+  const filteredChannels = channels.filter((channel: any) => 
     channel.name.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -48,45 +51,53 @@ export default function Channels() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredChannels.map((channel) => (
-          <Card key={channel.id} className="glass-card border-white/5 bg-card/40 group overflow-hidden">
-            <CardContent className="p-0">
-              <div className="h-40 bg-gradient-to-br from-black/40 to-black/10 flex items-center justify-center relative">
-                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center backdrop-blur-md border border-white/10 group-hover:scale-110 transition-transform duration-300">
-                  <Radio className="w-8 h-8 text-white/70" />
+        {filteredChannels.length === 0 ? (
+          <div className="col-span-full text-center py-12">
+            <Radio className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+            <p className="text-muted-foreground">No channels available. Create one to get started.</p>
+          </div>
+        ) : (
+          filteredChannels.map((channel: any) => (
+            <Card key={channel.id} className="glass-card border-white/5 bg-card/40 group overflow-hidden" data-testid={`card-channel-${channel.id}`}>
+              <CardContent className="p-0">
+                <div className="h-40 bg-gradient-to-br from-black/40 to-black/10 flex items-center justify-center relative">
+                  <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center backdrop-blur-md border border-white/10 group-hover:scale-110 transition-transform duration-300">
+                    <Radio className="w-8 h-8 text-white/70" />
+                  </div>
+                  
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-sm">
+                    <Button size="sm" className="bg-white text-black hover:bg-white/90 h-9">
+                      <PlayCircle className="w-4 h-4 mr-2" /> Preview
+                    </Button>
+                    <Button size="sm" variant="outline" className="bg-transparent border-white/20 text-white hover:bg-white/10 h-9">
+                      <Settings2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  
+                  <Badge 
+                    className={`absolute top-3 right-3 border-0 ${
+                      channel.status === "online" ? "bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.5)]" : "bg-red-500 text-white"
+                    }`}
+                    data-testid={`status-${channel.id}`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full mr-1.5 bg-white ${channel.status === "online" ? "animate-pulse" : ""}`} />
+                    {channel.status}
+                  </Badge>
                 </div>
-                
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-sm">
-                  <Button size="sm" className="bg-white text-black hover:bg-white/90 h-9">
-                    <PlayCircle className="w-4 h-4 mr-2" /> Preview
-                  </Button>
-                  <Button size="sm" variant="outline" className="bg-transparent border-white/20 text-white hover:bg-white/10 h-9">
-                    <Settings2 className="w-4 h-4" />
-                  </Button>
+                <div className="p-5">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-semibold text-white text-lg">{channel.name}</h3>
+                    <Badge variant="outline" className="text-xs border-white/10 bg-white/5">{channel.category}</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    {channel.status === "online" ? `${channel.currentViewers?.toLocaleString() || 0} watching now` : "Stream offline"}
+                  </p>
                 </div>
-                
-                <Badge 
-                  className={`absolute top-3 right-3 border-0 ${
-                    channel.status === "Online" ? "bg-green-500 text-white shadow-[0_0_10px_rgba(34,197,94,0.5)]" : "bg-red-500 text-white"
-                  }`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full mr-1.5 bg-white ${channel.status === "Online" ? "animate-pulse" : ""}`} />
-                  {channel.status}
-                </Badge>
-              </div>
-              <div className="p-5">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold text-white text-lg">{channel.name}</h3>
-                  <Badge variant="outline" className="text-xs border-white/10 bg-white/5">{channel.category}</Badge>
-                </div>
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  {channel.status === "Online" ? `${channel.viewers.toLocaleString()} watching now` : "Stream offline"}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </Layout>
   );
