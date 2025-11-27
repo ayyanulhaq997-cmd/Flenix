@@ -3,9 +3,16 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { insertMovieSchema, insertSeriesSchema, insertEpisodeSchema, insertChannelSchema, insertAppUserSchema, insertSubscriptionPlanSchema, insertChannelContentSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
+import { authMiddleware, generateToken, generateStreamingUrl } from "./auth";
+import { openApiSpec } from "./openapi";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
-  // Movies API
+  // OpenAPI Documentation
+  app.get("/api/docs", (req, res) => {
+    res.json(openApiSpec);
+  });
+
+  // Movies API (Admin - requires auth)
   app.get("/api/movies", async (req, res) => {
     try {
       const movies = await storage.getMovies();
@@ -27,7 +34,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.post("/api/movies", async (req, res) => {
+  app.post("/api/movies", authMiddleware, async (req, res) => {
     try {
       const result = insertMovieSchema.safeParse(req.body);
       if (!result.success) {
@@ -40,7 +47,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.patch("/api/movies/:id", async (req, res) => {
+  app.patch("/api/movies/:id", authMiddleware, async (req, res) => {
     try {
       const movie = await storage.updateMovie(Number(req.params.id), req.body);
       if (!movie) {
@@ -52,7 +59,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.delete("/api/movies/:id", async (req, res) => {
+  app.delete("/api/movies/:id", authMiddleware, async (req, res) => {
     try {
       await storage.deleteMovie(Number(req.params.id));
       res.status(204).send();
@@ -83,7 +90,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.post("/api/series", async (req, res) => {
+  app.post("/api/series", authMiddleware, async (req, res) => {
     try {
       const result = insertSeriesSchema.safeParse(req.body);
       if (!result.success) {
@@ -96,7 +103,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.patch("/api/series/:id", async (req, res) => {
+  app.patch("/api/series/:id", authMiddleware, async (req, res) => {
     try {
       const series = await storage.updateSeries(Number(req.params.id), req.body);
       if (!series) {
@@ -108,7 +115,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.delete("/api/series/:id", async (req, res) => {
+  app.delete("/api/series/:id", authMiddleware, async (req, res) => {
     try {
       await storage.deleteSeries(Number(req.params.id));
       res.status(204).send();
@@ -127,7 +134,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.post("/api/episodes", async (req, res) => {
+  app.post("/api/episodes", authMiddleware, async (req, res) => {
     try {
       const result = insertEpisodeSchema.safeParse(req.body);
       if (!result.success) {
@@ -140,7 +147,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.patch("/api/episodes/:id", async (req, res) => {
+  app.patch("/api/episodes/:id", authMiddleware, async (req, res) => {
     try {
       const episode = await storage.updateEpisode(Number(req.params.id), req.body);
       if (!episode) {
@@ -152,7 +159,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.delete("/api/episodes/:id", async (req, res) => {
+  app.delete("/api/episodes/:id", authMiddleware, async (req, res) => {
     try {
       await storage.deleteEpisode(Number(req.params.id));
       res.status(204).send();
@@ -171,7 +178,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.post("/api/channels", async (req, res) => {
+  app.post("/api/channels", authMiddleware, async (req, res) => {
     try {
       const result = insertChannelSchema.safeParse(req.body);
       if (!result.success) {
@@ -184,7 +191,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.patch("/api/channels/:id", async (req, res) => {
+  app.patch("/api/channels/:id", authMiddleware, async (req, res) => {
     try {
       const channel = await storage.updateChannel(Number(req.params.id), req.body);
       if (!channel) {
@@ -196,7 +203,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.delete("/api/channels/:id", async (req, res) => {
+  app.delete("/api/channels/:id", authMiddleware, async (req, res) => {
     try {
       await storage.deleteChannel(Number(req.params.id));
       res.status(204).send();
@@ -346,7 +353,40 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       });
 
       const { passwordHash: _, ...safeUser } = user;
-      res.status(201).json(safeUser);
+      const token = generateToken({
+        userId: user.id,
+        email: user.email,
+        plan: user.plan,
+      });
+      
+      res.status(201).json({ ...safeUser, token });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // User login endpoint
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password required" });
+      }
+
+      const user = await storage.getAppUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      const token = generateToken({
+        userId: user.id,
+        email: user.email,
+        plan: user.plan,
+      });
+
+      const { passwordHash: _, ...safeUser } = user;
+      res.json({ ...safeUser, token });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -470,7 +510,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Channel Content: Add content to channel
-  app.post("/api/channels/:channelId/content", async (req, res) => {
+  app.post("/api/channels/:channelId/content", authMiddleware, async (req, res) => {
     try {
       const { contentType, contentId } = req.body;
       const channelId = Number(req.params.channelId);
@@ -502,7 +542,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Channel Content: Remove content from channel
-  app.delete("/api/channels/:channelId/content/:contentId", async (req, res) => {
+  app.delete("/api/channels/:channelId/content/:contentId", authMiddleware, async (req, res) => {
     try {
       await storage.removeContentFromChannel(
         Number(req.params.contentId),
