@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
-import { insertMovieSchema, insertSeriesSchema, insertEpisodeSchema, insertChannelSchema, insertAppUserSchema, insertSubscriptionPlanSchema } from "@shared/schema";
+import { insertMovieSchema, insertSeriesSchema, insertEpisodeSchema, insertChannelSchema, insertAppUserSchema, insertSubscriptionPlanSchema, insertChannelContentSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
@@ -432,9 +432,83 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         accessible: canAccess,
         requiredPlan: content.requiredPlan,
         status: content.status,
-        // If not accessible, don't include streaming URL
         ...(canAccess ? { videoUrl: content.videoUrl } : {}),
       });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Search & Filter: Movies
+  app.get("/api/movies/search", async (req, res) => {
+    try {
+      const { q, genre, status } = req.query;
+      const movies = await storage.searchMovies(
+        (q as string) || "",
+        (genre as string) || undefined,
+        (status as string) || undefined
+      );
+      res.json(movies);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Search & Filter: Series
+  app.get("/api/series/search", async (req, res) => {
+    try {
+      const { q, genre, status } = req.query;
+      const allSeries = await storage.searchSeries(
+        (q as string) || "",
+        (genre as string) || undefined,
+        (status as string) || undefined
+      );
+      res.json(allSeries);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Channel Content: Add content to channel
+  app.post("/api/channels/:channelId/content", async (req, res) => {
+    try {
+      const { contentType, contentId } = req.body;
+      const channelId = Number(req.params.channelId);
+
+      if (!contentType || !contentId) {
+        return res.status(400).json({ error: "Missing contentType or contentId" });
+      }
+
+      const content = await storage.addContentToChannel({
+        channelId,
+        contentType,
+        contentId,
+      });
+
+      res.status(201).json(content);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Channel Content: Get channel content
+  app.get("/api/channels/:channelId/content", async (req, res) => {
+    try {
+      const content = await storage.getChannelContent(Number(req.params.channelId));
+      res.json(content);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Channel Content: Remove content from channel
+  app.delete("/api/channels/:channelId/content/:contentId", async (req, res) => {
+    try {
+      await storage.removeContentFromChannel(
+        Number(req.params.contentId),
+        Number(req.params.channelId)
+      );
+      res.status(204).send();
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

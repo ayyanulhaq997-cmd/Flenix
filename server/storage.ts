@@ -1,15 +1,16 @@
 import { 
-  movies, series, episodes, channels, appUsers, admins, subscriptionPlans,
+  movies, series, episodes, channels, appUsers, admins, subscriptionPlans, channelContent,
   type Movie, type InsertMovie,
   type Series, type InsertSeries,
   type Episode, type InsertEpisode,
   type Channel, type InsertChannel,
   type AppUser, type InsertAppUser,
   type Admin, type InsertAdmin,
-  type SubscriptionPlan, type InsertSubscriptionPlan
+  type SubscriptionPlan, type InsertSubscriptionPlan,
+  type ChannelContent, type InsertChannelContent
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, like, and } from "drizzle-orm";
+import { eq, desc, like, and, ilike, or } from "drizzle-orm";
 
 export interface IStorage {
   // Movies
@@ -58,6 +59,15 @@ export interface IStorage {
   createSubscriptionPlan(plan: InsertSubscriptionPlan): Promise<SubscriptionPlan>;
   updateSubscriptionPlan(id: number, plan: Partial<InsertSubscriptionPlan>): Promise<SubscriptionPlan | undefined>;
   deleteSubscriptionPlan(id: number): Promise<void>;
+
+  // Channel Content
+  addContentToChannel(content: InsertChannelContent): Promise<ChannelContent>;
+  getChannelContent(channelId: number): Promise<any[]>;
+  removeContentFromChannel(contentId: number, channelId: number): Promise<void>;
+
+  // Search & Filter
+  searchMovies(query: string, genre?: string, status?: string): Promise<Movie[]>;
+  searchSeries(query: string, genre?: string, status?: string): Promise<Series[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -247,6 +257,84 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSubscriptionPlan(id: number): Promise<void> {
     await db.delete(subscriptionPlans).where(eq(subscriptionPlans.id, id));
+  }
+
+  // Channel Content
+  async addContentToChannel(content: InsertChannelContent): Promise<ChannelContent> {
+    const [newContent] = await db.insert(channelContent).values(content).returning();
+    return newContent;
+  }
+
+  async getChannelContent(channelId: number): Promise<any[]> {
+    const channelContentList = await db
+      .select()
+      .from(channelContent)
+      .where(eq(channelContent.channelId, channelId));
+    
+    const result = [];
+    for (const cc of channelContentList) {
+      if (cc.contentType === "movie") {
+        const movie = await this.getMovie(cc.contentId);
+        if (movie) result.push({ ...movie, contentType: "movie" });
+      } else if (cc.contentType === "series") {
+        const show = await this.getSeries(cc.contentId);
+        if (show) result.push({ ...show, contentType: "series" });
+      }
+    }
+    return result;
+  }
+
+  async removeContentFromChannel(contentId: number, channelId: number): Promise<void> {
+    await db
+      .delete(channelContent)
+      .where(and(eq(channelContent.contentId, contentId), eq(channelContent.channelId, channelId)));
+  }
+
+  // Search & Filter
+  async searchMovies(query: string, genre?: string, status?: string): Promise<Movie[]> {
+    let query_builder = db.select().from(movies);
+    const conditions: any[] = [];
+
+    if (query) {
+      conditions.push(or(
+        ilike(movies.title, `%${query}%`),
+        ilike(movies.description, `%${query}%`)
+      ));
+    }
+    if (genre) {
+      conditions.push(ilike(movies.genre, `%${genre}%`));
+    }
+    if (status) {
+      conditions.push(eq(movies.status, status));
+    }
+
+    if (conditions.length > 0) {
+      return await query_builder.where(and(...conditions)).orderBy(desc(movies.createdAt));
+    }
+    return await query_builder.orderBy(desc(movies.createdAt));
+  }
+
+  async searchSeries(query: string, genre?: string, status?: string): Promise<Series[]> {
+    let query_builder = db.select().from(series);
+    const conditions: any[] = [];
+
+    if (query) {
+      conditions.push(or(
+        ilike(series.title, `%${query}%`),
+        ilike(series.description, `%${query}%`)
+      ));
+    }
+    if (genre) {
+      conditions.push(ilike(series.genre, `%${genre}%`));
+    }
+    if (status) {
+      conditions.push(eq(series.status, status));
+    }
+
+    if (conditions.length > 0) {
+      return await query_builder.where(and(...conditions)).orderBy(desc(series.createdAt));
+    }
+    return await query_builder.orderBy(desc(series.createdAt));
   }
 }
 
