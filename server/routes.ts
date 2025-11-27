@@ -390,6 +390,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
+      // Simple password check - in production, use bcrypt
+      if (user.passwordHash !== password) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
       const token = generateToken({
         userId: user.id,
         email: user.email,
