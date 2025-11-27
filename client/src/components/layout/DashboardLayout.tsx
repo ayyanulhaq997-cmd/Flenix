@@ -53,16 +53,14 @@ export function Sidebar() {
             const isActive = location === item.href;
             
             return (
-              <Link key={item.href} href={item.href}>
-                <a className={cn(
-                  "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group",
-                  isActive 
-                    ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_20px_rgba(59,130,246,0.15)]" 
-                    : "text-sidebar-foreground hover:bg-white/5 hover:text-white"
-                )} data-testid={`nav-${item.label.toLowerCase()}`}>
-                  <Icon className={cn("w-5 h-5 transition-colors", isActive ? "text-primary" : "text-muted-foreground group-hover:text-white")} />
-                  {item.label}
-                </a>
+              <Link key={item.href} href={item.href} className={cn(
+                "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group block",
+                isActive 
+                  ? "bg-primary/10 text-primary border border-primary/20 shadow-[0_0_20px_rgba(59,130,246,0.15)]" 
+                  : "text-sidebar-foreground hover:bg-white/5 hover:text-white"
+              )} data-testid={`nav-${item.label.toLowerCase()}`}>
+                <Icon className={cn("w-5 h-5 transition-colors", isActive ? "text-primary" : "text-muted-foreground group-hover:text-white")} />
+                {item.label}
               </Link>
             );
           })}
