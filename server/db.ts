@@ -15,12 +15,13 @@ if (!process.env.DATABASE_URL) {
 
 // Configure SSL for Railway endpoints
 const sslConfig = process.env.DATABASE_URL?.includes('railway') 
-  ? 'require'
+  ? { rejectUnauthorized: false }
   : false;
 
 const client = postgres(process.env.DATABASE_URL, {
   ssl: sslConfig,
   max: 10,
+  idle_timeout: 20,
 });
 
 export const db = drizzle({ client, schema });
