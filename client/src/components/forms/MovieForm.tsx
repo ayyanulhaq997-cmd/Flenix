@@ -87,7 +87,7 @@ export function MovieForm({ onSubmit }: { onSubmit: (data: any) => void }) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6 mt-4">
         <div className="space-y-4">
-          <FormLabel>Video Source File</FormLabel>
+          <label className="text-sm font-medium text-white">Video Source File</label>
           
           {uploadState === "idle" && (
             <div className="border-2 border-dashed border-white/10 rounded-xl p-8 text-center hover:bg-white/5 transition-colors cursor-pointer relative group">

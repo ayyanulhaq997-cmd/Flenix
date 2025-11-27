@@ -17,6 +17,7 @@ export const movies = pgTable("movies", {
   fileSize: integer("file_size"), // in bytes
   duration: integer("duration"), // in seconds
   status: text("status").notNull().default("draft"), // draft, active, archived
+  requiredPlan: text("required_plan").default("free"), // free, standard, premium
   views: integer("views").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -42,6 +43,7 @@ export const series = pgTable("series", {
   cast: text("cast").array(), // Array of actor names
   posterUrl: text("poster_url"),
   status: text("status").notNull().default("draft"), // draft, active, archived
+  requiredPlan: text("required_plan").default("free"), // free, standard, premium
   rating: text("rating"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

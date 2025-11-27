@@ -352,5 +352,93 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  // Public API: Get movies filtered by user plan and active status
+  app.get("/api/public/movies", async (req, res) => {
+    try {
+      const userPlan = (req.query.plan as string) || "free";
+      const allMovies = await storage.getMovies();
+      
+      // Filter by active status and user plan access
+      const accessibleMovies = allMovies.filter((movie: any) => {
+        if (movie.status !== "active") return false;
+        
+        const canAccess = 
+          movie.requiredPlan === "free" ||
+          (movie.requiredPlan === "standard" && (userPlan === "standard" || userPlan === "premium")) ||
+          (movie.requiredPlan === "premium" && userPlan === "premium");
+        
+        return canAccess;
+      });
+
+      res.json(accessibleMovies);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Public API: Get series filtered by user plan and active status
+  app.get("/api/public/series", async (req, res) => {
+    try {
+      const userPlan = (req.query.plan as string) || "free";
+      const allSeries = await storage.getAllSeries();
+      
+      // Filter by active status and user plan access
+      const accessibleSeries = allSeries.filter((show: any) => {
+        if (show.status !== "active") return false;
+        
+        const canAccess = 
+          show.requiredPlan === "free" ||
+          (show.requiredPlan === "standard" && (userPlan === "standard" || userPlan === "premium")) ||
+          (show.requiredPlan === "premium" && userPlan === "premium");
+        
+        return canAccess;
+      });
+
+      res.json(accessibleSeries);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Check content access for user
+  app.get("/api/content/:type/:id/access", async (req, res) => {
+    try {
+      const { type, id } = req.params;
+      const userPlan = (req.query.plan as string) || "free";
+      
+      let content: any;
+      if (type === "movie") {
+        content = await storage.getMovie(Number(id));
+      } else if (type === "series") {
+        content = await storage.getSeries(Number(id));
+      } else {
+        return res.status(400).json({ error: "Invalid content type" });
+      }
+
+      if (!content) {
+        return res.status(404).json({ error: "Content not found" });
+      }
+
+      const canAccess = 
+        content.status === "active" && (
+          content.requiredPlan === "free" ||
+          (content.requiredPlan === "standard" && (userPlan === "standard" || userPlan === "premium")) ||
+          (content.requiredPlan === "premium" && userPlan === "premium")
+        );
+
+      res.json({
+        id: content.id,
+        title: content.title,
+        accessible: canAccess,
+        requiredPlan: content.requiredPlan,
+        status: content.status,
+        // If not accessible, don't include streaming URL
+        ...(canAccess ? { videoUrl: content.videoUrl } : {}),
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   return httpServer;
 }
