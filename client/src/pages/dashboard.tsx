@@ -39,41 +39,38 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Dashboard Overview</h1>
-          <p className="text-muted-foreground">Real-time insights and performance metrics.</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" className="border-white/10 hover:bg-white/5">Download Report</Button>
-          <Button className="bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20">Live View</Button>
+      <div className="mb-12">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Fenix Control Center</h1>
+            <p className="text-base text-muted-foreground max-w-2xl">Monitor and manage your streaming platform with real-time analytics, content performance, and user engagement metrics.</p>
+          </div>
         </div>
       </div>
 
-      <div className="mb-8 p-4 border border-yellow-500/20 bg-yellow-500/5 rounded-xl flex items-center justify-between gap-4 backdrop-blur-sm">
+      <div className="mb-10 p-5 border border-blue-500/20 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-2xl flex items-center justify-between gap-6 backdrop-blur-sm">
         <div className="flex items-start gap-4">
-          <div className="p-2 bg-yellow-500/10 rounded-lg">
-            <Database className="w-5 h-5 text-yellow-500" />
+          <div className="p-3 bg-blue-500/15 rounded-xl">
+            <Database className="w-6 h-6 text-blue-400" />
           </div>
           <div>
-            <h4 className="text-sm font-semibold text-yellow-500 mb-1">System Migration Required</h4>
-            <p className="text-sm text-muted-foreground/80">
-              Content transfer from legacy infrastructure is pending. 
-              <span className="hidden sm:inline"> Please start the migration wizard to secure your assets.</span>
+            <h4 className="text-base font-semibold text-blue-300 mb-1">Data Migration Toolkit Available</h4>
+            <p className="text-sm text-muted-foreground">
+              Seamlessly migrate content from legacy infrastructure. Use the Migration tools to export, validate, and import all your existing data.
             </p>
           </div>
         </div>
-        <Button size="sm" variant="outline" className="border-yellow-500/30 text-yellow-500 hover:bg-yellow-500/10 shrink-0">
-          Start Migration
-        </Button>
+        <a href="/migration" className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors whitespace-nowrap">
+          Go to Migration
+        </a>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card className="glass-card border-white/5 bg-card/40">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
-            <div className="p-2 bg-blue-500/10 rounded-lg">
-              <Users className="h-4 w-4 text-blue-500" />
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-10">
+        <Card className="glass-card border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-transparent hover:border-blue-500/40 transition-all">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Active Subscribers</CardTitle>
+            <div className="p-3 bg-blue-500/20 rounded-xl">
+              <Users className="h-5 w-5 text-blue-400" />
             </div>
           </CardHeader>
           <CardContent>
@@ -82,22 +79,19 @@ export default function Dashboard() {
             ) : (
               <>
                 <div className="text-3xl font-bold text-white" data-testid="text-total-users">{stats?.totalUsers?.toLocaleString() || 0}</div>
-                <p className="text-xs text-muted-foreground flex items-center mt-2">
-                  <span className="text-green-500 flex items-center mr-2 bg-green-500/10 px-1.5 py-0.5 rounded">
-                    <TrendingUp className="w-3 h-3 mr-1" /> +15%
-                  </span>
-                  vs last month
+                <p className="text-xs text-muted-foreground mt-2">
+                  <span className="text-green-400 font-semibold">+12% YoY</span> growth
                 </p>
               </>
             )}
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-white/5 bg-card/40">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Movie Library</CardTitle>
-            <div className="p-2 bg-purple-500/10 rounded-lg">
-              <Film className="h-4 w-4 text-purple-500" />
+        <Card className="glass-card border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-transparent hover:border-purple-500/40 transition-all">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Movie Catalog</CardTitle>
+            <div className="p-3 bg-purple-500/20 rounded-xl">
+              <Film className="h-5 w-5 text-purple-400" />
             </div>
           </CardHeader>
           <CardContent>
@@ -106,22 +100,19 @@ export default function Dashboard() {
             ) : (
               <>
                 <div className="text-3xl font-bold text-white" data-testid="text-total-movies">{stats?.totalMovies?.toLocaleString() || 0}</div>
-                <p className="text-xs text-muted-foreground flex items-center mt-2">
-                  <span className="text-green-500 flex items-center mr-2 bg-green-500/10 px-1.5 py-0.5 rounded">
-                    <ArrowUpRight className="w-3 h-3 mr-1" /> New this week
-                  </span>
-                  recently added
+                <p className="text-xs text-muted-foreground mt-2">
+                  <span className="text-green-400 font-semibold">+2 new</span> this week
                 </p>
               </>
             )}
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-white/5 bg-card/40">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">TV Series</CardTitle>
-            <div className="p-2 bg-pink-500/10 rounded-lg">
-              <Tv className="h-4 w-4 text-pink-500" />
+        <Card className="glass-card border-pink-500/20 bg-gradient-to-br from-pink-500/10 to-transparent hover:border-pink-500/40 transition-all">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Series Library</CardTitle>
+            <div className="p-3 bg-pink-500/20 rounded-xl">
+              <Tv className="h-5 w-5 text-pink-400" />
             </div>
           </CardHeader>
           <CardContent>
