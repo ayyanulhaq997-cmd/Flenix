@@ -151,7 +151,7 @@ export function SeriesForm({ onSubmit }: { onSubmit: () => void }) {
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <FormLabel>Episodes Upload</FormLabel>
+            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Episodes Upload</label>
             <Button type="button" variant="outline" size="sm" onClick={addEpisode} className="h-8 border-white/10 hover:bg-white/5">
               <Plus className="w-3 h-3 mr-1" /> Add Episode
             </Button>
