@@ -12,6 +12,7 @@ import Channels from "@/pages/channels";
 import Users from "@/pages/users";
 import Settings from "@/pages/settings";
 import ApiKeys from "@/pages/api-keys";
+import Migration from "@/pages/migration";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/channels" component={Channels} />
       <Route path="/users" component={Users} />
       <Route path="/api-keys" component={ApiKeys} />
+      <Route path="/migration" component={Migration} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>

@@ -71,8 +71,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // Series API
   app.get("/api/series", async (req, res) => {
     try {
-      const allSeries = await storage.getAllSeries();
-      res.json(allSeries);
+      const series = await storage.getAllSeries();
+      res.json(series);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -178,6 +178,18 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  app.get("/api/channels/:id", async (req, res) => {
+    try {
+      const channel = await storage.getChannel(Number(req.params.id));
+      if (!channel) {
+        return res.status(404).json({ error: "Channel not found" });
+      }
+      res.json(channel);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.post("/api/channels", authMiddleware, async (req, res) => {
     try {
       const result = insertChannelSchema.safeParse(req.body);
@@ -216,7 +228,6 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.get("/api/users", async (req, res) => {
     try {
       const users = await storage.getAppUsers();
-      // Don't send password hashes to frontend
       const safeUsers = users.map(({ passwordHash, ...user }) => user);
       res.json(safeUsers);
     } catch (error: any) {
@@ -398,18 +409,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const userPlan = (req.query.plan as string) || "free";
       const allMovies = await storage.getMovies();
       
-      // Filter by active status and user plan access
-      const accessibleMovies = allMovies.filter((movie: any) => {
-        if (movie.status !== "active") return false;
-        
-        const canAccess = 
+      const accessibleMovies = allMovies.filter(movie => 
+        movie.status === "active" && (
           movie.requiredPlan === "free" ||
           (movie.requiredPlan === "standard" && (userPlan === "standard" || userPlan === "premium")) ||
-          (movie.requiredPlan === "premium" && userPlan === "premium");
-        
-        return canAccess;
-      });
-
+          (movie.requiredPlan === "premium" && userPlan === "premium")
+        )
+      );
+      
       res.json(accessibleMovies);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -422,18 +429,14 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const userPlan = (req.query.plan as string) || "free";
       const allSeries = await storage.getAllSeries();
       
-      // Filter by active status and user plan access
-      const accessibleSeries = allSeries.filter((show: any) => {
-        if (show.status !== "active") return false;
-        
-        const canAccess = 
+      const accessibleSeries = allSeries.filter(show => 
+        show.status === "active" && (
           show.requiredPlan === "free" ||
           (show.requiredPlan === "standard" && (userPlan === "standard" || userPlan === "premium")) ||
-          (show.requiredPlan === "premium" && userPlan === "premium");
-        
-        return canAccess;
-      });
-
+          (show.requiredPlan === "premium" && userPlan === "premium")
+        )
+      );
+      
       res.json(accessibleSeries);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -619,6 +622,101 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
 
       res.json({ valid: true, appName: apiKey.appName });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // DATA MIGRATION ENDPOINTS (Test 4.1 & 4.2)
+  
+  // Test 4.1: Export data
+  app.get("/api/admin/export", authMiddleware, async (req, res) => {
+    try {
+      const exportType = (req.query.type as string) || "all"; // all, movies, series, channels, users
+      
+      const exportData: any = { exportedAt: new Date().toISOString() };
+
+      if (exportType === "all" || exportType === "movies") {
+        exportData.movies = await storage.getMovies();
+      }
+      if (exportType === "all" || exportType === "series") {
+        exportData.series = await storage.getAllSeries();
+      }
+      if (exportType === "all" || exportType === "channels") {
+        exportData.channels = await storage.getChannels();
+      }
+      if (exportType === "all" || exportType === "users") {
+        const users = await storage.getAppUsers();
+        exportData.users = users.map(({ passwordHash, ...user }) => user);
+      }
+
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Content-Disposition", `attachment; filename="fenix-export-${Date.now()}.json"`);
+      res.json(exportData);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Test 4.2: Import data
+  app.post("/api/admin/import", authMiddleware, async (req, res) => {
+    try {
+      const { movies = [], series: seriesData = [], channels = [], users = [] } = req.body;
+      
+      const importResults = {
+        moviesImported: 0,
+        seriesImported: 0,
+        channelsImported: 0,
+        usersImported: 0,
+        errors: [] as string[],
+      };
+
+      // Import movies
+      for (const movie of movies) {
+        try {
+          const { id, createdAt, updatedAt, ...movieData } = movie;
+          await storage.createMovie(movieData);
+          importResults.moviesImported++;
+        } catch (err: any) {
+          importResults.errors.push(`Movie import failed: ${err.message}`);
+        }
+      }
+
+      // Import series
+      for (const show of seriesData) {
+        try {
+          const { id, createdAt, updatedAt, ...showData } = show;
+          await storage.createSeries(showData);
+          importResults.seriesImported++;
+        } catch (err: any) {
+          importResults.errors.push(`Series import failed: ${err.message}`);
+        }
+      }
+
+      // Import channels
+      for (const channel of channels) {
+        try {
+          const { id, createdAt, updatedAt, ...channelData } = channel;
+          await storage.createChannel(channelData);
+          importResults.channelsImported++;
+        } catch (err: any) {
+          importResults.errors.push(`Channel import failed: ${err.message}`);
+        }
+      }
+
+      // Import users
+      for (const user of users) {
+        try {
+          const { id, joinedAt, lastLogin, passwordHash, ...userData } = user;
+          if (!userData.passwordHash) userData.passwordHash = "imported_user_hash";
+          await storage.createAppUser(userData);
+          importResults.usersImported++;
+        } catch (err: any) {
+          importResults.errors.push(`User import failed: ${err.message}`);
+        }
+      }
+
+      res.status(201).json(importResults);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
