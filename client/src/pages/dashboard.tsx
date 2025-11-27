@@ -16,6 +16,8 @@ import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianG
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect } from "react";
+import { useLocation } from "wouter";
 
 const data = [
   { name: "Mon", users: 400, streams: 240 },
@@ -28,10 +30,23 @@ const data = [
 ];
 
 export default function Dashboard() {
+  const [, setLocation] = useLocation();
+
+  // Check authentication on mount
+  useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    if (!token) {
+      setLocation("/login");
+    }
+  }, [setLocation]);
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ['stats'],
     queryFn: async () => {
-      const response = await fetch('/api/stats');
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch('/api/stats', {
+        headers: token ? { "Authorization": `Bearer ${token}` } : {},
+      });
       if (!response.ok) throw new Error('Failed to fetch stats');
       return response.json();
     },

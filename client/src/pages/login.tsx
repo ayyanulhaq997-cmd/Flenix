@@ -1,25 +1,56 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Feather } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@fenix.local");
+  const [password, setPassword] = useState("Admin@123456");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    // Mock login delay
-    setTimeout(() => {
-      setIsLoading(false);
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    if (token) {
       setLocation("/");
-    }, 1000);
+    }
+  }, [setLocation]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Login failed");
+      }
+
+      const data = await response.json();
+      localStorage.setItem("auth_token", data.token);
+      localStorage.setItem("user", JSON.stringify(data));
+      toast.success("Login successful!");
+      setLocation("/");
+    } catch (err: any) {
+      const message = err.message || "Login failed. Please try again.";
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
