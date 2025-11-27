@@ -184,3 +184,26 @@ export const insertChannelContentSchema = createInsertSchema(channelContent).omi
 
 export type InsertChannelContent = z.infer<typeof insertChannelContentSchema>;
 export type ChannelContent = typeof channelContent.$inferSelect;
+
+// API Keys table (for mobile app authentication)
+export const apiKeys = pgTable("api_keys", {
+  id: serial("id").primaryKey(),
+  appName: text("app_name").notNull(),
+  key: text("key").notNull().unique(),
+  secret: text("secret").notNull(),
+  status: text("status").notNull().default("active"), // active, revoked
+  createdBy: text("created_by").notNull(), // admin username
+  lastUsed: timestamp("last_used"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  revokedAt: timestamp("revoked_at"),
+});
+
+export const insertApiKeySchema = createInsertSchema(apiKeys).omit({
+  id: true,
+  createdAt: true,
+  lastUsed: true,
+  revokedAt: true,
+});
+
+export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
+export type ApiKey = typeof apiKeys.$inferSelect;

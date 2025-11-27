@@ -1,5 +1,5 @@
 import { 
-  movies, series, episodes, channels, appUsers, admins, subscriptionPlans, channelContent,
+  movies, series, episodes, channels, appUsers, admins, subscriptionPlans, channelContent, apiKeys,
   type Movie, type InsertMovie,
   type Series, type InsertSeries,
   type Episode, type InsertEpisode,
@@ -7,7 +7,8 @@ import {
   type AppUser, type InsertAppUser,
   type Admin, type InsertAdmin,
   type SubscriptionPlan, type InsertSubscriptionPlan,
-  type ChannelContent, type InsertChannelContent
+  type ChannelContent, type InsertChannelContent,
+  type ApiKey, type InsertApiKey
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, like, and, ilike, or } from "drizzle-orm";
@@ -68,6 +69,13 @@ export interface IStorage {
   // Search & Filter
   searchMovies(query: string, genre?: string, status?: string): Promise<Movie[]>;
   searchSeries(query: string, genre?: string, status?: string): Promise<Series[]>;
+
+  // API Keys
+  createApiKey(key: InsertApiKey): Promise<ApiKey>;
+  getApiKeys(): Promise<ApiKey[]>;
+  getApiKey(keyId: number): Promise<ApiKey | undefined>;
+  revokeApiKey(keyId: number): Promise<ApiKey | undefined>;
+  verifyApiKey(key: string, secret: string): Promise<ApiKey | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -335,6 +343,38 @@ export class DatabaseStorage implements IStorage {
       return await query_builder.where(and(...conditions)).orderBy(desc(series.createdAt));
     }
     return await query_builder.orderBy(desc(series.createdAt));
+  }
+
+  // API Keys
+  async createApiKey(key: InsertApiKey): Promise<ApiKey> {
+    const [newKey] = await db.insert(apiKeys).values(key).returning();
+    return newKey;
+  }
+
+  async getApiKeys(): Promise<ApiKey[]> {
+    return await db.select().from(apiKeys).orderBy(desc(apiKeys.createdAt));
+  }
+
+  async getApiKey(keyId: number): Promise<ApiKey | undefined> {
+    const [key] = await db.select().from(apiKeys).where(eq(apiKeys.id, keyId));
+    return key || undefined;
+  }
+
+  async revokeApiKey(keyId: number): Promise<ApiKey | undefined> {
+    const [revoked] = await db
+      .update(apiKeys)
+      .set({ status: "revoked", revokedAt: new Date() })
+      .where(eq(apiKeys.id, keyId))
+      .returning();
+    return revoked || undefined;
+  }
+
+  async verifyApiKey(key: string, secret: string): Promise<ApiKey | undefined> {
+    const [apiKey] = await db
+      .select()
+      .from(apiKeys)
+      .where(and(eq(apiKeys.key, key), eq(apiKeys.secret, secret), eq(apiKeys.status, "active")));
+    return apiKey || undefined;
   }
 }
 

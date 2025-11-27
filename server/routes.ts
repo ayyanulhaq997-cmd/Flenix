@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
-import { insertMovieSchema, insertSeriesSchema, insertEpisodeSchema, insertChannelSchema, insertAppUserSchema, insertSubscriptionPlanSchema, insertChannelContentSchema } from "@shared/schema";
+import { insertMovieSchema, insertSeriesSchema, insertEpisodeSchema, insertChannelSchema, insertAppUserSchema, insertSubscriptionPlanSchema, insertChannelContentSchema, insertApiKeySchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { authMiddleware, generateToken, generateStreamingUrl } from "./auth";
 import { openApiSpec } from "./openapi";
@@ -549,6 +549,76 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         Number(req.params.channelId)
       );
       res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // API Keys Management
+  app.get("/api/admin/keys", authMiddleware, async (req, res) => {
+    try {
+      const keys = await storage.getApiKeys();
+      // Hide secrets from response
+      const safeKeys = keys.map(k => ({ ...k, secret: k.secret.substring(0, 8) + "****" }));
+      res.json(safeKeys);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/keys", authMiddleware, async (req, res) => {
+    try {
+      const { appName, createdBy } = req.body;
+      
+      if (!appName || !createdBy) {
+        return res.status(400).json({ error: "Missing appName or createdBy" });
+      }
+
+      // Generate random key and secret
+      const key = `fenix_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+      const secret = Math.random().toString(36).substring(2, 32) + Math.random().toString(36).substring(2, 32);
+
+      const apiKey = await storage.createApiKey({
+        appName,
+        key,
+        secret,
+        status: "active",
+        createdBy,
+      });
+
+      res.status(201).json({ ...apiKey, secret }); // Return full secret on creation
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/admin/keys/:id/revoke", authMiddleware, async (req, res) => {
+    try {
+      const key = await storage.revokeApiKey(Number(req.params.id));
+      if (!key) {
+        return res.status(404).json({ error: "Key not found" });
+      }
+      res.json(key);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Mobile App API Key Verification (public endpoint)
+  app.post("/api/verify-key", async (req, res) => {
+    try {
+      const { key, secret } = req.body;
+      
+      if (!key || !secret) {
+        return res.status(400).json({ error: "Missing key or secret" });
+      }
+
+      const apiKey = await storage.verifyApiKey(key, secret);
+      if (!apiKey) {
+        return res.status(401).json({ error: "Invalid key or secret" });
+      }
+
+      res.json({ valid: true, appName: apiKey.appName });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
