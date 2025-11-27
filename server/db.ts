@@ -1,5 +1,5 @@
-import { Pool } from 'pg';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import * as schema from "@shared/schema";
 
 // Disable TLS rejection for Railway endpoints
@@ -13,9 +13,14 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('railway') ? { rejectUnauthorized: false } : false,
+// Configure SSL for Railway endpoints
+const sslConfig = process.env.DATABASE_URL?.includes('railway') 
+  ? 'require'
+  : false;
+
+const client = postgres(process.env.DATABASE_URL, {
+  ssl: sslConfig,
+  max: 10,
 });
 
-export const db = drizzle({ client: pool, schema });
+export const db = drizzle({ client, schema });
