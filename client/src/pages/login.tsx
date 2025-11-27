@@ -102,7 +102,7 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="bg-white/90 border-0 text-black placeholder:text-gray-500 h-12 text-md font-medium"
-                  defaultValue="trbikerentals@gmail.com"
+                  data-testid="input-email"
                 />
               </div>
               <div className="space-y-2">
@@ -112,7 +112,7 @@ export default function Login() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="bg-white/90 border-0 text-black placeholder:text-gray-500 h-12 text-md font-medium"
-                  defaultValue="password123"
+                  data-testid="input-password"
                 />
               </div>
             </div>

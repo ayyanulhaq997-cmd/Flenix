@@ -11,5 +11,11 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Handle SSL verification for Railway private proxy URLs
+const connectionConfig: any = { connectionString: process.env.DATABASE_URL };
+if (process.env.DATABASE_URL?.includes('railway.internal') || process.env.DATABASE_URL?.includes('switchback')) {
+  connectionConfig.ssl = { rejectUnauthorized: false };
+}
+
+export const pool = new Pool(connectionConfig);
 export const db = drizzle({ client: pool, schema });
