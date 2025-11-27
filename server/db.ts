@@ -1,12 +1,9 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
 import * as schema from "@shared/schema";
 
-neonConfig.webSocketConstructor = ws;
-
-// Disable TLS rejection for Railway private endpoints
-if (process.env.NODE_ENV === 'production' && process.env.DATABASE_URL?.includes('railway')) {
+// Disable TLS rejection for Railway endpoints
+if (process.env.DATABASE_URL?.includes('railway') || process.env.DATABASE_URL?.includes('switchback')) {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 }
 
@@ -16,16 +13,16 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Handle SSL for Railway private proxy URLs - disable certificate validation
-const connectionConfig: any = { connectionString: process.env.DATABASE_URL };
-if (process.env.DATABASE_URL?.includes('railway.internal') || process.env.DATABASE_URL?.includes('switchback') || process.env.DATABASE_URL?.includes('railway.app')) {
+// Use standard postgres client for Railway compatibility
+const connectionConfig: any = { 
+  connectionString: process.env.DATABASE_URL,
+  ssl: false
+};
+
+// For Railway public/private endpoints, use SSL but don't verify
+if (process.env.DATABASE_URL?.includes('railway')) {
   connectionConfig.ssl = 'require';
-  connectionConfig.sslmode = 'require';
-  // Disable strict SSL validation for private Railway endpoints
-  if (process.env.DATABASE_URL?.includes('railway.internal') || process.env.DATABASE_URL?.includes('switchback')) {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-  }
 }
 
-export const pool = new Pool(connectionConfig);
-export const db = drizzle({ client: pool, schema });
+const client = postgres(connectionConfig);
+export const db = drizzle({ client, schema });
