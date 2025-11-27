@@ -30,30 +30,50 @@ import {
 import { useState } from "react";
 import { SeriesForm } from "@/components/forms/SeriesForm";
 import { useToast } from "@/hooks/use-toast";
-
-// Import images
-import poster1 from "@assets/stock_images/tv_show_poster_drama_7d8b8bd7.jpg";
-import poster2 from "@assets/stock_images/tv_show_poster_drama_2277a08d.jpg";
-import poster3 from "@assets/stock_images/tv_show_poster_drama_e6fab717.jpg";
-import poster4 from "@assets/stock_images/tv_show_poster_drama_77c9c8a4.jpg";
-// Reusing movie posters for demo if needed or duplications
-import poster5 from "@assets/stock_images/movie_poster_action__e218cd90.jpg";
-
-const mockSeries = [
-  { id: 1, title: "Stranger Things", seasons: 4, episodes: 34, status: "Active", rating: "9.2", image: poster1 },
-  { id: 2, title: "Breaking Bad", seasons: 5, episodes: 62, status: "Ended", rating: "9.5", image: poster2 },
-  { id: 3, title: "The Mandalorian", seasons: 3, episodes: 24, status: "Active", rating: "8.7", image: poster3 },
-  { id: 4, title: "House of the Dragon", seasons: 2, episodes: 18, status: "Active", rating: "8.8", image: poster4 },
-  { id: 5, title: "The Last of Us", seasons: 1, episodes: 9, status: "Active", rating: "9.1", image: poster5 },
-];
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function Series() {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const filteredSeries = mockSeries.filter(show => 
+  const { data: series = [], isLoading } = useQuery({
+    queryKey: ['series'],
+    queryFn: async () => {
+      const response = await fetch('/api/series');
+      if (!response.ok) throw new Error('Failed to fetch series');
+      return response.json();
+    },
+  });
+
+  const deleteSeriesMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/series/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+      });
+      if (!response.ok) throw new Error('Failed to delete series');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['series'] });
+      toast({
+        title: "Series Deleted",
+        description: "The series has been removed from the catalog.",
+        className: "bg-green-600 border-green-700 text-white",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete series. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const filteredSeries = series.filter((show: any) => 
     show.title.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -64,6 +84,13 @@ export default function Series() {
       description: "The series and episodes have been added to the library.",
       className: "bg-green-600 border-green-700 text-white",
     });
+    queryClient.invalidateQueries({ queryKey: ['series'] });
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this series?")) {
+      deleteSeriesMutation.mutate(id);
+    }
   };
 
   return (
@@ -138,31 +165,32 @@ export default function Series() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSeries.map((show) => (
-                <TableRow key={show.id} className="border-white/5 hover:bg-white/5 transition-colors">
+              {filteredSeries.map((show: any) => (
+                <TableRow key={show.id} className="border-white/5 hover:bg-white/5 transition-colors" data-testid={`row-series-${show.id}`}>
                   <TableCell className="font-medium text-white">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-14 bg-muted rounded-sm flex items-center justify-center shrink-0 overflow-hidden relative group">
-                        <img src={show.image} alt={show.title} className="w-full h-full object-cover" />
+                        {show.posterUrl && <img src={show.posterUrl} alt={show.title} className="w-full h-full object-cover" />}
                       </div>
                       <span>{show.title}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{show.seasons}</TableCell>
-                  <TableCell>{show.episodes}</TableCell>
+                  <TableCell>{show.totalSeasons}</TableCell>
+                  <TableCell data-testid={`text-episodes-${show.id}`}>TBD</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1 text-yellow-500">
-                      <span>★</span> {show.rating}
+                      <span>★</span> {show.rating || "N/A"}
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge 
                       variant="outline" 
                       className={
-                        show.status === "Active" 
+                        show.status === "active" 
                           ? "bg-green-500/10 text-green-400 border-green-500/20" 
                           : "bg-muted text-muted-foreground border-muted-foreground/20"
                       }
+                      data-testid={`status-${show.id}`}
                     >
                       {show.status}
                     </Badge>
