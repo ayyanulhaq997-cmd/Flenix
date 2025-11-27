@@ -10,12 +10,13 @@ export const movies = pgTable("movies", {
   genre: text("genre").notNull(),
   year: integer("year").notNull(),
   description: text("description"),
+  cast: text("cast").array(), // Array of actor names
   posterUrl: text("poster_url"),
   videoUrl: text("video_url"),
   fileName: text("file_name"),
   fileSize: integer("file_size"), // in bytes
   duration: integer("duration"), // in seconds
-  status: text("status").notNull().default("processing"), // processing, active, inactive
+  status: text("status").notNull().default("draft"), // draft, active, archived
   views: integer("views").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -38,8 +39,9 @@ export const series = pgTable("series", {
   genre: text("genre").notNull(),
   totalSeasons: integer("total_seasons").notNull(),
   description: text("description"),
+  cast: text("cast").array(), // Array of actor names
   posterUrl: text("poster_url"),
-  status: text("status").notNull().default("active"), // active, ended
+  status: text("status").notNull().default("draft"), // draft, active, archived
   rating: text("rating"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -163,3 +165,20 @@ export const insertSubscriptionPlanSchema = createInsertSchema(subscriptionPlans
 
 export type InsertSubscriptionPlan = z.infer<typeof insertSubscriptionPlanSchema>;
 export type SubscriptionPlan = typeof subscriptionPlans.$inferSelect;
+
+// Channel Content Junction Table (links movies/series to channels)
+export const channelContent = pgTable("channel_content", {
+  id: serial("id").primaryKey(),
+  channelId: integer("channel_id").notNull().references(() => channels.id, { onDelete: "cascade" }),
+  contentType: text("content_type").notNull(), // "movie" or "series"
+  contentId: integer("content_id").notNull(),
+  addedAt: timestamp("added_at").defaultNow().notNull(),
+});
+
+export const insertChannelContentSchema = createInsertSchema(channelContent).omit({
+  id: true,
+  addedAt: true,
+});
+
+export type InsertChannelContent = z.infer<typeof insertChannelContentSchema>;
+export type ChannelContent = typeof channelContent.$inferSelect;
