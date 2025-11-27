@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, serial, integer, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, serial, integer, timestamp, boolean, jsonb, bigint } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -207,3 +207,24 @@ export const insertApiKeySchema = createInsertSchema(apiKeys).omit({
 
 export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
 export type ApiKey = typeof apiKeys.$inferSelect;
+
+// File Storage table (for Wasabi/S3 uploads)
+export const files = pgTable("files", {
+  id: serial("id").primaryKey(),
+  storageKey: text("storage_key").notNull().unique(),
+  originalName: varchar("original_name", { length: 255 }).notNull(),
+  ownerUserId: varchar("owner_user_id", { length: 50 }).notNull(),
+  mimeType: varchar("mime_type", { length: 100 }),
+  fileSizeBytes: bigint("file_size_bytes", { mode: "number" }),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+  status: varchar("status", { length: 50 }).notNull().default("available"),
+  relatedContentId: integer("related_content_id"),
+});
+
+export const insertFileSchema = createInsertSchema(files).omit({
+  id: true,
+  uploadedAt: true,
+});
+
+export type InsertFile = z.infer<typeof insertFileSchema>;
+export type File = typeof files.$inferSelect;

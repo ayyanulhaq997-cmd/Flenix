@@ -1,10 +1,11 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
-import { insertMovieSchema, insertSeriesSchema, insertEpisodeSchema, insertChannelSchema, insertAppUserSchema, insertSubscriptionPlanSchema, insertChannelContentSchema, insertApiKeySchema } from "@shared/schema";
+import { insertMovieSchema, insertSeriesSchema, insertEpisodeSchema, insertChannelSchema, insertAppUserSchema, insertSubscriptionPlanSchema, insertChannelContentSchema, insertApiKeySchema, insertFileSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { authMiddleware, generateToken, generateStreamingUrl } from "./auth";
 import { openApiSpec } from "./openapi";
+import multer from "multer";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   // OpenAPI Documentation

@@ -1,5 +1,5 @@
 import { 
-  movies, series, episodes, channels, appUsers, admins, subscriptionPlans, channelContent, apiKeys,
+  movies, series, episodes, channels, appUsers, admins, subscriptionPlans, channelContent, apiKeys, files,
   type Movie, type InsertMovie,
   type Series, type InsertSeries,
   type Episode, type InsertEpisode,
@@ -8,7 +8,8 @@ import {
   type Admin, type InsertAdmin,
   type SubscriptionPlan, type InsertSubscriptionPlan,
   type ChannelContent, type InsertChannelContent,
-  type ApiKey, type InsertApiKey
+  type ApiKey, type InsertApiKey,
+  type File, type InsertFile
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, like, and, ilike, or } from "drizzle-orm";
@@ -76,6 +77,16 @@ export interface IStorage {
   getApiKey(keyId: number): Promise<ApiKey | undefined>;
   revokeApiKey(keyId: number): Promise<ApiKey | undefined>;
   verifyApiKey(key: string, secret: string): Promise<ApiKey | undefined>;
+
+  // Files
+  createFile(file: InsertFile): Promise<File>;
+  getFile(id: number): Promise<File | undefined>;
+  getFileByStorageKey(storageKey: string): Promise<File | undefined>;
+  getFilesByOwner(ownerUserId: string): Promise<File[]>;
+  getFilesByRelatedContent(relatedContentId: number): Promise<File[]>;
+  updateFile(id: number, file: Partial<InsertFile>): Promise<File | undefined>;
+  deleteFile(id: number): Promise<void>;
+  deleteFileByStorageKey(storageKey: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -375,6 +386,47 @@ export class DatabaseStorage implements IStorage {
       .from(apiKeys)
       .where(and(eq(apiKeys.key, key), eq(apiKeys.secret, secret), eq(apiKeys.status, "active")));
     return apiKey || undefined;
+  }
+
+  // Files
+  async createFile(file: InsertFile): Promise<File> {
+    const [newFile] = await db.insert(files).values(file).returning();
+    return newFile;
+  }
+
+  async getFile(id: number): Promise<File | undefined> {
+    const [file] = await db.select().from(files).where(eq(files.id, id));
+    return file || undefined;
+  }
+
+  async getFileByStorageKey(storageKey: string): Promise<File | undefined> {
+    const [file] = await db.select().from(files).where(eq(files.storageKey, storageKey));
+    return file || undefined;
+  }
+
+  async getFilesByOwner(ownerUserId: string): Promise<File[]> {
+    return await db.select().from(files).where(eq(files.ownerUserId, ownerUserId)).orderBy(desc(files.uploadedAt));
+  }
+
+  async getFilesByRelatedContent(relatedContentId: number): Promise<File[]> {
+    return await db.select().from(files).where(eq(files.relatedContentId, relatedContentId));
+  }
+
+  async updateFile(id: number, file: Partial<InsertFile>): Promise<File | undefined> {
+    const [updated] = await db
+      .update(files)
+      .set(file)
+      .where(eq(files.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteFile(id: number): Promise<void> {
+    await db.delete(files).where(eq(files.id, id));
+  }
+
+  async deleteFileByStorageKey(storageKey: string): Promise<void> {
+    await db.delete(files).where(eq(files.storageKey, storageKey));
   }
 }
 
