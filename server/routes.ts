@@ -5,7 +5,8 @@ import { insertMovieSchema, insertSeriesSchema, insertEpisodeSchema, insertChann
 import { fromZodError } from "zod-validation-error";
 import { authMiddleware, generateToken, generateStreamingUrl } from "./auth";
 import { openApiSpec } from "./openapi";
-import { S3Client, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { log } from "./index";
 
 // Initialize Wasabi S3 client
@@ -787,6 +788,60 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
       res.json(file);
     } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Download File Endpoint - Generate signed URL for secure access
+  app.get("/api/download/:id", authMiddleware, async (req, res) => {
+    try {
+      const file = await storage.getFile(Number(req.params.id));
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      // Generate pre-signed URL (valid for 5 minutes)
+      const getCommand = new GetObjectCommand({
+        Bucket: WASABI_BUCKET,
+        Key: file.storageKey,
+      });
+
+      const signedUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 300 }); // 5 minutes
+      
+      log(`✅ Generated signed URL for: ${file.originalName}`, "download");
+      
+      // Return the signed URL (client will redirect)
+      res.json({
+        signedUrl,
+        fileName: file.originalName,
+        expiresIn: 300,
+      });
+    } catch (error: any) {
+      log(`❌ Download error: ${error.message}`, "download");
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Redirect Download Endpoint - Sends browser directly to signed URL
+  app.get("/api/download/:id/redirect", authMiddleware, async (req, res) => {
+    try {
+      const file = await storage.getFile(Number(req.params.id));
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      // Generate pre-signed URL (valid for 5 minutes)
+      const getCommand = new GetObjectCommand({
+        Bucket: WASABI_BUCKET,
+        Key: file.storageKey,
+      });
+
+      const signedUrl = await getSignedUrl(s3Client, getCommand, { expiresIn: 300 });
+      
+      // Redirect browser directly to Wasabi - bypasses our server bandwidth
+      res.redirect(signedUrl);
+    } catch (error: any) {
+      log(`❌ Redirect download error: ${error.message}`, "download");
       res.status(500).json({ error: error.message });
     }
   });
