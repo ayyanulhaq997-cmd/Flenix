@@ -47,7 +47,7 @@ export default function Files() {
     queryFn: async () => {
       const response = await fetch('/api/files', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
       });
       if (!response.ok) throw new Error('Failed to fetch files');
@@ -60,7 +60,7 @@ export default function Files() {
     mutationFn: async (fileId: number) => {
       const response = await fetch(`/api/download/${fileId}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
       });
       if (!response.ok) throw new Error('Failed to generate download link');
@@ -87,9 +87,6 @@ export default function Files() {
   // Upload file mutation
   const uploadMutation = useMutation({
     mutationFn: async (file: globalThis.File) => {
-      const formData = new FormData();
-      formData.append('file', file);
-
       return new Promise<any>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
 
@@ -109,12 +106,17 @@ export default function Files() {
             const response = JSON.parse(xhr.responseText);
             resolve(response);
           } else {
-            reject(new Error(`Upload failed with status ${xhr.status}`));
+            try {
+              const error = JSON.parse(xhr.responseText);
+              reject(new Error(error.error || `Upload failed with status ${xhr.status}`));
+            } catch {
+              reject(new Error(`Upload failed with status ${xhr.status}`));
+            }
           }
         });
 
         xhr.addEventListener('error', () => {
-          reject(new Error('Upload failed'));
+          reject(new Error('Upload failed - network error'));
         });
 
         xhr.addEventListener('abort', () => {
@@ -122,23 +124,43 @@ export default function Files() {
         });
 
         xhr.open('POST', '/api/upload');
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('auth_token');
         if (token) {
           xhr.setRequestHeader('Authorization', `Bearer ${token}`);
         }
-        xhr.send(formData);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        
+        // Send file metadata as JSON, backend will handle the file data from body
+        const metadata = {
+          fileName: file.name,
+          contentType: file.type || 'video/mp4',
+        };
+        
+        // Read file as base64 and send
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64Data = (reader.result as string).split(',')[1];
+          xhr.send(JSON.stringify({
+            ...metadata,
+            fileData: base64Data,
+          }));
+        };
+        reader.onerror = () => {
+          reject(new Error('Failed to read file'));
+        };
+        reader.readAsDataURL(file);
       });
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['files'] });
       setUploadingFiles((prev) => {
         const newState = { ...prev };
-        delete newState[data.file?.originalName || 'file'];
+        delete newState[data.originalName || 'file'];
         return newState;
       });
       toast({
         title: "Upload Successful",
-        description: `${data.file?.originalName} uploaded successfully.`,
+        description: `${data.originalName} uploaded successfully.`,
         className: "bg-green-600 border-green-700 text-white",
       });
     },
@@ -157,7 +179,7 @@ export default function Files() {
       const response = await fetch(`/api/files/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
         },
       });
       if (!response.ok) throw new Error('Failed to delete file');

@@ -682,36 +682,34 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // File Upload Endpoint - Stream directly to Wasabi S3
   app.post("/api/upload", authMiddleware, async (req, res) => {
     try {
-      const { fileName, contentType, relatedContentId } = req.body;
+      const { fileName, contentType, relatedContentId, fileData } = req.body;
       
-      if (!fileName) {
-        return res.status(400).json({ error: "fileName is required" });
+      if (!fileName || !fileData) {
+        return res.status(400).json({ error: "fileName and fileData are required" });
       }
 
       // Validate content type
-      const validMimeTypes = ["video/mp4", "video/quicktime", "video/x-matroska", "image/jpeg", "image/png"];
-      const mimeType = contentType || "video/mp4";
+      const validMimeTypes = ["video/mp4", "video/quicktime", "video/x-matroska", "image/jpeg", "image/png", "application/octet-stream"];
+      const mimeType = contentType || "application/octet-stream";
       
-      if (!validMimeTypes.includes(mimeType)) {
-        return res.status(400).json({ error: `Unsupported content type: ${mimeType}` });
+      if (!validMimeTypes.includes(mimeType) && !mimeType.startsWith("video/") && !mimeType.startsWith("image/")) {
+        log(`⚠️ Allowing MIME type: ${mimeType}`, "upload");
       }
 
       // Generate unique storage key
       const timestamp = Date.now();
       const storageKey = `uploads/${timestamp}-${fileName.replace(/[^a-z0-9.-]/gi, "_")}`;
 
-      // Get the request body as buffer
-      let fileBuffer = Buffer.alloc(0);
-      
-      await new Promise((resolve, reject) => {
-        req.on("data", (chunk) => {
-          fileBuffer = Buffer.concat([fileBuffer, chunk]);
-        });
-        req.on("end", resolve);
-        req.on("error", reject);
-      });
+      // Convert base64 to buffer
+      let fileBuffer: Buffer;
+      try {
+        fileBuffer = Buffer.from(fileData, 'base64');
+      } catch (err) {
+        return res.status(400).json({ error: "Invalid file data encoding" });
+      }
 
       const fileSize = fileBuffer.length;
+      log(`📤 Uploading file: ${fileName} (${fileSize} bytes) to Wasabi`, "upload");
 
       // Upload to Wasabi
       try {
