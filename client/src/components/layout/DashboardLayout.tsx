@@ -10,8 +10,7 @@ import {
   Search,
   Bell,
   Key,
-  Database,
-  HardDrive
+  Database
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,7 +26,6 @@ export function Sidebar() {
     { icon: Tv, label: "Series", href: "/series" },
     { icon: Radio, label: "Channels", href: "/channels" },
     { icon: Users, label: "Users", href: "/users" },
-    { icon: HardDrive, label: "Files", href: "/files" },
     { icon: Key, label: "API Keys", href: "/api-keys" },
     { icon: Database, label: "Migration", href: "/migration" },
     { icon: Settings, label: "Settings", href: "/settings" },

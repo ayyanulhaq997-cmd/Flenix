@@ -10,7 +10,6 @@ import Movies from "@/pages/movies";
 import Series from "@/pages/series";
 import Channels from "@/pages/channels";
 import Users from "@/pages/users";
-import Files from "@/pages/files";
 import Settings from "@/pages/settings";
 import ApiKeys from "@/pages/api-keys";
 import Migration from "@/pages/migration";
@@ -30,7 +29,6 @@ function Router() {
       <Route path="/series" component={Series} />
       <Route path="/channels" component={Channels} />
       <Route path="/users" component={Users} />
-      <Route path="/files" component={Files} />
       <Route path="/api-keys" component={ApiKeys} />
       <Route path="/migration" component={Migration} />
       <Route path="/settings" component={Settings} />

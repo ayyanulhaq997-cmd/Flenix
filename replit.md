@@ -1,8 +1,10 @@
-# Fenix Streaming Platform
+# Fenix Streaming Platform - Admin Dashboard
 
 ## Overview
 
-Fenix is a professional streaming platform administration system designed to manage movies, TV series, live channels, and user subscriptions. The platform provides a comprehensive admin dashboard for content management, user administration, and API key generation. It supports tiered subscription plans (free, standard, premium) with content access control, secure JWT-based authentication, and large-scale video content storage via Wasabi S3-compatible object storage.
+Fenix is a professional streaming platform administration dashboard designed to manage content metadata, user accounts, and permissions for Android/iOS mobile apps (similar to Netflix). The dashboard serves as the **content management layer** for streaming apps.
+
+**Key Point:** Fenix is a management dashboard only. Content uploads happen directly within the mobile apps, not through this website. Streaming also happens directly in the apps.
 
 The system is built as a full-stack application with a React frontend dashboard and Node.js/Express backend API, designed to handle 1000-3000 concurrent users with proper clustering and connection pooling.
 
@@ -43,7 +45,6 @@ Preferred communication style: Simple, everyday language.
 - Drizzle ORM for database operations
 - PostgreSQL as the primary database (via Neon serverless)
 - JWT for authentication and authorization
-- AWS SDK for S3-compatible storage operations
 
 **Design Patterns:**
 - RESTful API architecture with versioned endpoints (`/api/*`)
@@ -58,6 +59,8 @@ Preferred communication style: Simple, everyday language.
 - Authentication endpoints: `/api/auth/login`, `/api/users/register`
 - Content endpoints: `/api/movies`, `/api/series`, `/api/episodes`, `/api/channels`
 - User management: `/api/app-users`, `/api/admins`
+- Subscription plans: `/api/subscription-plans`
+- API keys: `/api/api-keys`
 - Migration tools: `/api/admin/export`, `/api/admin/import`
 
 **Security Measures:**
@@ -92,54 +95,22 @@ Preferred communication style: Simple, everyday language.
 - Optimized connection pooling (10-50 connections)
 - Schema defined in `/shared/schema.ts`
 
-### Content Delivery
+### Content Delivery Model
 
-**Storage Solution:**
-- Wasabi S3-compatible object storage for video files
-- Cost-optimized at $5.99/TB/month
-- Multi-region support (US East, US West, EU Central, Asia Pacific)
-- Direct CDN URL access from mobile applications
+**Mobile App Direct Upload:**
+- Apps upload video files, posters, and metadata directly
+- No content passes through this web server
+- Apps handle all streaming and playback
 
-**Upload Strategy:**
-- Chunked upload support for large files (70TB+ capability)
-- Resumable upload mechanism
-- Automatic filename matching to database entries
-- Migration tool for bulk content transfer from legacy systems
-
-**Streaming Architecture:**
-- JWT-signed streaming URLs with 1-hour expiration
-- Direct streaming from Wasabi CDN endpoints
-- Format: `https://{bucket}.s3.{region}.wasabisys.com/{content-path}`
-
-### Deployment Architecture
-
-**Scalability Design:**
-- Horizontal scaling via clustering (uses all CPU cores)
-- Nginx reverse proxy for load balancing and SSL termination
-- Rate limiting at proxy level
-- Session management with memory store (development) or Redis (production)
-
-**Production Infrastructure:**
-- Backend: Multiple Node.js instances behind load balancer
-- Database: PostgreSQL with connection pooling and read replicas
-- Storage: Wasabi multi-region buckets
-- Frontend: Static file serving from Vite build output
-
-**Monitoring & Operations:**
-- PM2 process management with auto-restart
-- Structured logging with request/response tracking
-- Health check endpoints
-- Error tracking integration points (Sentry)
+**Fenix Role:**
+- Stores content metadata (titles, descriptions, durations)
+- Manages user accounts and subscription tiers
+- Provides API endpoints for apps to query content
+- Tracks user permissions and access control
 
 ## External Dependencies
 
 ### Third-Party Services
-
-**Storage & CDN:**
-- Wasabi Object Storage - S3-compatible video storage
-  - Multi-region availability
-  - No egress fees
-  - API compatible with AWS S3
 
 **Database:**
 - Neon Serverless PostgreSQL
@@ -159,9 +130,7 @@ Preferred communication style: Simple, everyday language.
 - `drizzle-orm` - Type-safe ORM
 - `@neondatabase/serverless` - Neon PostgreSQL client
 - `jsonwebtoken` - JWT authentication
-- `@aws-sdk/client-s3` - Wasabi/S3 integration
-- `multer` - File upload handling
-- `ws` - WebSocket support
+- `postgres` - PostgreSQL client library
 
 **Frontend:**
 - `@tanstack/react-query` - Server state management
@@ -177,17 +146,76 @@ Preferred communication style: Simple, everyday language.
 - `drizzle-kit` - Database migration tool
 - `esbuild` - Production bundler
 
-### API Integrations
+## API Integration Guide
 
-**Authentication:**
-- JWT-based token system (self-hosted)
-- No external authentication providers currently integrated
+### For Mobile App Developers
 
-**Payment Processing:**
-- Stripe integration prepared (package included)
-- Not actively implemented in current codebase
+The Fenix dashboard provides REST APIs for mobile apps to:
 
-**Migration Tools:**
-- CLI-based migration from legacy "crack server" databases
-- JSON import/export for bulk data operations
-- Wasabi bulk upload utilities
+1. **Authenticate Users**
+   - `POST /api/auth/login` - Get JWT token
+
+2. **Query Content**
+   - `GET /api/movies` - List all available movies
+   - `GET /api/series` - List all available series
+   - `GET /api/channels` - List all available channels
+   - `GET /api/episodes?seriesId=1` - Get episodes for a series
+
+3. **User Management**
+   - `POST /api/app-users` - Register new user
+   - `GET /api/app-users/:id` - Get user info
+   - `PUT /api/app-users/:id` - Update user subscription
+
+4. **API Keys**
+   - `POST /api/api-keys` - Generate API credentials
+   - Apps use these keys for server-to-server communication
+
+## Deployment Architecture
+
+**Scalability Design:**
+- Horizontal scaling via clustering (uses all CPU cores)
+- Nginx reverse proxy for load balancing and SSL termination
+- Rate limiting at proxy level
+- Session management with memory store (development) or Redis (production)
+
+**Production Infrastructure:**
+- Backend: Multiple Node.js instances behind load balancer
+- Database: PostgreSQL with connection pooling and read replicas
+- Frontend: Static file serving from Vite build output
+
+**Monitoring & Operations:**
+- PM2 process management with auto-restart
+- Structured logging with request/response tracking
+- Health check endpoints
+- Error tracking integration points (Sentry)
+
+## Setup Instructions
+
+1. **Install Dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Database Setup:**
+   - PostgreSQL is automatically provisioned on Replit
+   - Run migrations: `npm run db:push`
+
+3. **Environment Variables:**
+   - `JWT_SECRET` - Secret key for JWT signing
+   - Database credentials are auto-configured
+
+4. **Run Development Server:**
+   ```bash
+   npm run dev
+   ```
+
+5. **Access Dashboard:**
+   - URL: http://localhost:5000
+   - Default credentials: admin@fenix.local / Admin@123456
+
+## Notes
+
+- This is a **management dashboard only** - no streaming happens here
+- Mobile apps handle all video streaming directly
+- All content metadata is stored in PostgreSQL
+- APIs are designed for mobile app consumption
