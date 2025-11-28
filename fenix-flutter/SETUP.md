@@ -241,6 +241,103 @@ firebase deploy
 
 ---
 
+## How to Add New Movie Entries
+
+This is the most important part! Here's how to populate your app with movies:
+
+### Method 1: Via Fenix Dashboard (Web UI)
+
+1. **Start Fenix backend**:
+   ```bash
+   cd ..  # Go to backend directory
+   npm run dev
+   ```
+
+2. **Open Fenix Dashboard**: 
+   - URL: http://localhost:5000
+   - Login: `admin@fenix.local` / `Admin@123456`
+
+3. **Add Movies**:
+   - Click "Movies" menu
+   - Click "Add Movie" button
+   - Fill in details:
+     - **Title**: Movie name (e.g., "Avatar 2")
+     - **Genre**: Genre (e.g., "Sci-Fi")
+     - **Year**: Release year (e.g., 2022)
+     - **Description**: Plot summary
+     - **Duration**: Minutes (e.g., 192)
+     - **Poster URL**: Link to poster image
+     - **Video URL**: Link to video file (from Wasabi/S3)
+     - **Required Plan**: free/standard/premium
+     - **Rating**: Content rating (e.g., PG-13)
+   - Click "Save Movie"
+
+4. **Refresh Flutter App**:
+   - App automatically loads new movies
+   - Or logout and login to refresh
+
+### Method 2: Batch Import (Via API)
+
+For adding 100+ movies at once:
+
+```bash
+# Using curl to add movie via API
+curl -X POST http://localhost:5000/api/movies \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Movie Name",
+    "genre": "Action",
+    "year": 2023,
+    "description": "Movie description",
+    "duration": 120,
+    "posterUrl": "https://...",
+    "videoUrl": "https://wasabi.../movie.mp4",
+    "requiredPlan": "free",
+    "rating": "PG-13"
+  }'
+```
+
+### Method 3: Database Direct (Advanced)
+
+Connect to PostgreSQL and insert directly:
+
+```sql
+INSERT INTO movies (title, genre, year, description, duration, posterUrl, videoUrl, requiredPlan, rating) 
+VALUES (
+  'Movie Title',
+  'Genre',
+  2023,
+  'Description',
+  120,
+  'https://poster-url',
+  'https://video-url.mp4',
+  'free',
+  'PG-13'
+);
+```
+
+---
+
+## Video URL Sources (For Wasabi/S3)
+
+When you upload a video to Wasabi, you get URLs like:
+```
+https://bucket-name.s3.us-west-1.wasabisys.com/movies/avatar2.mp4
+```
+
+Store this full URL in the `videoUrl` field.
+
+---
+
+## Workflow: Add Videos → Add Movies → Test App
+
+1. **Upload video file** → Wasabi/S3 (get URL)
+2. **Add movie entry** → Fenix Dashboard (paste video URL)
+3. **Test in Flutter app** → See movie + play video
+
+---
+
 ## Next Steps
 
 1. ✅ Implement video player (uncomment code in player_screen.dart)
@@ -249,15 +346,17 @@ firebase deploy
 4. ✅ Add user profile page
 5. ✅ Add offline caching
 6. ✅ Build release APK/IPA
+7. ✅ Deploy to Play Store / App Store
 
 ---
 
 ## Support
 
 - **Flutter Docs**: https://flutter.dev/docs
-- **Fenix Backend**: Check backend README
+- **Fenix Backend**: Check backend README at parent directory
 - **Video Player**: https://pub.dev/packages/video_player
 - **REST API**: https://pub.dev/packages/http
+- **Wasabi Docs**: https://wasabi.com/
 
 ---
 
