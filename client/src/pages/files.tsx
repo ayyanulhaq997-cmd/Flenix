@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 
-interface File {
+interface UploadedFile {
   id: number;
   storageKey: string;
   originalName: string;
@@ -86,7 +86,7 @@ export default function Files() {
 
   // Upload file mutation
   const uploadMutation = useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async (file: globalThis.File) => {
       const formData = new FormData();
       formData.append('file', file);
 
@@ -209,12 +209,14 @@ export default function Files() {
     const droppedFiles = e.dataTransfer.files;
     if (droppedFiles && droppedFiles.length > 0) {
       for (let i = 0; i < droppedFiles.length; i++) {
-        const file = droppedFiles[i];
-        setUploadingFiles((prev) => ({
-          ...prev,
-          [file.name]: 0,
-        }));
-        uploadMutation.mutate(file);
+        const file = droppedFiles.item(i);
+        if (file) {
+          setUploadingFiles((prev) => ({
+            ...prev,
+            [file.name]: 0,
+          }));
+          uploadMutation.mutate(file);
+        }
       }
     }
   };
@@ -223,12 +225,14 @@ export default function Files() {
     const selectedFiles = e.currentTarget.files;
     if (selectedFiles && selectedFiles.length > 0) {
       for (let i = 0; i < selectedFiles.length; i++) {
-        const file = selectedFiles[i];
-        setUploadingFiles((prev) => ({
-          ...prev,
-          [file.name]: 0,
-        }));
-        uploadMutation.mutate(file);
+        const file = selectedFiles.item(i);
+        if (file) {
+          setUploadingFiles((prev) => ({
+            ...prev,
+            [file.name]: 0,
+          }));
+          uploadMutation.mutate(file);
+        }
       }
     }
     // Reset input
@@ -368,7 +372,7 @@ export default function Files() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {files.map((file: File) => (
+                {files.map((file: UploadedFile) => (
                   <TableRow 
                     key={file.id} 
                     className="border-b border-white/5 hover:bg-white/5 transition-colors"
