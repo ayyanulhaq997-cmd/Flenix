@@ -5,7 +5,7 @@
 /// - Production: https://your-fenix-backend.com
 
 class ApiConfig {
-  // ⚠️ UPDATE THIS WITH YOUR FENIX BACKEND URL
+  //  UPDATE THIS WITH YOUR FENIX BACKEND URL
   static const String apiBaseUrl = 'http://localhost:5000';
   
   // API Endpoints
