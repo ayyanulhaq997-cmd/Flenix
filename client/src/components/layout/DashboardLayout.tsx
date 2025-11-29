@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useRoute } from "wouter";
 import { 
   LayoutDashboard, 
   Film, 
@@ -17,6 +17,13 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Sidebar() {
   const [location] = useLocation();
@@ -82,7 +89,14 @@ export function Sidebar() {
             </div>
           </div>
         </div>
-        <button className="flex items-center gap-3 px-4 py-3 w-full text-sm font-medium text-muted-foreground hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10 group">
+        <button 
+          onClick={() => {
+            localStorage.removeItem("auth_token");
+            window.location.href = "/login";
+          }}
+          className="flex items-center gap-3 px-4 py-3 w-full text-sm font-medium text-muted-foreground hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10 group"
+          data-testid="button-sign-out"
+        >
           <LogOut className="w-5 h-5 group-hover:text-red-400" />
           Sign Out
         </button>
@@ -92,6 +106,13 @@ export function Sidebar() {
 }
 
 export function Topbar() {
+  const [, navigate] = useRoute();
+
+  const handleLogout = () => {
+    localStorage.removeItem("auth_token");
+    navigate("/login");
+  };
+
   return (
     <div className="h-16 border-b border-white/5 bg-background/50 backdrop-blur-md fixed top-0 right-0 left-64 z-40 flex items-center justify-between px-8">
       <div className="relative w-96">
@@ -108,16 +129,40 @@ export function Topbar() {
           <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
         </Button>
         <div className="h-8 w-[1px] bg-white/10 mx-2" />
-        <div className="flex items-center gap-3">
-          <div className="text-right hidden sm:block">
-            <div className="text-sm font-medium text-white">Admin User</div>
-            <div className="text-xs text-muted-foreground">Super Administrator</div>
-          </div>
-          <Avatar className="h-9 w-9 border border-white/10 cursor-pointer hover:ring-2 ring-primary ring-offset-2 ring-offset-background transition-all">
-            <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>AD</AvatarFallback>
-          </Avatar>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center gap-3 cursor-pointer">
+              <div className="text-right hidden sm:block">
+                <div className="text-sm font-medium text-white">Admin User</div>
+                <div className="text-xs text-muted-foreground">Super Administrator</div>
+              </div>
+              <Avatar className="h-9 w-9 border border-white/10 hover:ring-2 ring-primary ring-offset-2 ring-offset-background transition-all">
+                <AvatarImage src="https://github.com/shadcn.png" />
+                <AvatarFallback>AD</AvatarFallback>
+              </Avatar>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56 bg-card/95 border-white/10 backdrop-blur-xl">
+            <DropdownMenuItem className="text-white cursor-pointer focus:bg-primary/20" data-testid="menu-profile">
+              Profile Settings
+            </DropdownMenuItem>
+            <Link href="/settings" className="block">
+              <DropdownMenuItem className="text-white cursor-pointer focus:bg-primary/20" data-testid="menu-settings">
+                <Settings className="w-4 h-4 mr-2" />
+                Settings
+              </DropdownMenuItem>
+            </Link>
+            <DropdownMenuSeparator className="bg-white/10" />
+            <DropdownMenuItem 
+              onClick={handleLogout}
+              className="text-red-400 cursor-pointer focus:bg-red-500/20 focus:text-red-400" 
+              data-testid="menu-logout"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )
