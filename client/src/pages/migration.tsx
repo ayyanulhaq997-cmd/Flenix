@@ -14,7 +14,7 @@ export default function MigrationPage() {
   const handleExport = async (type: string) => {
     try {
       setExportLoading(true);
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("auth_token");
       const res = await fetch(`/api/admin/export?type=${type}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -46,7 +46,7 @@ export default function MigrationPage() {
       const fileContent = await file.text();
       const data = JSON.parse(fileContent);
 
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("auth_token");
       const res = await fetch("/api/admin/import", {
         method: "POST",
         headers: {
