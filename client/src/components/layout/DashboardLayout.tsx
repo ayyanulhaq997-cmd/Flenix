@@ -116,10 +116,35 @@ export function Sidebar() {
 export function Topbar() {
   const [, navigate] = useRoute();
   const [showProfile, setShowProfile] = useState(false);
+  const [editEmail, setEditEmail] = useState("admin@fenix.local");
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
     navigate("/login");
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/admins/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email: editEmail }),
+      });
+
+      if (response.ok) {
+        setShowProfile(false);
+      }
+    } catch (error) {
+      console.error("Failed to save profile:", error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -181,10 +206,10 @@ export function Topbar() {
       </div>
 
       <Dialog open={showProfile} onOpenChange={setShowProfile}>
-        <DialogContent className="bg-card/95 border-white/10 backdrop-blur-xl">
+        <DialogContent className="bg-card/95 border-white/10 backdrop-blur-xl max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-white">Admin Profile</DialogTitle>
-            <DialogDescription>Your account information</DialogDescription>
+            <DialogTitle className="text-white">Edit Admin Profile</DialogTitle>
+            <DialogDescription>Update your account information</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="flex items-center gap-4 pb-4 border-b border-white/10">
@@ -194,35 +219,56 @@ export function Topbar() {
               </Avatar>
               <div>
                 <h3 className="text-lg font-semibold text-white">Admin User</h3>
-                <p className="text-sm text-muted-foreground">admin@fenix.local</p>
+                <p className="text-sm text-muted-foreground">Super Administrator</p>
               </div>
             </div>
             
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase">Role</label>
-                <p className="text-white mt-1">Super Administrator</p>
+                <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">Role</label>
+                <div className="px-3 py-2 bg-black/20 border border-white/10 rounded text-white text-sm">
+                  Super Administrator
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Role cannot be changed</p>
               </div>
+
               <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase">Email</label>
-                <p className="text-white mt-1">admin@fenix.local</p>
+                <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">Email</label>
+                <Input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  placeholder="admin@fenix.local"
+                  className="bg-black/20 border-white/10"
+                  data-testid="input-profile-email"
+                />
               </div>
+
               <div>
-                <label className="text-xs font-semibold text-muted-foreground uppercase">Status</label>
-                <div className="flex items-center gap-2 mt-1">
+                <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">Status</label>
+                <div className="flex items-center gap-2 px-3 py-2 bg-black/20 border border-white/10 rounded">
                   <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <span className="text-white">Active</span>
+                  <span className="text-white text-sm">Active</span>
                 </div>
               </div>
             </div>
 
-            <div className="pt-4">
+            <div className="flex gap-3 pt-4">
               <Button 
                 onClick={() => setShowProfile(false)}
-                className="w-full bg-primary hover:bg-primary/90"
-                data-testid="button-close-profile"
+                variant="outline"
+                className="flex-1 border-white/10"
+                data-testid="button-cancel-profile"
               >
-                Close
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSaveProfile}
+                disabled={isSaving}
+                className="flex-1 bg-primary hover:bg-primary/90"
+                data-testid="button-save-profile"
+              >
+                {isSaving ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </div>
