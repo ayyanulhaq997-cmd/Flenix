@@ -8,28 +8,56 @@ class AuthService {
   final storage = const FlutterSecureStorage();
 
   Future<String> login(String email, String password) async {
-    final response = await http.post(
-      Uri.parse('${ApiConfig.apiBaseUrl}${ApiConfig.loginEndpoint}'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    ).timeout(const Duration(seconds: 30));
+    try {
+      final url = Uri.parse('${ApiConfig.apiBaseUrl}${ApiConfig.loginEndpoint}');
+      final body = jsonEncode({'email': email, 'password': password});
+      
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      ).timeout(const Duration(seconds: 30));
 
-    if (response.statusCode != 200) {
-      throw Exception('HTTP ${response.statusCode}');
+      print('DEBUG: Status Code: ${response.statusCode}');
+      print('DEBUG: Response Body: ${response.body}');
+
+      if (response.statusCode != 200) {
+        throw Exception('Server returned ${response.statusCode}');
+      }
+
+      final responseBody = response.body;
+      if (responseBody.isEmpty) {
+        throw Exception('Empty response from server');
+      }
+
+      final decoded = jsonDecode(responseBody);
+      print('DEBUG: Decoded Type: ${decoded.runtimeType}');
+      print('DEBUG: Decoded Value: $decoded');
+
+      if (decoded == null) {
+        throw Exception('Response is null');
+      }
+
+      if (decoded is! Map) {
+        throw Exception('Response is ${decoded.runtimeType}, expected Map');
+      }
+
+      final token = decoded['token'];
+      print('DEBUG: Token: $token');
+
+      if (token == null || token.toString().isEmpty) {
+        throw Exception('Token is null or empty');
+      }
+
+      await storage.write(key: _tokenKey, value: token.toString());
+      return token.toString();
+    } on Exception catch (e) {
+      print('DEBUG: Exception: $e');
+      throw Exception('Login error: $e');
+    } catch (e) {
+      print('DEBUG: Unknown Error: $e');
+      throw Exception('Login error: $e');
     }
-
-    dynamic decoded = jsonDecode(response.body);
-    if (decoded == null) {
-      throw Exception('Null response');
-    }
-
-    String token = decoded['token'] ?? '';
-    if (token.isEmpty) {
-      throw Exception('No token');
-    }
-
-    await storage.write(key: _tokenKey, value: token);
-    return token;
   }
 
   Future<String?> getToken() async {
