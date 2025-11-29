@@ -1,95 +1,71 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'dart:developer' as developer;
 import '../config/api_config.dart';
 import '../models/movie.dart';
 
 /// Authentication Service
 class AuthService {
   static const String _tokenKey = 'jwt_token';
-  
   final storage = const FlutterSecureStorage();
 
   /// Login with email and password
   Future<LoginResponse> login(String email, String password) async {
     try {
-      final url = Uri.parse('${ApiConfig.apiBaseUrl}${ApiConfig.loginEndpoint}');
-      developer.log('Login URL: $url');
-
+      final url = '${ApiConfig.apiBaseUrl}${ApiConfig.loginEndpoint}';
+      
       final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
       ).timeout(const Duration(seconds: 30));
 
-      developer.log('Response status: ${response.statusCode}');
-      developer.log('Response body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        // Parse response body safely
-        final Map<String, dynamic> jsonData;
-        try {
-          final decoded = jsonDecode(response.body);
-          if (decoded is Map<String, dynamic>) {
-            jsonData = decoded;
-          } else {
-            throw Exception('Response is not a JSON object');
-          }
-        } catch (e) {
-          developer.log('JSON parse error: $e');
-          throw Exception('Invalid JSON response: ${response.body}');
-        }
-
-        developer.log('Parsed JSON keys: ${jsonData.keys.toList()}');
-
-        // Extract token safely
-        final token = jsonData['token'];
-        if (token == null) {
-          throw Exception('No token in response');
-        }
-
-        final tokenStr = token.toString();
-        if (tokenStr.isEmpty) {
-          throw Exception('Token is empty');
-        }
-
-        // Extract user data safely
-        final id = jsonData['id'];
-        final idInt = id is int ? id : (id is String ? int.tryParse(id) : null) ?? 0;
-        
-        final email = (jsonData['email'] ?? '').toString();
-        final name = (jsonData['name'] ?? 'User').toString();
-        final plan = (jsonData['plan'] ?? 'free').toString();
-
-        final user = AppUser(
-          id: idInt,
-          email: email,
-          name: name,
-          subscriptionPlan: plan,
-          isActive: true,
-        );
-
-        final loginResponse = LoginResponse(
-          token: tokenStr,
-          user: user,
-          expiresIn: 604800,
-        );
-
-        await storage.write(key: _tokenKey, value: tokenStr);
-        developer.log('Login successful');
-        return loginResponse;
-      } else {
-        throw Exception('Login failed: HTTP ${response.statusCode}');
+      if (response.statusCode != 200) {
+        throw Exception('HTTP ${response.statusCode}');
       }
+
+      // Parse response - handle both string and already-decoded responses
+      dynamic responseData = response.body;
+      if (responseData is String) {
+        responseData = jsonDecode(responseData);
+      }
+
+      // Extract values safely with fallbacks
+      String token = '';
+      String userEmail = '';
+      String userName = '';
+      String userPlan = '';
+      int userId = 0;
+
+      if (responseData is Map) {
+        token = (responseData['token'] ?? '').toString();
+        userEmail = (responseData['email'] ?? '').toString();
+        userName = (responseData['name'] ?? 'User').toString();
+        userPlan = (responseData['plan'] ?? 'free').toString();
+        userId = int.tryParse((responseData['id'] ?? '0').toString()) ?? 0;
+      }
+
+      if (token.isEmpty) {
+        throw Exception('No token received');
+      }
+
+      final user = AppUser(
+        id: userId,
+        email: userEmail,
+        name: userName,
+        subscriptionPlan: userPlan,
+        isActive: true,
+      );
+
+      final response2 = LoginResponse(
+        token: token,
+        user: user,
+        expiresIn: 604800,
+      );
+
+      await storage.write(key: _tokenKey, value: token);
+      return response2;
     } catch (e) {
-      developer.log('Login exception: $e');
       rethrow;
     }
   }
