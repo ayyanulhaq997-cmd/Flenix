@@ -84,12 +84,15 @@ class AppUser {
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
+    final plan = json['plan'] ?? json['subscriptionPlan'] ?? 'free';
+    final status = json['status'] ?? 'active';
+    
     return AppUser(
-      id: json['id'] as int,
-      email: json['email'] as String,
-      name: json['name'] as String,
-      subscriptionPlan: (json['plan'] ?? json['subscriptionPlan'] ?? 'free') as String,
-      isActive: (json['status'] == 'active') ? true : (json['isActive'] as bool? ?? true),
+      id: (json['id'] ?? 0) as int,
+      email: (json['email'] ?? '') as String,
+      name: (json['name'] ?? '') as String,
+      subscriptionPlan: plan.toString(),
+      isActive: status.toString() == 'active',
     );
   }
 
@@ -116,16 +119,24 @@ class LoginResponse {
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     // Backend returns flat structure: {id, name, email, plan, status, token, ...}
+    final token = (json['token'] ?? '') as String;
+    final id = (json['id'] ?? 0) as int;
+    final email = (json['email'] ?? '') as String;
+    final name = (json['name'] ?? '') as String;
+    final plan = (json['plan'] ?? 'free').toString();
+    final status = (json['status'] ?? 'active').toString();
+    final expiresIn = (json['expiresIn'] ?? 604800) as int;
+    
     return LoginResponse(
-      token: json['token'] as String? ?? '',
+      token: token,
       user: AppUser(
-        id: json['id'] as int? ?? 0,
-        email: json['email'] as String? ?? '',
-        name: json['name'] as String? ?? '',
-        subscriptionPlan: json['plan'] as String? ?? 'free',
-        isActive: json['status'] == 'active',
+        id: id,
+        email: email,
+        name: name,
+        subscriptionPlan: plan,
+        isActive: status == 'active',
       ),
-      expiresIn: json['expiresIn'] as int? ?? 604800,
+      expiresIn: expiresIn,
     );
   }
 }
