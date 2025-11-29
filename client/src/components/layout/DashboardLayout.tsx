@@ -116,10 +116,17 @@ export function Sidebar() {
 export function Topbar() {
   const [, navigate] = useRoute();
   const [showProfile, setShowProfile] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [editEmail, setEditEmail] = useState("admin@fenix.local");
   const [avatarUrl, setAvatarUrl] = useState("https://github.com/shadcn.png");
   const [editAvatarUrl, setEditAvatarUrl] = useState("https://github.com/shadcn.png");
   const [isSaving, setIsSaving] = useState(false);
+
+  const notifications = [
+    { id: 1, title: "System Online", message: "All services running normally", time: "Just now", icon: "✓" },
+    { id: 2, title: "Database Backup", message: "Backup completed successfully", time: "2 hours ago", icon: "💾" },
+    { id: 3, title: "New Admin", message: "You have logged in successfully", time: "Today", icon: "👤" },
+  ];
 
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
@@ -162,10 +169,44 @@ export function Topbar() {
         </div>
         
         <div className="flex items-center gap-4">
-          <Button size="icon" variant="ghost" className="relative text-muted-foreground hover:text-white hover:bg-white/5">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
-          </Button>
+          <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" className="relative text-muted-foreground hover:text-white hover:bg-white/5" data-testid="button-notifications">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 bg-card/95 border-white/10 backdrop-blur-xl">
+              <div className="px-4 py-3 border-b border-white/10">
+                <h3 className="text-sm font-semibold text-white">Notifications</h3>
+              </div>
+              {notifications.length === 0 ? (
+                <div className="px-4 py-8 text-center">
+                  <p className="text-sm text-muted-foreground">No notifications</p>
+                </div>
+              ) : (
+                <div className="max-h-96 overflow-y-auto">
+                  {notifications.map((notif) => (
+                    <div key={notif.id} className="px-4 py-3 border-b border-white/5 hover:bg-primary/5 transition-colors cursor-pointer" data-testid={`notification-${notif.id}`}>
+                      <div className="flex gap-3">
+                        <div className="text-xl">{notif.icon}</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-white">{notif.title}</p>
+                          <p className="text-xs text-muted-foreground truncate">{notif.message}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{notif.time}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="px-4 py-3 border-t border-white/10 text-center">
+                <Button variant="ghost" size="sm" className="text-primary text-xs" data-testid="button-view-all-notifications">
+                  View All Notifications
+                </Button>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="h-8 w-[1px] bg-white/10 mx-2" />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
