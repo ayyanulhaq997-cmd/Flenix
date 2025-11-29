@@ -10,53 +10,27 @@ class AuthService {
   Future<String> login(String email, String password) async {
     try {
       final url = Uri.parse('${ApiConfig.apiBaseUrl}${ApiConfig.loginEndpoint}');
-      final body = jsonEncode({'email': email, 'password': password});
-      
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: body,
+        body: jsonEncode({'email': email, 'password': password}),
       ).timeout(const Duration(seconds: 30));
 
-      print('DEBUG: Status Code: ${response.statusCode}');
-      print('DEBUG: Response Body: ${response.body}');
-
       if (response.statusCode != 200) {
-        throw Exception('Server returned ${response.statusCode}');
+        throw Exception('HTTP ${response.statusCode}');
       }
 
-      final responseBody = response.body;
-      if (responseBody.isEmpty) {
-        throw Exception('Empty response from server');
+      // Extract token using regex instead of jsonDecode
+      final tokenMatch = RegExp(r'"token":"([^"]+)"').firstMatch(response.body);
+      if (tokenMatch == null || tokenMatch.group(1)!.isEmpty) {
+        throw Exception('No token found in response');
       }
 
-      final decoded = jsonDecode(responseBody);
-      print('DEBUG: Decoded Type: ${decoded.runtimeType}');
-      print('DEBUG: Decoded Value: $decoded');
-
-      if (decoded == null) {
-        throw Exception('Response is null');
-      }
-
-      if (decoded is! Map) {
-        throw Exception('Response is ${decoded.runtimeType}, expected Map');
-      }
-
-      final token = decoded['token'];
-      print('DEBUG: Token: $token');
-
-      if (token == null || token.toString().isEmpty) {
-        throw Exception('Token is null or empty');
-      }
-
-      await storage.write(key: _tokenKey, value: token.toString());
-      return token.toString();
-    } on Exception catch (e) {
-      print('DEBUG: Exception: $e');
-      throw Exception('Login error: $e');
+      final token = tokenMatch.group(1)!;
+      await storage.write(key: _tokenKey, value: token);
+      return token;
     } catch (e) {
-      print('DEBUG: Unknown Error: $e');
-      throw Exception('Login error: $e');
+      throw Exception('Login failed: $e');
     }
   }
 
