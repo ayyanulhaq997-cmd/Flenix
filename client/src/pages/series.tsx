@@ -50,9 +50,10 @@ export default function Series() {
 
   const deleteSeriesMutation = useMutation({
     mutationFn: async (id: number) => {
+      const token = localStorage.getItem('auth_token');
       const response = await fetch(`/api/series/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
       if (!response.ok) throw new Error('Failed to delete series');
     },

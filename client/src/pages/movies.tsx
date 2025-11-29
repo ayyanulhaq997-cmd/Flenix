@@ -51,9 +51,13 @@ export default function Movies() {
 
   const addMovieMutation = useMutation({
     mutationFn: async (data: any) => {
+      const token = localStorage.getItem('auth_token');
       const response = await fetch('/api/movies', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error('Failed to add movie');
@@ -80,8 +84,12 @@ export default function Movies() {
 
   const deleteMovieMutation = useMutation({
     mutationFn: async (id: number) => {
+      const token = localStorage.getItem('auth_token');
       const response = await fetch(`/api/movies/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       if (!response.ok) throw new Error('Failed to delete movie');
     },
