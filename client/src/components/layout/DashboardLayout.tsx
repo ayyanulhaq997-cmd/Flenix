@@ -1,4 +1,5 @@
 import { Link, useLocation, useRoute } from "wouter";
+import { useState } from "react";
 import { 
   LayoutDashboard, 
   Film, 
@@ -24,6 +25,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 export function Sidebar() {
   const [location] = useLocation();
@@ -107,6 +115,7 @@ export function Sidebar() {
 
 export function Topbar() {
   const [, navigate] = useRoute();
+  const [showProfile, setShowProfile] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
@@ -114,57 +123,112 @@ export function Topbar() {
   };
 
   return (
-    <div className="h-16 border-b border-white/5 bg-background/50 backdrop-blur-md fixed top-0 right-0 left-64 z-40 flex items-center justify-between px-8">
-      <div className="relative w-96">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input 
-          placeholder="Global search..." 
-          className="pl-9 bg-black/20 border-white/10 focus:border-primary/50 h-9 transition-all"
-        />
-      </div>
-      
-      <div className="flex items-center gap-4">
-        <Button size="icon" variant="ghost" className="relative text-muted-foreground hover:text-white hover:bg-white/5">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
-        </Button>
-        <div className="h-8 w-[1px] bg-white/10 mx-2" />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <div className="flex items-center gap-3 cursor-pointer">
-              <div className="text-right hidden sm:block">
-                <div className="text-sm font-medium text-white">Admin User</div>
-                <div className="text-xs text-muted-foreground">Super Administrator</div>
+    <>
+      <div className="h-16 border-b border-white/5 bg-background/50 backdrop-blur-md fixed top-0 right-0 left-64 z-40 flex items-center justify-between px-8">
+        <div className="relative w-96">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input 
+            placeholder="Global search..." 
+            className="pl-9 bg-black/20 border-white/10 focus:border-primary/50 h-9 transition-all"
+          />
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <Button size="icon" variant="ghost" className="relative text-muted-foreground hover:text-white hover:bg-white/5">
+            <Bell className="w-5 h-5" />
+            <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full" />
+          </Button>
+          <div className="h-8 w-[1px] bg-white/10 mx-2" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center gap-3 cursor-pointer">
+                <div className="text-right hidden sm:block">
+                  <div className="text-sm font-medium text-white">Admin User</div>
+                  <div className="text-xs text-muted-foreground">Super Administrator</div>
+                </div>
+                <Avatar className="h-9 w-9 border border-white/10 hover:ring-2 ring-primary ring-offset-2 ring-offset-background transition-all">
+                  <AvatarImage src="https://github.com/shadcn.png" />
+                  <AvatarFallback>AD</AvatarFallback>
+                </Avatar>
               </div>
-              <Avatar className="h-9 w-9 border border-white/10 hover:ring-2 ring-primary ring-offset-2 ring-offset-background transition-all">
-                <AvatarImage src="https://github.com/shadcn.png" />
-                <AvatarFallback>AD</AvatarFallback>
-              </Avatar>
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 bg-card/95 border-white/10 backdrop-blur-xl">
-            <DropdownMenuItem className="text-white cursor-pointer focus:bg-primary/20" data-testid="menu-profile">
-              Profile Settings
-            </DropdownMenuItem>
-            <Link href="/settings" className="block">
-              <DropdownMenuItem className="text-white cursor-pointer focus:bg-primary/20" data-testid="menu-settings">
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-card/95 border-white/10 backdrop-blur-xl">
+              <DropdownMenuItem 
+                onClick={() => setShowProfile(true)}
+                className="text-white cursor-pointer focus:bg-primary/20" 
+                data-testid="menu-profile"
+              >
+                Profile Settings
               </DropdownMenuItem>
-            </Link>
-            <DropdownMenuSeparator className="bg-white/10" />
-            <DropdownMenuItem 
-              onClick={handleLogout}
-              className="text-red-400 cursor-pointer focus:bg-red-500/20 focus:text-red-400" 
-              data-testid="menu-logout"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <Link href="/settings" className="block">
+                <DropdownMenuItem className="text-white cursor-pointer focus:bg-primary/20" data-testid="menu-settings">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
+                </DropdownMenuItem>
+              </Link>
+              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuItem 
+                onClick={handleLogout}
+                className="text-red-400 cursor-pointer focus:bg-red-500/20 focus:text-red-400" 
+                data-testid="menu-logout"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
-    </div>
+
+      <Dialog open={showProfile} onOpenChange={setShowProfile}>
+        <DialogContent className="bg-card/95 border-white/10 backdrop-blur-xl">
+          <DialogHeader>
+            <DialogTitle className="text-white">Admin Profile</DialogTitle>
+            <DialogDescription>Your account information</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4 pb-4 border-b border-white/10">
+              <Avatar className="h-16 w-16 border-2 border-primary/50">
+                <AvatarImage src="https://github.com/shadcn.png" />
+                <AvatarFallback className="bg-primary/20">AD</AvatarFallback>
+              </Avatar>
+              <div>
+                <h3 className="text-lg font-semibold text-white">Admin User</h3>
+                <p className="text-sm text-muted-foreground">admin@fenix.local</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Role</label>
+                <p className="text-white mt-1">Super Administrator</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Email</label>
+                <p className="text-white mt-1">admin@fenix.local</p>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase">Status</label>
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="w-2 h-2 rounded-full bg-green-500" />
+                  <span className="text-white">Active</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <Button 
+                onClick={() => setShowProfile(false)}
+                className="w-full bg-primary hover:bg-primary/90"
+                data-testid="button-close-profile"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
