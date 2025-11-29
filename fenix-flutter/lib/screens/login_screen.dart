@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = false;
     });
 
-    onLoginSuccess(token);
+    widget.onLoginSuccess(token);
   }
 
   @override
