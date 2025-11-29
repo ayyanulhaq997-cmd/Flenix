@@ -21,15 +21,14 @@ class _CatalogScreenState extends State<CatalogScreen> {
   final AuthService _authService = AuthService();
   List<dynamic> _movies = [];
   bool _isLoading = true;
-  String _selectedCategory = 'All';
+  String _selectedCategory = 'All Content';
   final List<String> _categories = [
-    'All',
-    'Action',
-    'Comedy',
-    'Drama',
-    'Horror',
-    'Sci-Fi',
-    'Thriller'
+    'All Content',
+    'Actors',
+    'Series',
+    'Genres',
+    'Recent',
+    'Trending'
   ];
 
   @override
@@ -67,7 +66,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   List<dynamic> _getFilteredMovies() {
-    if (_selectedCategory == 'All') {
+    if (_selectedCategory == 'All Content') {
       return _movies;
     }
     return _movies
@@ -125,9 +124,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
             )
           : Row(
               children: [
-                // Sidebar with categories
+                // Sidebar with categories - Blue (#3B82F6) styled
                 Container(
-                  width: 120,
+                  width: 140,
                   color: const Color(0xFF1a1a2e),
                   child: ListView(
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -144,17 +143,18 @@ class _CatalogScreenState extends State<CatalogScreen> {
                               ? const Color(0xFF3B82F6)
                               : Colors.transparent,
                           padding: const EdgeInsets.symmetric(
-                              vertical: 12, horizontal: 12),
+                              vertical: 14, horizontal: 16),
                           child: Text(
                             category,
                             style: TextStyle(
                               color: isSelected
                                   ? Colors.white
                                   : Colors.grey[400],
-                              fontSize: 12,
+                              fontSize: 13,
                               fontWeight: isSelected
                                   ? FontWeight.bold
-                                  : FontWeight.normal,
+                                  : FontWeight.w500,
+                              letterSpacing: 0.3,
                             ),
                           ),
                         ),
@@ -194,13 +194,13 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           ),
                         )
                       : GridView.builder(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(20),
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
-                            childAspectRatio: 0.7,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
+                            childAspectRatio: 0.65,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
                           ),
                           itemCount: filteredMovies.length,
                           itemBuilder: (context, index) {
@@ -222,16 +222,23 @@ class _CatalogScreenState extends State<CatalogScreen> {
                               },
                               child: Container(
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
+                                  borderRadius: BorderRadius.circular(10),
                                   color: const Color(0xFF1a1a2e),
                                   border: Border.all(
-                                    color: Colors.grey[700]!,
+                                    color: Colors.grey[800]!,
                                     width: 1,
                                   ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
                                 ),
                                 child: posterUrl != null
                                     ? ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(10),
                                         child: Image.network(
                                           posterUrl,
                                           fit: BoxFit.cover,
@@ -246,18 +253,25 @@ class _CatalogScreenState extends State<CatalogScreen> {
                                                   const Icon(
                                                     Icons.movie,
                                                     color: Color(0xFF3B82F6),
-                                                    size: 32,
+                                                    size: 36,
                                                   ),
-                                                  const SizedBox(height: 8),
-                                                  Text(
-                                                    title,
-                                                    textAlign: TextAlign.center,
-                                                    maxLines: 2,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: const TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 10,
+                                                  const SizedBox(height: 10),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(8),
+                                                    child: Text(
+                                                      title,
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontSize: 11,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
                                                     ),
                                                   ),
                                                 ],
@@ -275,18 +289,23 @@ class _CatalogScreenState extends State<CatalogScreen> {
                                             const Icon(
                                               Icons.movie,
                                               color: Color(0xFF3B82F6),
-                                              size: 32,
+                                              size: 36,
                                             ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              title,
-                                              textAlign: TextAlign.center,
-                                              maxLines: 2,
-                                              overflow:
-                                                  TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 10,
+                                            const SizedBox(height: 10),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8),
+                                              child: Text(
+                                                title,
+                                                textAlign: TextAlign.center,
+                                                maxLines: 2,
+                                                overflow:
+                                                    TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
                                               ),
                                             ),
                                           ],
@@ -301,6 +320,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF3B82F6),
+        tooltip: 'Logout',
         onPressed: widget.onLogout,
         child: const Icon(Icons.logout),
       ),
