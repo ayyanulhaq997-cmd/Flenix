@@ -1,4 +1,4 @@
-/// Movie model matching Fenix backend schema
+/// Movie model
 class Movie {
   final int id;
   final String title;
@@ -30,7 +30,6 @@ class Movie {
     this.rating = 'TV-14',
   });
 
-  /// Create Movie from JSON (from Fenix API)
   factory Movie.fromJson(Map<String, dynamic> json) {
     return Movie(
       id: json['id'] ?? 0,
@@ -49,7 +48,6 @@ class Movie {
     );
   }
 
-  /// Convert to JSON
   Map<String, dynamic> toJson() => {
     'id': id,
     'title': title,
@@ -83,26 +81,15 @@ class AppUser {
     this.isActive = true,
   });
 
-  factory AppUser.fromJson(Map<String, dynamic> json) {
-    return AppUser(
-      id: json['id'] ?? 0,
-      email: json['email'] ?? '',
-      name: json['name'] ?? '',
-      subscriptionPlan: json['plan'] ?? json['subscriptionPlan'] ?? 'free',
-      isActive: (json['status'] ?? 'active') == 'active',
-    );
-  }
-
   Map<String, dynamic> toJson() => {
     'id': id,
     'email': email,
     'name': name,
     'subscriptionPlan': subscriptionPlan,
-    'isActive': isActive,
   };
 }
 
-/// Login response with JWT token
+/// Login response
 class LoginResponse {
   final String token;
   final AppUser user;
@@ -113,12 +100,4 @@ class LoginResponse {
     required this.user,
     required this.expiresIn,
   });
-
-  factory LoginResponse.fromJson(Map<String, dynamic> json) {
-    return LoginResponse(
-      token: json['token'] ?? '',
-      user: AppUser.fromJson(json),
-      expiresIn: json['expiresIn'] ?? 604800,
-    );
-  }
 }
