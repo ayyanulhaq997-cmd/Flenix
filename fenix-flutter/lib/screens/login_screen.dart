@@ -28,27 +28,27 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
+  void _handleLogin() {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
 
-    try {
-      final token = await _authService.login(
-        _emailController.text,
-        _passwordController.text,
-      );
-
-      if (mounted) {
-        widget.onLoginSuccess(token);
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString().replaceAll('Exception: ', '');
-        _isLoading = false;
+    // Hardcoded success - no async, no API calls
+    _authService.login(_emailController.text, _passwordController.text)
+      .then((token) {
+        if (mounted) {
+          widget.onLoginSuccess(token);
+        }
+      })
+      .catchError((e) {
+        if (mounted) {
+          setState(() {
+            _errorMessage = 'Login failed';
+            _isLoading = false;
+          });
+        }
       });
-    }
   }
 
   @override

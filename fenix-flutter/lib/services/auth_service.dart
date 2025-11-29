@@ -7,10 +7,10 @@ class AuthService {
   final storage = const FlutterSecureStorage();
 
   Future<String> login(String email, String password) async {
-    const String token = 'test_token_12345';
-    await storage.write(key: _tokenKey, value: token);
+    // Simple hardcoded login
+    await storage.write(key: _tokenKey, value: 'token_123');
     await storage.write(key: _userKey, value: email);
-    return token;
+    return 'token_123';
   }
 
   Future<String?> getToken() async {
@@ -23,7 +23,7 @@ class AuthService {
     return AppUser(
       id: 1,
       email: email,
-      name: 'User',
+      name: 'Admin',
       subscriptionPlan: 'premium',
       isActive: true,
     );
