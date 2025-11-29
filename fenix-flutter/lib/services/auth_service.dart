@@ -16,7 +16,6 @@ class AuthService {
     try {
       final url = Uri.parse('${ApiConfig.apiBaseUrl}${ApiConfig.loginEndpoint}');
       developer.log('Login URL: $url');
-      developer.log('Email: $email');
 
       final response = await http.post(
         url,
@@ -34,37 +33,60 @@ class AuthService {
       developer.log('Response body: ${response.body}');
 
       if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
-        developer.log('Parsed JSON: $jsonData');
+        // Parse response body safely
+        final Map<String, dynamic> jsonData;
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map<String, dynamic>) {
+            jsonData = decoded;
+          } else {
+            throw Exception('Response is not a JSON object');
+          }
+        } catch (e) {
+          developer.log('JSON parse error: $e');
+          throw Exception('Invalid JSON response: ${response.body}');
+        }
 
-        // Extract token with fallback
-        final token = jsonData['token'] as String?;
-        if (token == null || token.isEmpty) {
+        developer.log('Parsed JSON keys: ${jsonData.keys.toList()}');
+
+        // Extract token safely
+        final token = jsonData['token'];
+        if (token == null) {
           throw Exception('No token in response');
         }
 
-        // Build user object
+        final tokenStr = token.toString();
+        if (tokenStr.isEmpty) {
+          throw Exception('Token is empty');
+        }
+
+        // Extract user data safely
+        final id = jsonData['id'];
+        final idInt = id is int ? id : (id is String ? int.tryParse(id) : null) ?? 0;
+        
+        final email = (jsonData['email'] ?? '').toString();
+        final name = (jsonData['name'] ?? 'User').toString();
+        final plan = (jsonData['plan'] ?? 'free').toString();
+
         final user = AppUser(
-          id: jsonData['id'] as int? ?? 0,
-          email: jsonData['email'] as String? ?? '',
-          name: jsonData['name'] as String? ?? 'User',
-          subscriptionPlan: jsonData['plan'] as String? ?? 'free',
+          id: idInt,
+          email: email,
+          name: name,
+          subscriptionPlan: plan,
           isActive: true,
         );
 
         final loginResponse = LoginResponse(
-          token: token,
+          token: tokenStr,
           user: user,
           expiresIn: 604800,
         );
 
-        await storage.write(key: _tokenKey, value: token);
-        developer.log('Login successful, token saved');
+        await storage.write(key: _tokenKey, value: tokenStr);
+        developer.log('Login successful');
         return loginResponse;
       } else {
-        final errorBody = response.body;
-        developer.log('Login failed with status ${response.statusCode}: $errorBody');
-        throw Exception('Login failed: ${response.statusCode}');
+        throw Exception('Login failed: HTTP ${response.statusCode}');
       }
     } catch (e) {
       developer.log('Login exception: $e');
