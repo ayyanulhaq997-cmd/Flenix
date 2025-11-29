@@ -4,87 +4,75 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/api_config.dart';
 import '../models/movie.dart';
 
-/// Authentication Service
 class AuthService {
   static const String _tokenKey = 'jwt_token';
   final storage = const FlutterSecureStorage();
 
-  /// Login with email and password
   Future<LoginResponse> login(String email, String password) async {
     try {
-      final url = Uri.parse('${ApiConfig.apiBaseUrl}${ApiConfig.loginEndpoint}');
-      
       final response = await http.post(
-        url,
+        Uri.parse('${ApiConfig.apiBaseUrl}${ApiConfig.loginEndpoint}'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
-        throw Exception('Login failed: HTTP ${response.statusCode}');
+        throw Exception('HTTP ${response.statusCode}');
       }
 
-      // Get response body
-      final String responseBody = response.body;
-      if (responseBody.isEmpty) {
-        throw Exception('Empty response from server');
+      // Ensure we have valid response
+      String bodyText = response.body;
+      if (bodyText.isEmpty) {
+        throw Exception('Empty response');
       }
 
-      // Decode JSON carefully
-      final dynamic decoded = jsonDecode(responseBody);
-      
-      // Make sure we have a map
-      if (decoded == null) {
-        throw Exception('Response is null');
-      }
-      
-      if (decoded is! Map) {
-        throw Exception('Response is not a JSON object');
+      // Parse JSON
+      var data = jsonDecode(bodyText);
+      if (data == null) {
+        throw Exception('Null response');
       }
 
-      // Now safely cast
-      final Map<String, dynamic> data = decoded as Map<String, dynamic>;
+      // Extract fields
+      String token = data['token'] ?? '';
+      String userEmail = data['email'] ?? '';
+      String userName = data['name'] ?? '';
+      String plan = data['plan'] ?? 'free';
+      int userId = data['id'] ?? 0;
 
-      // Extract token
-      final token = data['token'];
-      if (token == null) {
-        throw Exception('No token in response');
+      if (token.isEmpty) {
+        throw Exception('No token');
       }
 
-      // Build user
-      final user = AppUser(
-        id: (data['id'] ?? 0) as int,
-        email: (data['email'] ?? '') as String,
-        name: (data['name'] ?? 'User') as String,
-        subscriptionPlan: (data['plan'] ?? 'free') as String,
+      AppUser user = AppUser(
+        id: userId,
+        email: userEmail,
+        name: userName,
+        subscriptionPlan: plan,
         isActive: true,
       );
 
-      final loginResponse = LoginResponse(
-        token: token as String,
+      LoginResponse result = LoginResponse(
+        token: token,
         user: user,
         expiresIn: 604800,
       );
 
-      await storage.write(key: _tokenKey, value: loginResponse.token);
-      return loginResponse;
+      await storage.write(key: _tokenKey, value: token);
+      return result;
     } catch (e) {
-      throw Exception('Login error: ${e.toString()}');
+      throw Exception('Login error: $e');
     }
   }
 
-  /// Get stored JWT token
   Future<String?> getToken() async {
     return await storage.read(key: _tokenKey);
   }
 
-  /// Check if user is authenticated
   Future<bool> isAuthenticated() async {
     final token = await getToken();
     return token != null && token.isNotEmpty;
   }
 
-  /// Logout
   Future<void> logout() async {
     await storage.delete(key: _tokenKey);
   }
