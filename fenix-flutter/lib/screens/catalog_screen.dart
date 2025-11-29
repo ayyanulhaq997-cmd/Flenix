@@ -162,52 +162,111 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     }).toList(),
                   ),
                 ),
-                // Movies grid
+                // Movies grid or empty state
                 Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      childAspectRatio: 0.7,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                    ),
-                    itemCount: filteredMovies.length,
-                    itemBuilder: (context, index) {
-                      final movie = filteredMovies[index];
-                      final title = movie['title'] ?? 'Unknown';
-                      final posterUrl = movie['posterUrl'];
-
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PlayerScreen(
-                                movie: movie,
-                                allMovies: filteredMovies,
+                  child: filteredMovies.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.movie_not_supported_outlined,
+                                color: Colors.grey[600],
+                                size: 64,
                               ),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: const Color(0xFF1a1a2e),
-                            border: Border.all(
-                              color: Colors.grey[700]!,
-                              width: 1,
-                            ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No movies found',
+                                style: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'in $_selectedCategory category',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
-                          child: posterUrl != null
-                              ? ClipRRect(
+                        )
+                      : GridView.builder(
+                          padding: const EdgeInsets.all(16),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            childAspectRatio: 0.7,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                          itemCount: filteredMovies.length,
+                          itemBuilder: (context, index) {
+                            final movie = filteredMovies[index];
+                            final title = movie['title'] ?? 'Unknown';
+                            final posterUrl = movie['posterUrl'];
+
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PlayerScreen(
+                                      movie: movie,
+                                      allMovies: filteredMovies,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    posterUrl,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stack) {
-                                      return Container(
+                                  color: const Color(0xFF1a1a2e),
+                                  border: Border.all(
+                                    color: Colors.grey[700]!,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: posterUrl != null
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          posterUrl,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stack) {
+                                            return Container(
+                                              color: const Color(0xFF1a1a2e),
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  const Icon(
+                                                    Icons.movie,
+                                                    color: Color(0xFF3B82F6),
+                                                    size: 32,
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  Text(
+                                                    title,
+                                                    textAlign: TextAlign.center,
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 10,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      )
+                                    : Container(
                                         color: const Color(0xFF1a1a2e),
                                         child: Column(
                                           mainAxisAlignment:
@@ -232,39 +291,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
                                             ),
                                           ],
                                         ),
-                                      );
-                                    },
-                                  ),
-                                )
-                              : Container(
-                                  color: const Color(0xFF1a1a2e),
-                                  child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(
-                                        Icons.movie,
-                                        color: Color(0xFF3B82F6),
-                                        size: 32,
                                       ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        title,
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 10,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
