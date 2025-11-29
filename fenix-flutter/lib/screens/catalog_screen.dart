@@ -1,25 +1,12 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
 
-class CatalogScreen extends StatefulWidget {
+class CatalogScreen extends StatelessWidget {
   final Function() onLogout;
 
   const CatalogScreen({
     Key? key,
     required this.onLogout,
   }) : super(key: key);
-
-  @override
-  State<CatalogScreen> createState() => _CatalogScreenState();
-}
-
-class _CatalogScreenState extends State<CatalogScreen> {
-  final _authService = AuthService();
-
-  Future<void> _handleLogout() async {
-    await _authService.logout();
-    widget.onLogout();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +24,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: _handleLogout,
+            onPressed: onLogout,
             child: const Text('Logout'),
           ),
         ],
@@ -70,11 +57,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
             const SizedBox(height: 48),
             ElevatedButton(
-              onPressed: _handleLogout,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3B82F6),
-                padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-              ),
+              onPressed: onLogout,
               child: const Text('Logout'),
             ),
           ],
