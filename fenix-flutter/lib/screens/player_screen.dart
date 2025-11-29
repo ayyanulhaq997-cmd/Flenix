@@ -93,27 +93,28 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           ),
                         ),
                       // Play button overlay
-                      Center(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _isPlaying = !_isPlaying;
-                            });
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.blue.withOpacity(0.7),
-                            ),
-                            padding: const EdgeInsets.all(16),
-                            child: Icon(
-                              _isPlaying ? Icons.pause : Icons.play_arrow,
-                              color: Colors.white,
-                              size: 64,
+                      if (widget.movie['videoUrl'] != null)
+                        Center(
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isPlaying = !_isPlaying;
+                              });
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.blue.withOpacity(0.7),
+                              ),
+                              padding: const EdgeInsets.all(16),
+                              child: Icon(
+                                _isPlaying ? Icons.pause : Icons.play_arrow,
+                                color: Colors.white,
+                                size: 64,
+                              ),
                             ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),

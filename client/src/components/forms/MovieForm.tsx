@@ -71,15 +71,14 @@ export function MovieForm({ onSubmit }: { onSubmit: (data: any) => void }) {
   };
 
   function handleSubmit(values: z.infer<typeof formSchema>) {
-    if (uploadState !== "completed") {
-      alert("Please upload a video file first.");
-      return;
-    }
     onSubmit({ 
       ...values, 
       year: parseInt(values.year),
       fileName,
-      status: "processing",
+      status: "active",
+      duration: 120,
+      requiredPlan: "free",
+      rating: "PG-13",
     });
   }
 
