@@ -117,6 +117,8 @@ export function Topbar() {
   const [, navigate] = useRoute();
   const [showProfile, setShowProfile] = useState(false);
   const [editEmail, setEditEmail] = useState("admin@fenix.local");
+  const [avatarUrl, setAvatarUrl] = useState("https://github.com/shadcn.png");
+  const [editAvatarUrl, setEditAvatarUrl] = useState("https://github.com/shadcn.png");
   const [isSaving, setIsSaving] = useState(false);
 
   const handleLogout = () => {
@@ -134,10 +136,11 @@ export function Topbar() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ email: editEmail }),
+        body: JSON.stringify({ email: editEmail, avatarUrl: editAvatarUrl }),
       });
 
       if (response.ok) {
+        setAvatarUrl(editAvatarUrl);
         setShowProfile(false);
       }
     } catch (error) {
@@ -172,7 +175,7 @@ export function Topbar() {
                   <div className="text-xs text-muted-foreground">Super Administrator</div>
                 </div>
                 <Avatar className="h-9 w-9 border border-white/10 hover:ring-2 ring-primary ring-offset-2 ring-offset-background transition-all">
-                  <AvatarImage src="https://github.com/shadcn.png" />
+                  <AvatarImage src={avatarUrl} />
                   <AvatarFallback>AD</AvatarFallback>
                 </Avatar>
               </div>
@@ -214,7 +217,7 @@ export function Topbar() {
           <div className="space-y-4">
             <div className="flex items-center gap-4 pb-4 border-b border-white/10">
               <Avatar className="h-16 w-16 border-2 border-primary/50">
-                <AvatarImage src="https://github.com/shadcn.png" />
+                <AvatarImage src={editAvatarUrl} />
                 <AvatarFallback className="bg-primary/20">AD</AvatarFallback>
               </Avatar>
               <div>
@@ -230,6 +233,18 @@ export function Topbar() {
                   Super Administrator
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">Role cannot be changed</p>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-muted-foreground uppercase mb-2 block">Profile Image URL</label>
+                <Input
+                  type="text"
+                  value={editAvatarUrl}
+                  onChange={(e) => setEditAvatarUrl(e.target.value)}
+                  placeholder="https://example.com/avatar.jpg"
+                  className="bg-black/20 border-white/10"
+                  data-testid="input-profile-avatar"
+                />
               </div>
 
               <div>
