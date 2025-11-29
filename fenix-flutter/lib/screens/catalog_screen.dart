@@ -15,20 +15,6 @@ class CatalogScreen extends StatefulWidget {
 
 class _CatalogScreenState extends State<CatalogScreen> {
   final _authService = AuthService();
-  String _userEmail = 'User';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUser();
-  }
-
-  Future<void> _loadUser() async {
-    final token = await _authService.getToken();
-    setState(() {
-      _userEmail = token ?? 'Admin';
-    });
-  }
 
   Future<void> _handleLogout() async {
     await _authService.logout();
@@ -50,18 +36,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
           ),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Center(
-              child: Text(
-                _userEmail,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ),
           TextButton(
             onPressed: _handleLogout,
             child: const Text('Logout'),
@@ -88,7 +62,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Welcome to Fenix',
+              'Welcome to Fenix Streaming',
               style: TextStyle(
                 color: Colors.grey[400],
                 fontSize: 16,

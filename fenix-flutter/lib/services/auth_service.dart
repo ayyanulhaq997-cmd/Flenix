@@ -1,5 +1,4 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../models/movie.dart';
 
 class AuthService {
   static const String _tokenKey = 'jwt_token';
@@ -7,7 +6,6 @@ class AuthService {
   final storage = const FlutterSecureStorage();
 
   Future<String> login(String email, String password) async {
-    // Simple hardcoded login
     await storage.write(key: _tokenKey, value: 'token_123');
     await storage.write(key: _userKey, value: email);
     return 'token_123';
@@ -15,18 +13,6 @@ class AuthService {
 
   Future<String?> getToken() async {
     return await storage.read(key: _tokenKey);
-  }
-
-  Future<AppUser?> getUser() async {
-    final email = await storage.read(key: _userKey);
-    if (email == null) return null;
-    return AppUser(
-      id: 1,
-      email: email,
-      name: 'Admin',
-      subscriptionPlan: 'premium',
-      isActive: true,
-    );
   }
 
   Future<bool> isAuthenticated() async {
