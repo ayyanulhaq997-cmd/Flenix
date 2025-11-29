@@ -13,6 +13,7 @@ import Users from "@/pages/users";
 import Settings from "@/pages/settings";
 import ApiKeys from "@/pages/api-keys";
 import Migration from "@/pages/migration";
+import BulkImport from "@/pages/bulk-import";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/users" component={Users} />
       <Route path="/api-keys" component={ApiKeys} />
       <Route path="/migration" component={Migration} />
+      <Route path="/bulk-import" component={BulkImport} />
       <Route path="/settings" component={Settings} />
       <Route component={NotFound} />
     </Switch>
