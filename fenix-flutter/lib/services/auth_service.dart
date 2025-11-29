@@ -12,61 +12,64 @@ class AuthService {
   /// Login with email and password
   Future<LoginResponse> login(String email, String password) async {
     try {
-      final url = '${ApiConfig.apiBaseUrl}${ApiConfig.loginEndpoint}';
+      final url = Uri.parse('${ApiConfig.apiBaseUrl}${ApiConfig.loginEndpoint}');
       
       final response = await http.post(
-        Uri.parse(url),
+        url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'email': email, 'password': password}),
       ).timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
-        throw Exception('HTTP ${response.statusCode}');
+        throw Exception('Login failed: HTTP ${response.statusCode}');
       }
 
-      // Parse response - handle both string and already-decoded responses
-      dynamic responseData = response.body;
-      if (responseData is String) {
-        responseData = jsonDecode(responseData);
+      // Get response body
+      final String responseBody = response.body;
+      if (responseBody.isEmpty) {
+        throw Exception('Empty response from server');
       }
 
-      // Extract values safely with fallbacks
-      String token = '';
-      String userEmail = '';
-      String userName = '';
-      String userPlan = '';
-      int userId = 0;
-
-      if (responseData is Map) {
-        token = (responseData['token'] ?? '').toString();
-        userEmail = (responseData['email'] ?? '').toString();
-        userName = (responseData['name'] ?? 'User').toString();
-        userPlan = (responseData['plan'] ?? 'free').toString();
-        userId = int.tryParse((responseData['id'] ?? '0').toString()) ?? 0;
+      // Decode JSON carefully
+      final dynamic decoded = jsonDecode(responseBody);
+      
+      // Make sure we have a map
+      if (decoded == null) {
+        throw Exception('Response is null');
+      }
+      
+      if (decoded is! Map) {
+        throw Exception('Response is not a JSON object');
       }
 
-      if (token.isEmpty) {
-        throw Exception('No token received');
+      // Now safely cast
+      final Map<String, dynamic> data = decoded as Map<String, dynamic>;
+
+      // Extract token
+      final token = data['token'];
+      if (token == null) {
+        throw Exception('No token in response');
       }
 
+      // Build user
       final user = AppUser(
-        id: userId,
-        email: userEmail,
-        name: userName,
-        subscriptionPlan: userPlan,
+        id: (data['id'] ?? 0) as int,
+        email: (data['email'] ?? '') as String,
+        name: (data['name'] ?? 'User') as String,
+        subscriptionPlan: (data['plan'] ?? 'free') as String,
         isActive: true,
       );
 
-      final response2 = LoginResponse(
-        token: token,
+      final loginResponse = LoginResponse(
+        token: token as String,
         user: user,
         expiresIn: 604800,
       );
 
-      await storage.write(key: _tokenKey, value: token);
-      return response2;
+      await storage.write(key: _tokenKey, value: loginResponse.token);
+      return loginResponse;
     } catch (e) {
-      rethrow;
+      throw Exception('Login error: ${e.toString()}');
     }
   }
 
