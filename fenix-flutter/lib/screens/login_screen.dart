@@ -29,26 +29,40 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _handleLogin() {
+    if (_isLoading) return;
+    
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
 
-    // Hardcoded success - no async, no API calls
-    _authService.login(_emailController.text, _passwordController.text)
-      .then((token) {
-        if (mounted) {
-          widget.onLoginSuccess(token);
-        }
-      })
-      .catchError((e) {
-        if (mounted) {
+    try {
+      _authService.login(_emailController.text, _passwordController.text)
+        .then((token) {
+          if (!mounted) return;
+          try {
+            widget.onLoginSuccess(token);
+          } catch (e) {
+            print('Callback error: $e');
+            setState(() {
+              _errorMessage = 'Navigation error';
+              _isLoading = false;
+            });
+          }
+        })
+        .catchError((e) {
+          if (!mounted) return;
           setState(() {
-            _errorMessage = 'Login failed';
+            _errorMessage = 'Login failed: $e';
             _isLoading = false;
           });
-        }
+        });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error: $e';
+        _isLoading = false;
       });
+    }
   }
 
   @override
