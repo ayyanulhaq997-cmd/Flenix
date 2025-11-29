@@ -115,10 +115,17 @@ class LoginResponse {
   });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
+    // Backend returns flat structure: {id, name, email, plan, status, token, ...}
     return LoginResponse(
-      token: json['token'] as String,
-      user: AppUser.fromJson(json as Map<String, dynamic>),
-      expiresIn: json['expiresIn'] as int? ?? 604800, // 7 days default
+      token: json['token'] as String? ?? '',
+      user: AppUser(
+        id: json['id'] as int? ?? 0,
+        email: json['email'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        subscriptionPlan: json['plan'] as String? ?? 'free',
+        isActive: json['status'] == 'active',
+      ),
+      expiresIn: json['expiresIn'] as int? ?? 604800,
     );
   }
 }
