@@ -6,7 +6,7 @@
 
 class ApiConfig {
   //  UPDATE THIS WITH YOUR FENIX BACKEND URL
-  static const String apiBaseUrl = 'http://localhost:5000';
+  static const String apiBaseUrl = 'https://e1c30eb1-234f-4841-89d1-b4cd3d839858-00-168qrarj2xv9x.spock.replit.dev';
   
   // API Endpoints
   static const String loginEndpoint = '/api/auth/login';
