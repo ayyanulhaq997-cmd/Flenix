@@ -33,19 +33,19 @@ class Movie {
   /// Create Movie from JSON (from Fenix API)
   factory Movie.fromJson(Map<String, dynamic> json) {
     return Movie(
-      id: json['id'] as int,
-      title: json['title'] as String,
-      genre: json['genre'] as String,
-      year: json['year'] as int,
-      description: json['description'] as String,
-      posterUrl: json['posterUrl'] as String?,
-      videoUrl: json['videoUrl'] as String?,
-      duration: json['duration'] as int?,
-      cast: json['cast'] as String?,
-      status: json['status'] as String? ?? 'active',
-      requiredPlan: json['requiredPlan'] as String? ?? 'free',
-      views: json['views'] as int? ?? 0,
-      rating: json['rating'] as String? ?? 'TV-14',
+      id: json['id'] ?? 0,
+      title: json['title'] ?? 'Untitled',
+      genre: json['genre'] ?? 'Unknown',
+      year: json['year'] ?? 2025,
+      description: json['description'] ?? '',
+      posterUrl: json['posterUrl'],
+      videoUrl: json['videoUrl'],
+      duration: json['duration'],
+      cast: json['cast'],
+      status: json['status'] ?? 'active',
+      requiredPlan: json['requiredPlan'] ?? 'free',
+      views: json['views'] ?? 0,
+      rating: json['rating'] ?? 'TV-14',
     );
   }
 
@@ -84,15 +84,12 @@ class AppUser {
   });
 
   factory AppUser.fromJson(Map<String, dynamic> json) {
-    final plan = json['plan'] ?? json['subscriptionPlan'] ?? 'free';
-    final status = json['status'] ?? 'active';
-    
     return AppUser(
-      id: (json['id'] ?? 0) as int,
-      email: (json['email'] ?? '') as String,
-      name: (json['name'] ?? '') as String,
-      subscriptionPlan: plan.toString(),
-      isActive: status.toString() == 'active',
+      id: json['id'] ?? 0,
+      email: json['email'] ?? '',
+      name: json['name'] ?? '',
+      subscriptionPlan: json['plan'] ?? json['subscriptionPlan'] ?? 'free',
+      isActive: (json['status'] ?? 'active') == 'active',
     );
   }
 
@@ -118,25 +115,10 @@ class LoginResponse {
   });
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
-    // Backend returns flat structure: {id, name, email, plan, status, token, ...}
-    final token = (json['token'] ?? '') as String;
-    final id = (json['id'] ?? 0) as int;
-    final email = (json['email'] ?? '') as String;
-    final name = (json['name'] ?? '') as String;
-    final plan = (json['plan'] ?? 'free').toString();
-    final status = (json['status'] ?? 'active').toString();
-    final expiresIn = (json['expiresIn'] ?? 604800) as int;
-    
     return LoginResponse(
-      token: token,
-      user: AppUser(
-        id: id,
-        email: email,
-        name: name,
-        subscriptionPlan: plan,
-        isActive: status == 'active',
-      ),
-      expiresIn: expiresIn,
+      token: json['token'] ?? '',
+      user: AppUser.fromJson(json),
+      expiresIn: json['expiresIn'] ?? 604800,
     );
   }
 }
