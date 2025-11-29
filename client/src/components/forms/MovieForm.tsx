@@ -215,12 +215,49 @@ export function MovieForm({ onSubmit }: { onSubmit: (data: any) => void }) {
           )}
         />
 
+        <FormField
+          control={form.control}
+          name="posterUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Poster Image URL</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="https://example.com/poster.jpg" 
+                  {...field} 
+                  className="bg-black/20 border-white/10" 
+                />
+              </FormControl>
+              <FormDescription className="text-xs">URL to the movie poster image (JPG/PNG)</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="videoUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Video URL</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="https://bucket.wasabisys.com/movies/video.mp4" 
+                  {...field} 
+                  className="bg-black/20 border-white/10" 
+                />
+              </FormControl>
+              <FormDescription className="text-xs">Full URL to your video file on Wasabi/S3 (MP4/MKV/MOV)</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <Button 
           type="submit" 
           className="w-full bg-primary hover:bg-primary/90 text-white h-11"
-          disabled={uploadState !== "completed"}
         >
-          {uploadState === "uploading" ? "Uploading File..." : "Add Movie to Library"}
+          Add Movie to Library
         </Button>
       </form>
     </Form>
