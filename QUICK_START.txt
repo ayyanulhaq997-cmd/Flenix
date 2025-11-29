@@ -1,0 +1,63 @@
+============================================
+FENIX FLUTTER APP - QUICK START (Windows)
+============================================
+
+THREE SIMPLE STEPS:
+
+STEP 1: Install Flutter SDK (One-time only)
+========================================
+1. Download Flutter: https://flutter.dev/docs/get-started/install/windows
+2. Extract to: C:\flutter
+3. Add C:\flutter\bin to Windows PATH
+4. Restart PowerShell
+
+Verify: flutter --version
+
+STEP 2: Copy Flutter Project to Windows PC
+==========================================
+Copy these files from Replit to your Windows:
+  From: /home/runner/workspace/fenix-flutter/
+  To:   C:\Flutter-Projects\fenix-flutter\
+
+Files to copy:
+  - lib/ (entire folder)
+  - pubspec.yaml
+  - SETUP.md
+
+STEP 3: Run Setup Script
+=======================
+1. Save this file to: C:\Flutter-Projects\fenix-flutter\setup.bat
+2. Double-click setup.bat
+3. Wait for app to open in Chrome
+4. Login with: admin@fenix.local / Admin@123456
+
+That's it! App should be running.
+
+============================================
+TROUBLESHOOTING
+============================================
+
+Q: "Flutter not found"
+A: Install Flutter SDK and add to PATH, then restart PowerShell
+
+Q: "pubspec.yaml not found"
+A: Make sure you're in C:\Flutter-Projects\fenix-flutter\ directory
+
+Q: "Cannot connect to backend"
+A: Edit lib/config/api_config.dart
+   Change apiBaseUrl to: https://e1c30eb1-234f-4841-89d1-b4cd3d839858-00-168qrarj2xv9x.spock.replit.dev
+
+Q: "Chrome error"
+A: Make sure Chrome is installed
+   Or use: flutter run (for Android)
+
+BACKEND URL
+===========
+https://e1c30eb1-234f-4841-89d1-b4cd3d839858-00-168qrarj2xv9x.spock.replit.dev
+
+LOGIN CREDENTIALS
+=================
+Email: admin@fenix.local
+Password: Admin@123456
+
+DONE! You now have a complete Netflix-style streaming platform! 🎉
