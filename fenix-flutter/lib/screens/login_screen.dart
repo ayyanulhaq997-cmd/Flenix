@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import 'dart:developer' as developer;
 
 /// Login Screen
 /// Handles user authentication with email and password
@@ -38,15 +39,19 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      developer.log('Attempting login with email: ${_emailController.text}');
       final loginResponse = await _authService.login(
         _emailController.text,
         _passwordController.text,
       );
 
+      developer.log('Login response received, token: ${loginResponse.token.substring(0, 20)}...');
+
       if (mounted) {
         widget.onLoginSuccess(loginResponse.token);
       }
     } catch (e) {
+      developer.log('Login error caught: $e');
       setState(() {
         _errorMessage = e.toString().replaceAll('Exception: ', '');
         _isLoading = false;

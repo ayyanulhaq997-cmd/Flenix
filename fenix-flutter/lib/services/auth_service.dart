@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:developer' as developer;
 import '../config/api_config.dart';
 import '../models/movie.dart';
 
@@ -13,33 +14,61 @@ class AuthService {
   /// Login with email and password
   Future<LoginResponse> login(String email, String password) async {
     try {
+      final url = Uri.parse('${ApiConfig.apiBaseUrl}${ApiConfig.loginEndpoint}');
+      developer.log('Login URL: $url');
+      developer.log('Email: $email');
+
       final response = await http.post(
-        Uri.parse('${ApiConfig.apiBaseUrl}${ApiConfig.loginEndpoint}'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+          'password': password,
+        }),
       ).timeout(const Duration(seconds: 30));
 
+      developer.log('Response status: ${response.statusCode}');
+      developer.log('Response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+        final jsonData = jsonDecode(response.body);
+        developer.log('Parsed JSON: $jsonData');
+
+        // Extract token with fallback
+        final token = jsonData['token'] as String?;
+        if (token == null || token.isEmpty) {
+          throw Exception('No token in response');
+        }
+
+        // Build user object
+        final user = AppUser(
+          id: jsonData['id'] as int? ?? 0,
+          email: jsonData['email'] as String? ?? '',
+          name: jsonData['name'] as String? ?? 'User',
+          subscriptionPlan: jsonData['plan'] as String? ?? 'free',
+          isActive: true,
+        );
+
         final loginResponse = LoginResponse(
-          token: data['token'] ?? '',
-          user: AppUser(
-            id: data['id'] ?? 0,
-            email: data['email'] ?? '',
-            name: data['name'] ?? '',
-            subscriptionPlan: data['plan'] ?? 'free',
-            isActive: true,
-          ),
+          token: token,
+          user: user,
           expiresIn: 604800,
         );
-        
-        await storage.write(key: _tokenKey, value: loginResponse.token);
+
+        await storage.write(key: _tokenKey, value: token);
+        developer.log('Login successful, token saved');
         return loginResponse;
       } else {
-        throw Exception('Login failed');
+        final errorBody = response.body;
+        developer.log('Login failed with status ${response.statusCode}: $errorBody');
+        throw Exception('Login failed: ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Login error: ${e.toString()}');
+      developer.log('Login exception: $e');
+      rethrow;
     }
   }
 
