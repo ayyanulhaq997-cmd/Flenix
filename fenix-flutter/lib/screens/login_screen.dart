@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import 'dart:developer' as developer;
 
-/// Login Screen
-/// Handles user authentication with email and password
 class LoginScreen extends StatefulWidget {
-  final Function(String) onLoginSuccess; // Callback with JWT token
+  final Function(String) onLoginSuccess;
 
   const LoginScreen({
     Key? key,
@@ -31,7 +28,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// Handle login button press
   Future<void> _handleLogin() async {
     setState(() {
       _isLoading = true;
@@ -39,19 +35,15 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      developer.log('Attempting login with email: ${_emailController.text}');
-      final loginResponse = await _authService.login(
+      final token = await _authService.login(
         _emailController.text,
         _passwordController.text,
       );
 
-      developer.log('Login response received, token: ${loginResponse.token.substring(0, 20)}...');
-
       if (mounted) {
-        widget.onLoginSuccess(loginResponse.token);
+        widget.onLoginSuccess(token);
       }
     } catch (e) {
-      developer.log('Login error caught: $e');
       setState(() {
         _errorMessage = e.toString().replaceAll('Exception: ', '');
         _isLoading = false;
@@ -69,7 +61,6 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Fenix Logo
               Text(
                 'FENIX',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(
@@ -79,7 +70,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 48),
 
-              // Email Input
               TextField(
                 controller: _emailController,
                 enabled: !_isLoading,
@@ -96,7 +86,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Password Input
               TextField(
                 controller: _passwordController,
                 enabled: !_isLoading,
@@ -113,7 +102,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Error Message
               if (_errorMessage.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -129,7 +117,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               if (_errorMessage.isNotEmpty) const SizedBox(height: 16),
 
-              // Login Button
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -156,7 +143,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Demo Credentials Info
               Text(
                 'Demo: admin@fenix.local / Admin@123456',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
