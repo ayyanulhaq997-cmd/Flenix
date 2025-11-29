@@ -88,8 +88,8 @@ class AppUser {
       id: json['id'] as int,
       email: json['email'] as String,
       name: json['name'] as String,
-      subscriptionPlan: json['subscriptionPlan'] as String? ?? 'free',
-      isActive: json['isActive'] as bool? ?? true,
+      subscriptionPlan: (json['plan'] ?? json['subscriptionPlan'] ?? 'free') as String,
+      isActive: (json['status'] == 'active') ? true : (json['isActive'] as bool? ?? true),
     );
   }
 
@@ -117,7 +117,7 @@ class LoginResponse {
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
       token: json['token'] as String,
-      user: AppUser.fromJson(json['user'] as Map<String, dynamic>),
+      user: AppUser.fromJson(json as Map<String, dynamic>),
       expiresIn: json['expiresIn'] as int? ?? 604800, // 7 days default
     );
   }
