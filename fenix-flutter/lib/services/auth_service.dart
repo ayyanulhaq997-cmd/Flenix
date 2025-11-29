@@ -28,9 +28,8 @@ class AuthService {
       );
 
       if (response.statusCode == 200) {
-        final loginResponse = LoginResponse.fromJson(
-          jsonDecode(response.body) as Map<String, dynamic>,
-        );
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final loginResponse = LoginResponse.fromJson(data);
         
         // Store token securely
         await storage.write(key: _tokenKey, value: loginResponse.token);
@@ -38,7 +37,7 @@ class AuthService {
         
         return loginResponse;
       } else {
-        final error = jsonDecode(response.body) as Map<String, dynamic>;
+        final Map<String, dynamic> error = jsonDecode(response.body);
         throw Exception(error['error'] ?? 'Login failed');
       }
     } on http.ClientException {
