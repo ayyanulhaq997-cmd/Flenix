@@ -1,5 +1,5 @@
 name: fenix_streaming
-description: Netflix-style streaming app for Android and iOS.
+description: Netflix-style streaming app for Android TV, Google TV, Android, and iOS.
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -17,7 +17,7 @@ dependencies:
   # State Management
   provider: ^6.0.0
   
-  # Video Player
+  # Video Player (Android TV optimized)
   video_player: ^2.7.0
   
   # Image Caching
