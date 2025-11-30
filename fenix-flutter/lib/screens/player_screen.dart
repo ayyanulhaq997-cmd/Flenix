@@ -86,9 +86,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              // Color preferences
+              // Audio preferences
               const Text(
-                'Preferencia de subtítulos',
+                'Preferencia de audio',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 16,
@@ -96,48 +96,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Color',
-                style: TextStyle(
-                  color: Colors.grey[300],
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  _buildColorOption('white', Colors.white),
-                  const SizedBox(width: 12),
-                  _buildColorOption('yellow', Colors.amber),
-                  const SizedBox(width: 12),
-                  _buildColorOption('green', Colors.green),
-                  const SizedBox(width: 12),
-                  _buildColorOption('cyan', Colors.cyan),
-                  const SizedBox(width: 12),
-                  _buildColorOption('pink', Colors.pink),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // Size preferences
-              const Text(
-                'Tamaño',
-                style: TextStyle(
-                  color: Colors.grey[300],
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ..._buildSizeOptions(),
-              const SizedBox(height: 20),
-              // Language preferences
-              const Text(
-                'Idioma',
-                style: TextStyle(
-                  color: Colors.grey[300],
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 8),
               ..._buildLanguageOptions(),
             ],
           ),
@@ -146,63 +104,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     );
   }
 
-  Widget _buildColorOption(String color, Color colorValue) {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedSubtitleColor = color;
-        });
-        Navigator.pop(context);
-      },
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: colorValue,
-          border: Border.all(
-            color: _selectedSubtitleColor == color
-                ? const Color(0xFF3B82F6)
-                : Colors.grey[700]!,
-            width: 2,
-          ),
-        ),
-        child: _selectedSubtitleColor == color
-            ? const Icon(Icons.check, color: Colors.black, size: 20)
-            : null,
-      ),
-    );
-  }
 
-  List<Widget> _buildSizeOptions() {
-    return ['Pequeño', 'Mediano', 'Grande'].map((size) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            Radio<String>(
-              value: size,
-              groupValue: _selectedSubtitleSize,
-              onChanged: (value) {
-                setState(() {
-                  _selectedSubtitleSize = value!;
-                });
-                Navigator.pop(context);
-              },
-              activeColor: const Color(0xFF3B82F6),
-            ),
-            Text(
-              size,
-              style: TextStyle(
-                color: Colors.grey[300],
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      );
-    }).toList();
-  }
 
   List<Widget> _buildLanguageOptions() {
     return ['Desactivar', 'Español', 'Inglés'].map((lang) {
@@ -541,6 +443,37 @@ class _PlayerScreenState extends State<PlayerScreen> {
                           },
                         ),
                       ),
+                      const SizedBox(height: 24),
+                      // Remove from history button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Removed from history'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFE91E63),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          child: const Text(
+                            'REMOVER DEL HISTORIAL',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 20),
                     ],
                   ),
@@ -566,7 +499,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   onPressed: () {},
                 ),
                 IconButton(
-                  icon: const Icon(Icons.closed_caption),
+                  icon: const Icon(Icons.settings),
                   onPressed: _showSubtitlePreferences,
                 ),
                 IconButton(
