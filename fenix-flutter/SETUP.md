@@ -1,38 +1,380 @@
-# Fenix Flutter App - Setup Guide
+# Fenix Streaming App - Complete Setup Guide
 
-Complete Netflix-style streaming app for Android and iOS.
+## Overview
 
-## Prerequisites
+Fenix is a Netflix-style streaming platform with three main app implementations:
 
-1. **Flutter SDK** (3.0+)
-   - Download: https://flutter.dev/docs/get-started/install
-   - Verify: `flutter --version`
+1. **Mobile App** (Android/iOS) - Consumer streaming app
+2. **TV App** (Android TV, Apple TV, Web TV) - Large screen optimized interface
+3. **Admin Dashboard** (Web) - Content and user management
 
-2. **Android Studio** (for Android development)
-   - Download: https://developer.android.com/studio
+---
 
-3. **Xcode** (for iOS development, macOS only)
-   - Install: `xcode-select --install`
+## Part 1: Mobile App Setup (Android/iOS)
 
-## Quick Start (5 minutes)
+### Prerequisites
 
-### Step 1: Update API Endpoint
-Edit `lib/config/api_config.dart`:
+- Flutter SDK (3.0+)
+- Android Studio or Xcode
+- Java Development Kit (JDK 11+)
+- Node.js (for backend)
+
+### Installation Steps
+
+1. **Set up Flutter environment:**
+   ```bash
+   flutter doctor
+   flutter pub get
+   ```
+
+2. **Run on device/emulator:**
+   ```bash
+   # For Android
+   flutter run -d android
+
+   # For iOS
+   flutter run -d ios
+   ```
+
+3. **Build production APK (Android):**
+   ```bash
+   flutter build apk --release
+   # APK will be at: build/app/outputs/apk/release/app-release.apk
+   ```
+
+4. **Build production IPA (iOS):**
+   ```bash
+   flutter build ios --release
+   # Follow iOS app store submission process
+   ```
+
+---
+
+## Part 2: TV App Setup (Android TV, Apple TV, Web)
+
+### Android TV Build
+
+The TV app uses the same Flutter codebase with TV-optimized screens:
+
+```bash
+# Create TV variant project structure
+flutter create . --platforms android
+
+# For Android TV specifically, modify android/app/build.gradle:
+# - Add TV permission: <uses-feature android:name="android.hardware.tv" />
+# - Target Android API 30+
+
+# Build Android TV APK
+flutter build apk --release
+
+# For Nvidia Shield, Fire TV, etc:
+# The APK can be sideloaded or distributed through developer settings
+```
+
+**TV App Screens:**
+- `tv_catalog_screen.dart` - Large grid layout optimized for TV
+- `tv_player_screen.dart` - Full-screen player with remote control support
+
+### Apple TV Build
+
+For Apple TV, you'll need to create a tvOS project:
+
+```bash
+# Note: Current Flutter has limited tvOS support
+# Recommended: Use native Swift with Xcode
+
+# Or use flutter_tv plugin (community-maintained):
+flutter pub add flutter_tv
+
+flutter build ios --release
+```
+
+### Web TV Interface
+
+The React dashboard can be adapted for web TV:
+
+```bash
+# The existing web dashboard at http://localhost:5000
+# Works on any smart TV browser (LG WebOS, Samsung Tizen, etc.)
+```
+
+---
+
+## Part 3: Admin Dashboard Setup (Web)
+
+The admin dashboard runs on the Node.js/Express backend with React frontend.
+
+### Backend Setup
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Database setup:**
+   ```bash
+   npm run db:push
+   ```
+
+3. **Run development server:**
+   ```bash
+   npm run dev
+   ```
+   - Backend runs on: `http://localhost:5000/api`
+   - Frontend runs on: `http://localhost:5000`
+
+4. **Default admin credentials:**
+   - Email: `admin@fenix.local`
+   - Password: `Admin@123456`
+
+### Frontend Access
+
+- **Dashboard:** `http://localhost:5000`
+- **Content Management:** Movies, Series, Channels, Episodes
+- **User Management:** App users, subscriptions
+- **API Keys:** For mobile app developers
+
+---
+
+## Deployment Guide
+
+### Mobile App Deployment
+
+#### Google Play Store (Android)
+
+1. **Create Google Play Developer Account** ($25 one-time)
+
+2. **Generate signed keystore:**
+   ```bash
+   keytool -genkey -v -keystore ~/key.jks -keyalg RSA -keysize 2048 -validity 10000
+   ```
+
+3. **Configure signing in android/app/build.gradle**
+
+4. **Build signed APK:**
+   ```bash
+   flutter build apk --release
+   ```
+
+5. **Upload to Google Play Console**
+
+#### Apple App Store (iOS)
+
+1. **Enroll Apple Developer Program** ($99/year)
+
+2. **Create App ID and provisioning profiles in Xcode**
+
+3. **Build for App Store:**
+   ```bash
+   flutter build ios --release
+   ```
+
+4. **Upload with Transporter or Xcode**
+
+### TV App Deployment
+
+#### Android TV
+
+- **Supported Devices:** Nvidia Shield, Fire TV, Sony Smart TVs, TCL, etc.
+- **Distribution:** Google Play Store (TV section) or direct APK installation
+- **Sideload for testing:** ADB installation on test devices
+
+#### Web TV Interface
+
+- Deploy the React dashboard to a web server
+- Access via smart TV browser
+- No installation required
+
+#### Apple TV
+
+- Submit through App Store Connect (tvOS section)
+- Requires Apple Developer account
+
+---
+
+## API Integration for Mobile Apps
+
+### Authentication
+
 ```dart
-// Change this to your Fenix backend URL
-static const String apiBaseUrl = 'http://localhost:5000';
+// Login endpoint
+POST /api/auth/login
+{
+  "email": "user@example.com",
+  "password": "password"
+}
+
+Response:
+{
+  "token": "jwt_token_here",
+  "user": { ... }
+}
 ```
 
-### Step 2: Install Dependencies
+### Content Queries
+
+```dart
+// Get all movies
+GET /api/movies
+Headers: Authorization: Bearer {token}
+
+// Get series with episodes
+GET /api/series?id={seriesId}
+
+// Get channels
+GET /api/channels
+
+// Get episodes for series
+GET /api/episodes?seriesId={seriesId}
+```
+
+### Streaming URLs
+
+```dart
+// Get signed streaming URL (1-hour expiry)
+GET /api/public/stream/{contentId}
+
+// Use in video_player:
+video_player: ^2.7.0
+```
+
+---
+
+## System Architecture
+
+### Scalability (1000-3000 concurrent users)
+
+**Backend:**
+- Node.js clustering (multi-core utilization)
+- Connection pooling (10-50 database connections)
+- Nginx load balancer (reverse proxy)
+- Redis session management (production)
+
+**Database:**
+- PostgreSQL with connection pooling
+- Indexes on frequently queried fields
+- Read replicas for scaling reads
+
+**Storage:**
+- Wasabi S3 (70TB+ video content)
+- CDN for edge delivery
+- Signed URLs with expiry for security
+
+**Mobile App:**
+- Local caching with `cached_network_image`
+- Video buffering with `video_player`
+- JWT refresh tokens for authentication
+
+---
+
+## Environment Variables
+
+### Backend (.env)
+
+```
+DATABASE_URL=postgresql://user:password@host:5432/fenix
+JWT_SECRET=your_secret_key_here
+NODE_ENV=production
+PORT=5000
+
+# Wasabi S3 (optional)
+WASABI_ENDPOINT=https://s3.wasabisys.com
+WASABI_ACCESS_KEY=your_access_key
+WASABI_SECRET_KEY=your_secret_key
+WASABI_BUCKET_NAME=fenix-videos
+```
+
+### Mobile App (lib/config/api_config.dart)
+
+```dart
+class ApiConfig {
+  static const String apiBaseUrl = 'https://api.fenix.app';
+  static const Duration timeoutDuration = Duration(seconds: 30);
+}
+```
+
+---
+
+## Testing Checklist
+
+- [ ] Mobile app login with test credentials
+- [ ] Movie/series browsing and filtering
+- [ ] Video playback on mobile
+- [ ] TV app layout on 55" TV screen
+- [ ] Admin dashboard content management
+- [ ] Add/edit/delete movies, series, channels
+- [ ] User subscription management
+- [ ] API key generation for developers
+- [ ] Streaming URL generation with expiry
+- [ ] Database backup and recovery
+
+---
+
+## Support & Troubleshooting
+
+### Common Issues
+
+**Flutter build fails on Android:**
 ```bash
-cd fenix-flutter
+flutter clean
 flutter pub get
+flutter build apk
 ```
 
-### Step 3: Run the App
+**TV app not detecting as TV device:**
+- Ensure `android.hardware.tv` feature is declared
+- Test on actual Android TV or emulator with TV add-on
 
-**Android:**
-```bash
+**API connection issues:**
+- Verify backend is running: `http://localhost:5000/api/stats`
+- Check JWT token expiry (7 days)
+- Ensure CORS is enabled on backend
+
+---
+
+## File Structure
+
+```
+fenix-flutter/
+├── lib/
+│   ├── main.dart
+│   ├── screens/
+│   │   ├── login_screen.dart
+│   │   ├── catalog_screen.dart (Mobile)
+│   │   ├── tv_catalog_screen.dart (TV)
+│   │   ├── player_screen.dart (Mobile)
+│   │   └── tv_player_screen.dart (TV)
+│   ├── services/
+│   │   ├── auth_service.dart
+│   │   └── movie_service.dart
+│   └── config/
+│       └── api_config.dart
+
+fenix-dashboard/ (React Admin)
+├── client/
+│   ├── src/
+│   │   ├── pages/
+│   │   ├── components/
+│   │   └── App.tsx
+│   └── index.html
+
+server/
+├── routes.ts
+├── storage.ts
+├── index.ts
+└── middleware/
+```
+
+---
+
+## Next Steps
+
+1. **Configure Wasabi S3** for video storage
+2. **Set up CI/CD pipeline** for automatic builds
+3. **Deploy backend** to Railway/AWS
+4. **Submit to app stores** (Play Store, App Store, TV platforms)
+5. **Configure CDN** for video edge delivery
+6. **Set up monitoring** (Sentry, DataDog)
 flutter run
 ```
 
