@@ -104,7 +104,7 @@ export function TVVideoPlayer({ title, duration, contentId, videoUrl }: TVVideoP
           e.preventDefault();
           // Save viewing progress to backend (mock)
           console.log(`Saved progress: ${currentTime}s / ${duration}s`);
-          setLocation('/tv/details');
+          setLocation('/tv');
           break;
 
         default:
@@ -126,13 +126,30 @@ export function TVVideoPlayer({ title, duration, contentId, videoUrl }: TVVideoP
 
   const progressPercent = (currentTime / duration) * 100;
 
+  const handleExit = () => {
+    console.log(`Saved progress: ${currentTime}s / ${duration}s`);
+    setLocation('/tv');
+  };
+
   return (
     <div className="relative w-full h-screen bg-black text-white overflow-hidden" data-testid="video-player">
+      {/* Persistent EXIT Button - Always Visible */}
+      <button
+        onClick={handleExit}
+        className="absolute top-6 right-6 z-50 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg font-bold text-lg transition-all shadow-lg flex items-center gap-2"
+        data-testid="button-exit-persistent"
+        aria-label="Salir del reproductor"
+      >
+        <span>✕</span>
+        <span>SALIR</span>
+      </button>
+
       {/* Video Container */}
       <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-black">
         <div className="text-center">
           <h2 className="text-3xl font-bold mb-4">{title}</h2>
           <p className="text-gray-400">▶ {isPlaying ? 'Playing' : 'Paused'}</p>
+          <p className="text-sm text-gray-500 mt-8">Presiona cualquier tecla para mostrar controles | Presiona ESC o SALIR para salir</p>
         </div>
       </div>
 
@@ -200,20 +217,18 @@ export function TVVideoPlayer({ title, duration, contentId, videoUrl }: TVVideoP
             </button>
 
             <button
-              onClick={() => {
-                console.log(`Saved progress: ${currentTime}s / ${duration}s`);
-                setLocation('/tv/details');
-              }}
-              className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded font-semibold transition-all"
-              data-testid="button-exit"
+              onClick={handleExit}
+              className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded font-bold transition-all"
+              data-testid="button-exit-controls"
             >
-              ✕ Salir
+              ✕ SALIR AL INICIO
             </button>
           </div>
 
           {/* Keyboard Hints */}
-          <div className="text-xs text-gray-500 text-center">
-            <p>▶ Espacio: Play/Pause | ◀ ▶: ±10s | ▼: Audio/Subs | Esc: Salir</p>
+          <div className="text-xs text-gray-500 text-center space-y-1">
+            <p>▶ Espacio: Play/Pause | ◀ ▶: ±10s | ▼: Audio/Subs | Esc: Salir al Inicio</p>
+            <p className="text-gray-600">💡 Haz clic en botón SALIR o presiona ESC para volver a la pantalla principal</p>
           </div>
         </div>
       )}
