@@ -28,6 +28,7 @@ import AdminDashboardMetrics from "@/pages/admin-dashboard-metrics";
 import AdminContentList from "@/pages/admin-content-list";
 import AdminUserManagement from "@/pages/admin-user-management";
 import UnifiedHome from "@/pages/unified-home";
+import PlanSelection from "@/pages/plan-selection";
 import { isAdmin, isAuthenticated } from "@/lib/auth-utils";
 
 /**
@@ -68,6 +69,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route path="/profiles" component={ProfileSelector} />
+      <Route path="/plans" component={PlanSelection} />
       
       {/* Public Content Routes */}
       <Route path="/browse" component={Browse} />

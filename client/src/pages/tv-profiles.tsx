@@ -26,7 +26,7 @@ export default function TVProfiles() {
   const { data: fetchedProfiles = [], isLoading: isProfilesLoading } = useQuery({
     queryKey: ['user-profiles'],
     queryFn: async () => {
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('appToken');
       if (!token) return [];
       const { data } = await axios.get('/api/profiles', {
         headers: { 'Authorization': `Bearer ${token}` },
@@ -46,7 +46,7 @@ export default function TVProfiles() {
 
   const handleSelectProfile = async (profileId: number) => {
     try {
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('appToken');
       if (!token) {
         setLocation('/login');
         return;
@@ -60,8 +60,8 @@ export default function TVProfiles() {
       if (response.status === 200) {
         // Store active profile in localStorage
         localStorage.setItem('activeProfileId', String(profileId));
-        // Navigate to home
-        setLocation('/tv');
+        // Navigate to plan selection
+        setLocation('/plans');
       }
     } catch (error) {
       console.error('Error selecting profile:', error);
@@ -116,7 +116,7 @@ export default function TVProfiles() {
     if (!newProfileName.trim()) return;
     
     try {
-      const token = localStorage.getItem('authToken');
+      const token = localStorage.getItem('appToken');
       if (!token) {
         setLocation('/login');
         return;
@@ -128,10 +128,12 @@ export default function TVProfiles() {
       );
 
       if (response.status === 201) {
-        // Add new profile to local state
-        setProfiles([...profiles, response.data]);
+        // Store new profile and navigate to plan selection
+        localStorage.setItem('activeProfileId', String(response.data.id));
         setNewProfileName('');
         setShowAddProfile(false);
+        // Navigate to plan selection after creating profile
+        setLocation('/plans');
       }
     } catch (error: any) {
       console.error('Error creating profile:', error.response?.data?.error || error.message);

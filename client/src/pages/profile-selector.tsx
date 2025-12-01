@@ -50,7 +50,7 @@ export default function ProfileSelector() {
 
   const selectProfile = (profileId: number) => {
     localStorage.setItem("selectedProfileId", profileId.toString());
-    setLocation("/browse");
+    setLocation("/plans");
   };
 
   if (selectedProfileId) {
