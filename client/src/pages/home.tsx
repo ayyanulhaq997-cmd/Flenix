@@ -6,11 +6,15 @@ export default function Home() {
   const [, setLocation] = useLocation();
   
   useEffect(() => {
-    // Check if user is authenticated (only redirect if not already on this page)
-    const token = localStorage.getItem("appToken");
-    if (token && window.location.pathname === "/") {
-      // Redirect to browse page if authenticated
-      setLocation("/browse");
+    try {
+      // Check if user is authenticated
+      const token = localStorage?.getItem("appToken");
+      if (token) {
+        // Redirect to browse page if authenticated
+        setLocation("/browse");
+      }
+    } catch (err) {
+      console.warn("Auth check failed:", err);
     }
   }, [setLocation]);
 
