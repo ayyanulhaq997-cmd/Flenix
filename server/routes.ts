@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { insertMovieSchema, insertSeriesSchema, insertEpisodeSchema, insertChannelSchema, insertAppUserSchema, insertSubscriptionPlanSchema, insertChannelContentSchema, insertApiKeySchema, insertFileSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { authMiddleware, adminMiddleware, generateToken, generateStreamingUrl } from "./auth";
+import bcrypt from "bcryptjs";
 import { openApiSpec } from "./openapi";
 import { log } from "./index";
 import { getCached, setCached, invalidateCache, cacheKeys } from "./cache";
@@ -482,7 +483,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const admin = await storage.getAdminByEmail(email);
       if (admin) {
         // Verify admin password
-        const isPasswordValid = await require('bcryptjs').compare(password, admin.passwordHash);
+        const isPasswordValid = await bcrypt.compare(password, admin.passwordHash);
         if (!isPasswordValid) {
           return res.status(401).json({ error: "Invalid credentials" });
         }
@@ -511,7 +512,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }
 
       // Verify password using bcrypt
-      const isPasswordValid = await require('bcryptjs').compare(password, user.passwordHash);
+      const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
       if (!isPasswordValid) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
