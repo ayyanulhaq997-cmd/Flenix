@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
 import { TVHeader } from '@/components/tv/TVHeader';
 import { TVHero } from '@/components/tv/TVHero';
 import { TVNavigationTabs } from '@/components/tv/TVNavigationTabs';
 import { TVContentRow } from '@/components/tv/TVContentRow';
 import { useTVNavigation } from '@/hooks/useTVNavigation';
+import axios from 'axios';
 
 interface ContentItem {
   id: string | number;
@@ -23,33 +25,21 @@ interface NavigationState {
   colIndex: number;
 }
 
-// Mock data
-const mockMovies: ContentItem[] = [
-  { id: 1, title: "Avengers: Doomsday", year: 2026, progress: 45 },
-  { id: 2, title: "Black Panther: Wakanda Forever", year: 2024, progress: 20 },
-  { id: 3, title: "Thor: Love and Thunder", year: 2024, progress: 0 },
-  { id: 4, title: "Doctor Strange", year: 2022, progress: 85 },
-  { id: 5, title: "Guardians of the Galaxy", year: 2023, progress: 100 },
-  { id: 6, title: "Spider-Man: No Way Home", year: 2023, progress: 60 },
-  { id: 7, title: "The Marvels", year: 2023, progress: 30 },
-  { id: 8, title: "Captain America: Brave New World", year: 2025, progress: 0 },
-];
+// Fetch functions for real data from API
+const fetchMovies = async (): Promise<ContentItem[]> => {
+  const { data } = await axios.get('/api/movies');
+  return Array.isArray(data) ? data : [];
+};
 
-const mockSeries: ContentItem[] = [
-  { id: 101, title: "Loki", year: 2023 },
-  { id: 102, title: "WandaVision", year: 2021 },
-  { id: 103, title: "The Falcon and the Winter Soldier", year: 2021 },
-  { id: 104, title: "Moon Knight", year: 2022 },
-  { id: 105, title: "She-Hulk", year: 2022 },
-  { id: 106, title: "Ms. Marvel", year: 2022 },
-];
+const fetchSeries = async (): Promise<ContentItem[]> => {
+  const { data } = await axios.get('/api/series');
+  return Array.isArray(data) ? data : [];
+};
 
-const mockChannels: ContentItem[] = [
-  { id: 201, title: "HBO Max", year: 2024 },
-  { id: 202, title: "Netflix", year: 2024 },
-  { id: 203, title: "Disney+", year: 2024 },
-  { id: 204, title: "ESPN", year: 2024 },
-];
+const fetchChannels = async (): Promise<ContentItem[]> => {
+  const { data } = await axios.get('/api/channels');
+  return Array.isArray(data) ? data : [];
+};
 
 const TABS = [
   { id: 'resume', label: 'RESUMEN' },
@@ -71,6 +61,25 @@ export default function TVHome() {
   const [searchMode, setSearchMode] = useState(false);
   const keyPressTimeRef = useRef<Record<string, number>>({});
   const fastScrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Fetch real data from API
+  const { data: moviesData = [] } = useQuery({
+    queryKey: ['movies'],
+    queryFn: fetchMovies,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  const { data: seriesData = [] } = useQuery({
+    queryKey: ['series'],
+    queryFn: fetchSeries,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: channelsData = [] } = useQuery({
+    queryKey: ['channels'],
+    queryFn: fetchChannels,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Navigate to content details
   const navigateToContent = (item: ContentItem) => {
@@ -223,14 +232,23 @@ export default function TVHome() {
   function getActiveRowData(): ContentItem[] {
     switch (TABS[activeTab]?.id) {
       case 'movies':
-        return mockMovies;
+        return moviesData;
       case 'series':
-        return mockSeries;
+        return seriesData;
       case 'channels':
-        return mockChannels;
+        return channelsData;
       default:
-        return mockMovies;
+        return moviesData;
     }
+  }
+
+  function getSearchResults(): ContentItem[] {
+    if (!searchQuery) return [];
+    const query = searchQuery.toLowerCase();
+    const allContent = [...moviesData, ...seriesData, ...channelsData];
+    return allContent.filter(item => 
+      item.title.toLowerCase().includes(query)
+    );
   }
 
   return (
@@ -268,21 +286,21 @@ export default function TVHome() {
             <>
               <TVContentRow
                 title="CONTINUAR VIENDO"
-                items={mockMovies.filter(m => m.progress! > 0 && m.progress! < 100)}
+                items={moviesData.filter(m => m.progress! > 0 && m.progress! < 100)}
                 focusedCol={focusedElement === 'row' && focusedRowIndex === 0 ? focusedColIndex : -1}
                 rowIndex={0}
                 onItemClick={navigateToContent}
               />
               <TVContentRow
                 title="PELÍCULAS POPULARES"
-                items={mockMovies}
+                items={moviesData}
                 focusedCol={focusedElement === 'row' && focusedRowIndex === 1 ? focusedColIndex : -1}
                 rowIndex={1}
                 onItemClick={navigateToContent}
               />
               <TVContentRow
                 title="SERIES RECOMENDADAS"
-                items={mockSeries}
+                items={seriesData}
                 focusedCol={focusedElement === 'row' && focusedRowIndex === 2 ? focusedColIndex : -1}
                 rowIndex={2}
                 onItemClick={navigateToContent}
@@ -293,7 +311,7 @@ export default function TVHome() {
           {activeTab === 1 && (
             <TVContentRow
               title="PELÍCULAS"
-              items={mockMovies}
+              items={moviesData}
               focusedCol={focusedElement === 'row' ? focusedColIndex : -1}
               rowIndex={0}
               onItemClick={navigateToContent}
@@ -303,7 +321,7 @@ export default function TVHome() {
           {activeTab === 2 && (
             <TVContentRow
               title="SERIES"
-              items={mockSeries}
+              items={seriesData}
               focusedCol={focusedElement === 'row' ? focusedColIndex : -1}
               rowIndex={0}
               onItemClick={navigateToContent}
@@ -313,7 +331,17 @@ export default function TVHome() {
           {activeTab === 3 && (
             <TVContentRow
               title="CANALES TV"
-              items={mockChannels}
+              items={channelsData}
+              focusedCol={focusedElement === 'row' ? focusedColIndex : -1}
+              rowIndex={0}
+              onItemClick={navigateToContent}
+            />
+          )}
+
+          {activeTab === 4 && (
+            <TVContentRow
+              title={searchQuery ? `RESULTADOS: ${searchQuery.toUpperCase()}` : 'INGRESE UN TÉRMINO DE BÚSQUEDA'}
+              items={getSearchResults()}
               focusedCol={focusedElement === 'row' ? focusedColIndex : -1}
               rowIndex={0}
               onItemClick={navigateToContent}
