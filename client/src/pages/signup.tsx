@@ -15,13 +15,18 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const { data: plans = [] } = useQuery({
+  const { data: plans = [], isLoading: plansLoading, isError: plansError, error: plansErrorMsg } = useQuery({
     queryKey: ['subscription-plans'],
     queryFn: async () => {
       const response = await fetch('/api/subscription-plans');
       if (!response.ok) throw new Error('Failed to fetch plans');
-      return response.json();
+      const data = await response.json();
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('No subscription plans available');
+      }
+      return data;
     },
+    retry: 2,
   });
 
   const registerMutation = useMutation({
@@ -101,8 +106,24 @@ export default function Signup() {
               <p className="text-muted-foreground">Select a subscription to get started</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {plans.map((plan: any) => (
+            {plansLoading ? (
+              <div className="text-center py-12">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+                <p className="text-muted-foreground">Loading plans...</p>
+              </div>
+            ) : plansError ? (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-center">
+                <p className="text-red-400 font-semibold mb-2">Failed to Load Plans</p>
+                <p className="text-muted-foreground text-sm">{plansErrorMsg?.message || 'Please try refreshing the page'}</p>
+              </div>
+            ) : plans.length === 0 ? (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-6 text-center">
+                <p className="text-yellow-400 font-semibold">No Plans Available</p>
+                <p className="text-muted-foreground text-sm">Subscription plans are temporarily unavailable</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {plans.map((plan: any) => (
                 <div key={plan.id} className="relative group">
                   <div className={`absolute inset-0 rounded-xl blur transition-all ${selectedPlan === plan.id ? 'bg-blue-500/50' : 'bg-white/5'} group-hover:bg-white/10`} />
                   <div className="relative bg-black/80 backdrop-blur border border-white/10 rounded-xl p-6 flex flex-col h-full hover:border-white/20 transition-colors cursor-pointer"
@@ -135,7 +156,8 @@ export default function Signup() {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="max-w-md mx-auto space-y-6">
