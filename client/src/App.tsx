@@ -21,6 +21,7 @@ import ProfileSelector from "@/pages/profile-selector";
 import AccountSettings from "@/pages/account-settings";
 import TVHome from "@/pages/tv-home";
 import TVDetails from "@/pages/tv-details";
+import TVProfiles from "@/pages/tv-profiles";
 import { isAdmin, isAuthenticated } from "@/lib/auth-utils";
 
 /**
@@ -50,6 +51,7 @@ function Router() {
       {/* TV Application - Primary Platform */}
       <Route path="/tv" component={TVHome} />
       <Route path="/tv/details" component={TVDetails} />
+      <Route path="/tv/profiles" component={TVProfiles} />
 
       {/* Public Routes */}
       <Route path="/" component={Home} />
