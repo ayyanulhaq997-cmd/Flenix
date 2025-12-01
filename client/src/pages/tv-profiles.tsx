@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { TVHeader } from '@/components/tv/TVHeader';
 import { Spinner } from '@/components/ui/spinner';
-import { isAuthenticated } from '@/lib/auth-utils';
+import { isAuthenticated, logout } from '@/lib/auth-utils';
 import axios from 'axios';
 
 interface Profile {
@@ -18,6 +18,7 @@ export default function TVProfiles() {
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [showAddProfile, setShowAddProfile] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Check authentication - show login option if not authenticated
   const isLoggedIn = isAuthenticated();
@@ -68,8 +69,24 @@ export default function TVProfiles() {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (showLogoutConfirm) {
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          e.preventDefault();
+          setShowLogoutConfirm(false);
+        }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleLogout();
+        }
+        return;
+      }
+
       if (showAddProfile) {
         if (e.key === 'Escape') {
           e.preventDefault();
@@ -86,13 +103,16 @@ export default function TVProfiles() {
           break;
         case 'ArrowRight':
           e.preventDefault();
-          setFocusedIndex(Math.min(profiles.length, focusedIndex + 1));
+          setFocusedIndex(Math.min(profiles.length + 1, focusedIndex + 1));
           break;
         case 'Enter':
           e.preventDefault();
           if (focusedIndex === profiles.length) {
             // Add profile button
             setShowAddProfile(true);
+          } else if (focusedIndex === profiles.length + 1) {
+            // Logout button
+            setShowLogoutConfirm(true);
           } else {
             // Select profile and navigate to home
             handleSelectProfile(profiles[focusedIndex].id);
@@ -110,7 +130,7 @@ export default function TVProfiles() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [focusedIndex, profiles, showAddProfile, setLocation]);
+  }, [focusedIndex, profiles, showAddProfile, showLogoutConfirm, setLocation]);
 
   const handleAddProfile = async () => {
     if (!newProfileName.trim()) return;
@@ -254,11 +274,51 @@ export default function TVProfiles() {
           </button>
         </div>
 
+        {/* Logout Button */}
+        <button
+          onClick={() => setShowLogoutConfirm(true)}
+          className={`mt-20 px-8 py-3 rounded-lg font-semibold transition-all ${
+            focusedIndex === profiles.length + 1
+              ? 'bg-orange-600 hover:bg-orange-700 border-4 border-orange-400 shadow-lg shadow-orange-600 scale-105'
+              : 'bg-gray-700 hover:bg-gray-600 border-2 border-gray-600'
+          }`}
+          data-testid="button-logout"
+          aria-label="Cerrar sesión"
+        >
+          Cerrar Sesión
+        </button>
+
         {/* Instructions */}
-        <div className="mt-20 text-gray-400 text-sm">
-          <p>◀ ▶: Navegar entre perfiles | Intro: Seleccionar | Esc: Salir</p>
+        <div className="mt-8 text-gray-400 text-sm">
+          <p>◀ ▶: Navegar | Intro: Seleccionar | Esc: Salir</p>
         </div>
       </main>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-8 rounded-lg max-w-md w-full mx-4 border-2 border-orange-600">
+            <h2 className="text-2xl font-bold mb-4 text-orange-400">Confirmar Cierre de Sesión</h2>
+            <p className="text-gray-300 mb-8">¿Estás seguro de que deseas cerrar sesión? Tendrás que iniciar sesión nuevamente para acceder a tu cuenta.</p>
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded font-semibold transition-all"
+                data-testid="button-cancel-logout"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex-1 px-6 py-3 bg-orange-600 hover:bg-orange-700 rounded font-semibold transition-all"
+                data-testid="button-confirm-logout"
+              >
+                Cerrar Sesión
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Profile Modal */}
       {showAddProfile && (

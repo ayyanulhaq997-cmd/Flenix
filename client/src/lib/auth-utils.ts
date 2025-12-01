@@ -28,7 +28,7 @@ export function getCurrentUser(): User | null {
  * Check if user is authenticated
  */
 export function isAuthenticated(): boolean {
-  return !!localStorage.getItem("auth_token");
+  return !!localStorage.getItem("appToken");
 }
 
 /**
@@ -51,16 +51,27 @@ export function isSubscriber(): boolean {
  * Get auth token
  */
 export function getAuthToken(): string | null {
-  return localStorage.getItem("auth_token");
+  return localStorage.getItem("appToken");
 }
 
 /**
- * Logout user
+ * Logout user - Secure sign-out with complete state cleanup
  */
 export function logout(): void {
+  // Clear all authentication-related data
+  localStorage.removeItem("appToken");
   localStorage.removeItem("auth_token");
   localStorage.removeItem("user");
-  window.location.href = "/";
+  localStorage.removeItem("signupEmail");
+  localStorage.removeItem("signupPlanData");
+  localStorage.removeItem("activeProfileId");
+  localStorage.removeItem("selectedPlan");
+  
+  // Clear sessionStorage as well
+  sessionStorage.clear();
+  
+  // Reset to login page
+  window.location.href = "/login";
 }
 
 /**
