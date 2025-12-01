@@ -558,6 +558,154 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updated || undefined;
   }
+
+  // Profiles
+  async getUserProfiles(userId: number): Promise<UserProfile[]> {
+    return await db.select().from(userProfiles).where(eq(userProfiles.userId, userId)).orderBy(userProfiles.createdAt);
+  }
+
+  async getUserProfile(profileId: number): Promise<UserProfile | undefined> {
+    const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.id, profileId));
+    return profile || undefined;
+  }
+
+  async createUserProfile(profile: InsertUserProfile): Promise<UserProfile> {
+    const [newProfile] = await db.insert(userProfiles).values(profile).returning();
+    return newProfile;
+  }
+
+  async updateUserProfile(profileId: number, profile: Partial<InsertUserProfile>): Promise<UserProfile | undefined> {
+    const [updated] = await db
+      .update(userProfiles)
+      .set(profile)
+      .where(eq(userProfiles.id, profileId))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteUserProfile(profileId: number): Promise<void> {
+    await db.delete(userProfiles).where(eq(userProfiles.id, profileId));
+  }
+
+  // Sessions
+  async createUserSession(session: InsertUserSession): Promise<UserSession> {
+    const [newSession] = await db.insert(userSessions).values(session).returning();
+    return newSession;
+  }
+
+  async getUserSessions(userId: number): Promise<UserSession[]> {
+    return await db.select().from(userSessions).where(eq(userSessions.userId, userId));
+  }
+
+  async getUserSession(sessionId: number): Promise<UserSession | undefined> {
+    const [session] = await db.select().from(userSessions).where(eq(userSessions.id, sessionId));
+    return session || undefined;
+  }
+
+  async deleteSession(sessionId: number): Promise<void> {
+    await db.delete(userSessions).where(eq(userSessions.id, sessionId));
+  }
+
+  async deleteAllUserSessions(userId: number): Promise<void> {
+    await db.delete(userSessions).where(eq(userSessions.userId, userId));
+  }
+
+  // Viewing History
+  async recordViewingHistory(history: InsertViewingHistory): Promise<ViewingHistory> {
+    const [newHistory] = await db.insert(viewingHistory).values(history).returning();
+    return newHistory;
+  }
+
+  async getViewingHistory(userId: number, profileId?: number): Promise<ViewingHistory[]> {
+    if (profileId) {
+      return await db
+        .select()
+        .from(viewingHistory)
+        .where(and(eq(viewingHistory.userId, userId), eq(viewingHistory.profileId, profileId)))
+        .orderBy(desc(viewingHistory.lastWatchedAt));
+    }
+    return await db.select().from(viewingHistory).where(eq(viewingHistory.userId, userId)).orderBy(desc(viewingHistory.lastWatchedAt));
+  }
+
+  async getViewingHistoryItem(userId: number, contentType: string, contentId: number): Promise<ViewingHistory | undefined> {
+    const [item] = await db
+      .select()
+      .from(viewingHistory)
+      .where(
+        and(
+          eq(viewingHistory.userId, userId),
+          eq(viewingHistory.contentType, contentType),
+          eq(viewingHistory.contentId, contentId)
+        )
+      );
+    return item || undefined;
+  }
+
+  async updateViewingProgress(userId: number, contentId: number, currentTime: number, duration: number): Promise<ViewingHistory | undefined> {
+    const completionPercentage = Math.round((currentTime / duration) * 100);
+    const [updated] = await db
+      .update(viewingHistory)
+      .set({ currentTimeSeconds: currentTime, completionPercentage, lastWatchedAt: new Date() })
+      .where(
+        and(
+          eq(viewingHistory.userId, userId),
+          eq(viewingHistory.contentId, contentId)
+        )
+      )
+      .returning();
+    return updated || undefined;
+  }
+
+  async getContinueWatchingList(userId: number, profileId?: number, limit = 10): Promise<any[]> {
+    let query = db
+      .select()
+      .from(viewingHistory)
+      .where(
+        and(
+          eq(viewingHistory.userId, userId),
+          profileId ? eq(viewingHistory.profileId, profileId) : undefined
+        )
+      )
+      .orderBy(desc(viewingHistory.lastWatchedAt))
+      .limit(limit);
+
+    return await query;
+  }
+
+  // Trending & Recommendations
+  async getTrendingContent(limit = 20): Promise<any[]> {
+    const trendingMovies = await db
+      .select()
+      .from(movies)
+      .where(eq(movies.status, "active"))
+      .orderBy(desc(movies.views))
+      .limit(Math.ceil(limit / 2));
+
+    const trendingSeries = await db
+      .select()
+      .from(series)
+      .where(eq(series.status, "active"))
+      .orderBy(desc(series.createdAt))
+      .limit(Math.ceil(limit / 2));
+
+    return [...trendingMovies, ...trendingSeries];
+  }
+
+  async getRecommendedContent(userId: number, limit = 20): Promise<any[]> {
+    // Get user's viewing history to understand preferences
+    const history = await this.getViewingHistory(userId);
+    const watchedIds = history.map(h => h.contentId);
+
+    // Get trending content excluding watched items
+    const recommended = await db
+      .select()
+      .from(movies)
+      .where(and(eq(movies.status, "active")))
+      .orderBy(desc(movies.views))
+      .limit(limit);
+
+    return recommended.filter(m => !watchedIds.includes(m.id));
+  }
 }
 
 export const storage = new DatabaseStorage();
