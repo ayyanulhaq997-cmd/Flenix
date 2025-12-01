@@ -2,19 +2,54 @@ import type { Express } from "express";
 import { storage } from "./storage";
 import { authMiddleware } from "./auth";
 import { generateSignedUrl } from "./cloudfront-signing";
+import { canStreamAtQuality, getSubscriptionFeatures, canStartStream } from "./subscriptions";
+import { geoblockingMiddleware } from "./geoblocking";
 
 export async function registerStreamingRoutes(app: Express) {
   // Get HLS manifest with adaptive bitrate streaming
-  app.get("/api/stream/:contentId/manifest.m3u8", async (req, res) => {
-    try {
-      const { contentId } = req.params;
-      const movie = await storage.getMovie(Number(contentId));
-      if (!movie) {
-        return res.status(404).json({ error: "Content not found" });
-      }
+  // Protected by subscription tier and geoblocking
+  app.get(
+    "/api/stream/:contentId/manifest.m3u8",
+    authMiddleware,
+    geoblockingMiddleware(),
+    async (req, res) => {
+      try {
+        const { contentId } = req.params;
+        const userPlan = req.user?.plan || "free";
+        const userId = req.user?.userId;
 
-      // Generate signed CloudFront URL valid for 1 hour
-      const masterUrl = generateSignedUrl(`/hls/${contentId}/master.m3u8`);
+        // Check if user can stream based on simultaneous stream limit
+        if (userId) {
+          const canStream = await canStartStream(userId, userPlan);
+          if (!canStream) {
+            return res.status(429).json({
+              error: "Maximum simultaneous streams reached for your plan",
+              maxStreams: getSubscriptionFeatures(userPlan).maxSimultaneousStreams,
+            });
+          }
+        }
+
+        const movie = await storage.getMovie(Number(contentId));
+        if (!movie) {
+          return res.status(404).json({ error: "Content not found" });
+        }
+
+        // Check subscription access
+        if (!canStreamAtQuality(userPlan, "1080p")) {
+          return res.status(403).json({
+            error: "Your subscription plan doesn't support streaming",
+            requiredPlan: "standard",
+          });
+        }
+
+        // Generate signed CloudFront URL valid for 5 minutes (300 seconds)
+        // Short expiry prevents unauthorized sharing/redistribution
+        const masterUrl = generateSignedUrl(`/hls/${contentId}/master.m3u8`, {
+          privateKey: process.env.CLOUDFRONT_PRIVATE_KEY || "",
+          keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID || "",
+          domainName: process.env.CLOUDFRONT_DOMAIN || "d123456.cloudfront.net",
+          expireTime: 300, // 5 minutes - short-lived for security
+        });
 
       // HLS Master Playlist with multiple quality levels
       const manifest = `#EXTM3U
@@ -39,10 +74,11 @@ ${masterUrl.replace("master.m3u8", "4k/playlist.m3u8")}`;
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
-  });
+    }
+  );
 
-  // Get audio tracks for content
-  app.get("/api/content/:contentId/audio-tracks", async (req, res) => {
+  // Get audio tracks for content (with subscription check)
+  app.get("/api/content/:contentId/audio-tracks", authMiddleware, geoblockingMiddleware(), async (req, res) => {
     try {
       const { contentId } = req.params;
       const tracks = await storage.getAudioTracks(Number(contentId));
@@ -52,8 +88,8 @@ ${masterUrl.replace("master.m3u8", "4k/playlist.m3u8")}`;
     }
   });
 
-  // Get subtitles for content
-  app.get("/api/content/:contentId/subtitles", async (req, res) => {
+  // Get subtitles for content (with subscription check)
+  app.get("/api/content/:contentId/subtitles", authMiddleware, geoblockingMiddleware(), async (req, res) => {
     try {
       const { contentId } = req.params;
       const subtitles = await storage.getSubtitles(Number(contentId));

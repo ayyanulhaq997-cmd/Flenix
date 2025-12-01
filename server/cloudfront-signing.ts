@@ -10,7 +10,7 @@ export interface SignedUrlOptions {
   privateKey: string; // RSA private key (PEM format)
   keyPairId: string; // CloudFront key pair ID
   domainName: string; // CloudFront domain (e.g., d123456.cloudfront.net)
-  expireTime?: number; // URL expiry time in seconds (default: 3600)
+  expireTime?: number; // URL expiry time in seconds (default: 300 for security)
 }
 
 export interface SignedUrlResult {
@@ -27,7 +27,9 @@ export function generateSignedUrl(
   resourcePath: string,
   options: SignedUrlOptions
 ): SignedUrlResult {
-  const expireTime = Math.floor(Date.now() / 1000) + (options.expireTime || 3600);
+  // Default to 300 seconds (5 minutes) for maximum security
+  // Videos expire quickly, preventing unauthorized sharing/redistribution
+  const expireTime = Math.floor(Date.now() / 1000) + (options.expireTime || 300);
 
   // Build the policy document
   const policy = {

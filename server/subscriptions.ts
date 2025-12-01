@@ -8,10 +8,92 @@ const planHierarchy: Record<string, number> = {
   premium: 2,
 };
 
+// Subscription tier features - business model enforcement
+export const subscriptionFeatures: Record<string, {
+  maxDevices: number;
+  maxQuality: "480p" | "720p" | "1080p" | "4k";
+  maxSimultaneousStreams: number;
+  supportsOfflineDownload: boolean;
+  supportsHDR: boolean;
+  supportsSpatialAudio: boolean;
+}> = {
+  free: {
+    maxDevices: 1,
+    maxQuality: "720p",
+    maxSimultaneousStreams: 1,
+    supportsOfflineDownload: false,
+    supportsHDR: false,
+    supportsSpatialAudio: false,
+  },
+  standard: {
+    maxDevices: 2,
+    maxQuality: "1080p",
+    maxSimultaneousStreams: 2,
+    supportsOfflineDownload: true,
+    supportsHDR: false,
+    supportsSpatialAudio: false,
+  },
+  premium: {
+    maxDevices: 4,
+    maxQuality: "4k",
+    maxSimultaneousStreams: 4,
+    supportsOfflineDownload: true,
+    supportsHDR: true,
+    supportsSpatialAudio: true,
+  },
+};
+
+// Countries where streaming is available (empty = worldwide)
+const ALLOWED_COUNTRIES = process.env.ALLOWED_COUNTRIES
+  ? process.env.ALLOWED_COUNTRIES.split(",")
+  : [];
+
 export function canAccessContent(userPlan: string, requiredPlan: string): boolean {
   const userLevel = planHierarchy[userPlan] ?? 0;
   const requiredLevel = planHierarchy[requiredPlan] ?? 0;
   return userLevel >= requiredLevel;
+}
+
+// Get subscription features for a plan
+export function getSubscriptionFeatures(plan: string) {
+  return subscriptionFeatures[plan] || subscriptionFeatures.free;
+}
+
+// Check if user can stream at requested quality
+export function canStreamAtQuality(userPlan: string, requestedQuality: string): boolean {
+  const features = getSubscriptionFeatures(userPlan);
+  const qualityOrder = ["480p", "720p", "1080p", "4k"];
+  
+  const userQualityIndex = qualityOrder.indexOf(features.maxQuality);
+  const requestedQualityIndex = qualityOrder.indexOf(requestedQuality);
+  
+  return requestedQualityIndex <= userQualityIndex;
+}
+
+/**
+ * Check if user can start a new stream (enforces max simultaneous streams)
+ */
+export async function canStartStream(
+  userId: number,
+  userPlan: string
+): Promise<boolean> {
+  const features = getSubscriptionFeatures(userPlan);
+  
+  // Get active sessions for this user
+  // In production, query database for active playback sessions
+  // For now, we assume DB has this capability
+  const activeSessions = await getActivePlaybackSessions(userId);
+  
+  return activeSessions.length < features.maxSimultaneousStreams;
+}
+
+/**
+ * Get active playback sessions (stub - implement with DB query)
+ */
+async function getActivePlaybackSessions(userId: number): Promise<any[]> {
+  // TODO: Query database for active sessions in last 5 minutes
+  // SELECT * FROM user_sessions WHERE user_id = ? AND last_activity_at > NOW() - INTERVAL 5 MINUTE
+  return [];
 }
 
 // Middleware to check subscription access for content

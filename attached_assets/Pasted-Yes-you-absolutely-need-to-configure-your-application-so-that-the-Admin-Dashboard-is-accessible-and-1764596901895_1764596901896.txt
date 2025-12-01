@@ -1,0 +1,33 @@
+Yes, you absolutely need to configure your application so that the Admin Dashboard is accessible and visible only to users with the 'admin' role, and completely hidden from regular users (who only stream content).
+
+This is a fundamental requirement for security and proper application architecture. It is handled by Role-Based Access Control (RBAC), which involves both server-side checks and frontend routing rules.
+
+Here is how you, as the developer, ensure that only admins see the admin page:
+
+1. 🔑 Frontend (Client-Side) Control (Visibility)
+This step controls whether a regular user even sees the Admin link or route. This is handled within your React/Wouter application.
+
+Action: Implement your ProtectedRoute component (as discussed earlier) to wrap the entire /admin route path.
+
+Logic Check: The ProtectedRoute must check the user's role:
+
+If the user is logged in AND their userRole is 'admin', the dashboard component is rendered.
+
+If the user is logged in BUT their userRole is 'subscriber' (or anything else), they are redirected to the public / home page.
+
+Navigation Hide: Ensure your main app navigation (in the header or side menu) only displays the "Admin Dashboard" link if the user's current session or state variable confirms their userRole is 'admin'.
+
+2. 🔒 Backend (Server-Side) Control (Security)
+Frontend protection is for usability; backend protection is for security. A smart user could bypass the frontend by typing the /admin URL directly. Your server must prevent this.
+
+Action: All API endpoints that the Admin Dashboard uses (e.g., /api/admin/create-content, /api/admin/delete-user) must be protected by a strict server-side middleware.
+
+Middleware Logic:
+
+The middleware executes on every request to an admin API endpoint.
+
+It extracts the user's security token (JWT).
+
+It validates the token and checks the role field within the token payload.
+
+If the role is not 'admin', the server immediately returns a 403 Forbidden error, refusing the request, even if the user is logged in as a regular subscriber.
