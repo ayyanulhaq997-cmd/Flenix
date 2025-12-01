@@ -48,6 +48,30 @@ export default function TVProfiles() {
     }
   }, [fetchedProfiles]);
 
+  const handleSelectProfile = async (profileId: number) => {
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setLocation('/login');
+        return;
+      }
+
+      const response = await axios.post('/api/auth/select-profile', 
+        { profileId },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+
+      if (response.status === 200) {
+        // Store active profile in localStorage
+        localStorage.setItem('activeProfileId', String(profileId));
+        // Navigate to home
+        setLocation('/tv');
+      }
+    } catch (error) {
+      console.error('Error selecting profile:', error);
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (showAddProfile) {
@@ -74,14 +98,14 @@ export default function TVProfiles() {
             // Add profile button
             setShowAddProfile(true);
           } else {
-            // Select profile
-            console.log('Selected profile:', profiles[focusedIndex]);
-            setLocation('/tv');
+            // Select profile and navigate to home
+            handleSelectProfile(profiles[focusedIndex].id);
           }
           break;
         case 'Escape':
           e.preventDefault();
-          console.log('Exit app');
+          // Go back to home
+          setLocation('/tv');
           break;
         default:
           break;
@@ -126,6 +150,17 @@ export default function TVProfiles() {
       <TVHeader isFocused={false} />
 
       <main className="pt-32 px-20">
+        {/* Back Button */}
+        <button
+          onClick={() => setLocation('/tv')}
+          className="flex items-center gap-2 mb-12 px-4 py-2 text-gray-300 hover:text-red-400 transition-colors focus:outline-none"
+          data-testid="button-back-profiles"
+          aria-label="Volver atrás"
+        >
+          <span className="text-2xl">←</span>
+          <span className="text-lg font-semibold">Atrás</span>
+        </button>
+
         <h1 className="text-5xl font-bold mb-16" data-testid="text-select-profile">
           Selecciona tu Perfil
         </h1>
@@ -135,7 +170,7 @@ export default function TVProfiles() {
           {profiles.map((profile, idx) => (
             <button
               key={profile.id}
-              onClick={() => setLocation('/tv')}
+              onClick={() => handleSelectProfile(profile.id)}
               className={`text-center transition-all ${
                 focusedIndex === idx ? 'scale-110' : ''
               }`}

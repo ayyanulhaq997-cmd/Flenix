@@ -129,6 +129,29 @@ export async function registerAccountRoutes(app: Express) {
     }
   });
 
+  // Select active profile
+  app.post("/api/auth/select-profile", authMiddleware, async (req, res) => {
+    try {
+      const { profileId } = req.body;
+      const userId = req.user?.userId;
+
+      if (!userId || !profileId) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Verify profile belongs to user
+      const profile = await storage.getUserProfile(Number(profileId));
+      if (!profile || profile.userId !== userId) {
+        return res.status(403).json({ error: "Profile not found or unauthorized" });
+      }
+
+      // Store active profile ID in session/response
+      res.json({ message: "Profile selected", profileId, profile });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Create profile
   app.post("/api/profiles", authMiddleware, async (req, res) => {
     try {
