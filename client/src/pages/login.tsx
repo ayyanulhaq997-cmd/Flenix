@@ -42,8 +42,10 @@ export default function Login() {
       const data = await response.json();
       localStorage.setItem("appToken", data.token);
       localStorage.setItem("appUser", JSON.stringify(data));
+      localStorage.setItem("user", JSON.stringify(data));
       toast.success("Login successful!");
-      setLocation("/");
+      // Redirect to TV profiles screen (skip plan selection for existing users)
+      setLocation("/tv/profiles");
     } catch (err: any) {
       const message = err.message || "Login failed. Please try again.";
       setError(message);

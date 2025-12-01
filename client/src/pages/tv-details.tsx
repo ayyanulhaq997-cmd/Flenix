@@ -48,6 +48,7 @@ export default function TVDetails() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isInMyList, setIsInMyList] = useState(false);
   const [showTrailer, setShowTrailer] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [selectedSeason, setSelectedSeason] = useState(1);
   const [selectedEpisode, setSelectedEpisode] = useState<Episode | null>(null);
   const [focusedButton, setFocusedButton] = useState<'play' | 'mylist' | 'trailer' | 'back'>('play');
@@ -82,6 +83,33 @@ export default function TVDetails() {
       }
     }
   }, []);
+
+  // Check if user can play content (plan enforcement)
+  const canPlayContent = () => {
+    if (!content?.requiredPlan || content.requiredPlan === 'free') return true;
+    
+    const userJson = localStorage.getItem('user') || localStorage.getItem('appUser');
+    if (!userJson) return false;
+    
+    try {
+      const user = JSON.parse(userJson);
+      const userPlan = user.plan || 'free';
+      const planHierarchy = { free: 0, standard: 1, premium: 2 };
+      const requiredLevel = planHierarchy[content.requiredPlan as keyof typeof planHierarchy] || 0;
+      const userLevel = planHierarchy[userPlan as keyof typeof planHierarchy] || 0;
+      return userLevel >= requiredLevel;
+    } catch {
+      return false;
+    }
+  };
+
+  const handlePlayClick = () => {
+    if (!canPlayContent()) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    setIsPlaying(true);
+  };
 
   useEffect(() => {
     if (focusedElement === 'episodes' && seasonEpisodes.length > 0) {
