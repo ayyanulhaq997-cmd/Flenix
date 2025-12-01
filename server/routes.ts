@@ -884,9 +884,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         process.env.STREAMING_QUALITIES || "hd1080,hd720,sd480"
       ).split(",");
 
+      const cdnUrlBase: string = getStorageConfig().cdnUrl || generateCDNUrl("");
       const streamingConfig = buildStreamingUrl(
         movie.videoUrl,
-        (getStorageConfig().cdnUrl ?? "") || generateCDNUrl(""),
+        cdnUrlBase,
         (format as "hls" | "dash") || "hls",
         qualities,
         movie.duration || 0,
@@ -895,18 +896,17 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
 
       // Generate playlists
       let playlistContent = "";
-      const cdnUrl = (getStorageConfig().cdnUrl ?? "") || "";
       if (format === "hls") {
         playlistContent = generateHLSPlaylist(
           movie.videoUrl,
           qualities,
-          cdnUrl
+          cdnUrlBase
         );
       } else {
         playlistContent = generateDASHManifest(
           movie.videoUrl,
           qualities,
-          cdnUrl,
+          cdnUrlBase,
           movie.duration || 0
         );
       }
@@ -977,7 +977,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const qualities = (
         process.env.STREAMING_QUALITIES || "hd1080,hd720,sd480"
       ).split(",");
-      const cdnUrlPlaylist = (getStorageConfig().cdnUrl ?? "") || "";
+      const cdnUrlPlaylist: string = getStorageConfig().cdnUrl || "";
       const playlist = generateHLSPlaylist(
         movie.videoUrl,
         qualities,
@@ -1004,7 +1004,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       const qualities = (
         process.env.STREAMING_QUALITIES || "hd1080,hd720,sd480"
       ).split(",");
-      const cdnUrlManifest = (getStorageConfig().cdnUrl ?? "") || "";
+      const cdnUrlManifest: string = getStorageConfig().cdnUrl || "";
       const manifest = generateDASHManifest(
         movie.videoUrl,
         qualities,
