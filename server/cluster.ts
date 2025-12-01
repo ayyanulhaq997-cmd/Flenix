@@ -3,8 +3,15 @@ import os from "os";
 import { log } from "./index";
 
 const numCPUs = parseInt(process.env.CLUSTER_WORKERS || String(os.cpus().length), 10);
+const isContainerized = process.env.DOCKER_CONTAINER === "true" || process.env.RAILWAY_ENVIRONMENT_NAME;
 
 export function setupCluster() {
+  // Skip clustering in containerized environments (Railway, Docker)
+  // Containers handle scaling at the orchestration level
+  if (isContainerized) {
+    return;
+  }
+
   if (cluster.isPrimary && process.env.NODE_ENV === "production") {
     log(`🚀 Primary process ${process.pid} starting ${numCPUs} workers`, "cluster");
 

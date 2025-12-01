@@ -2,27 +2,46 @@ import Redis from 'ioredis';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379';
 let redisClient: Redis | null = null;
+let redisAvailable = false;
 
-export function initRedis(): Redis {
-  if (!redisClient) {
-    try {
-      redisClient = new Redis(REDIS_URL);
-      redisClient.on('connect', () => {
-        console.log('[redis] Connected to Redis cache');
-      });
-      redisClient.on('error', (err) => {
-        console.error('[redis] Connection error:', err.message);
-      });
-    } catch (error) {
-      console.warn('[redis] Failed to connect - caching disabled');
-      return null as any;
-    }
+export function initRedis(): Redis | null {
+  if (redisClient !== undefined) {
+    return redisClient;
   }
+
+  try {
+    redisClient = new Redis(REDIS_URL, {
+      retryStrategy: () => null, // Don't retry, just fail fast
+      maxRetriesPerRequest: 1,
+      enableOfflineQueue: false,
+      connectTimeout: 5000,
+      lazyConnect: true, // Don't connect immediately
+    });
+
+    redisClient.on('connect', () => {
+      redisAvailable = true;
+      console.log('[redis] Connected to Redis cache');
+    });
+
+    redisClient.on('error', () => {
+      redisAvailable = false;
+      // Silently fail - don't spam logs
+    });
+
+    // Try connecting without blocking
+    redisClient.connect().catch(() => {
+      redisAvailable = false;
+    });
+  } catch (error) {
+    redisClient = null;
+    redisAvailable = false;
+  }
+
   return redisClient;
 }
 
 export function getRedis(): Redis | null {
-  return redisClient;
+  return redisAvailable && redisClient ? redisClient : null;
 }
 
 // Cache utilities
