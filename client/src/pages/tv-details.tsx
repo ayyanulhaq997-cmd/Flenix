@@ -223,7 +223,21 @@ export default function TVDetails() {
       ? `${content.title} - S${selectedEpisode.season}E${selectedEpisode.episode}: ${selectedEpisode.title}`
       : content.title;
     const playDuration = selectedEpisode ? selectedEpisode.duration : (content.duration || 7200);
-    return <TVVideoPlayer title={playTitle} duration={playDuration} />;
+    
+    // Return to details page after video player closes
+    const handlePlayerExit = () => {
+      setIsPlaying(false);
+    };
+    
+    return (
+      <div className="w-full h-screen">
+        <TVVideoPlayer 
+          title={playTitle} 
+          duration={playDuration}
+          onExit={handlePlayerExit}
+        />
+      </div>
+    );
   }
 
   return (
@@ -330,7 +344,7 @@ export default function TVDetails() {
               {/* Action Buttons */}
               <div className="flex gap-4 pt-6">
                 <button
-                  onClick={() => setIsPlaying(true)}
+                  onClick={handlePlayClick}
                   className={`px-10 py-3 font-bold text-lg rounded-lg transition-all ${
                     focusedButton === 'play'
                       ? 'bg-red-600 border-4 border-red-400 text-white scale-105'
@@ -380,6 +394,51 @@ export default function TVDetails() {
                 >
                   ← ATRÁS
                 </button>
+              </div>
+
+              {/* MÁS INFORMACIÓN - Full Metadata Always Visible */}
+              <div className="pt-8 border-t border-gray-700 mt-8" data-testid="section-more-info">
+                <h2 className="text-2xl font-bold mb-4">MÁS INFORMACIÓN</h2>
+                <div className="grid grid-cols-2 gap-6">
+                  {content.rating && (
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Clasificación</p>
+                      <p className="text-white font-semibold" data-testid="info-rating">{content.rating}</p>
+                    </div>
+                  )}
+                  {content.genre && (
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Género</p>
+                      <p className="text-white font-semibold" data-testid="info-genre">{content.genre}</p>
+                    </div>
+                  )}
+                  {content.duration && !isSeries && (
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Duración</p>
+                      <p className="text-white font-semibold" data-testid="info-duration">{Math.floor(content.duration / 60)}h {content.duration % 60}m</p>
+                    </div>
+                  )}
+                  {isSeries && (
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Temporadas</p>
+                      <p className="text-white font-semibold" data-testid="info-seasons">{uniqueSeasons.length}</p>
+                    </div>
+                  )}
+                  {content.requiredPlan && (
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Plan Requerido</p>
+                      <span className="px-3 py-1 bg-blue-600/20 text-blue-400 rounded text-sm inline-block" data-testid="info-plan">
+                        {content.requiredPlan === 'free' ? 'Gratis' : content.requiredPlan}
+                      </span>
+                    </div>
+                  )}
+                  {content.year && (
+                    <div>
+                      <p className="text-gray-400 text-sm mb-1">Año</p>
+                      <p className="text-white font-semibold" data-testid="info-year">{content.year}</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
