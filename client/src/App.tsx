@@ -19,6 +19,7 @@ import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import ProfileSelector from "@/pages/profile-selector";
 import AccountSettings from "@/pages/account-settings";
+import TVHome from "@/pages/tv-home";
 import { isAdmin, isAuthenticated } from "@/lib/auth-utils";
 
 /**
@@ -45,6 +46,9 @@ function AdminRoute({ component: Component, ...props }: any) {
 function Router() {
   return (
     <Switch>
+      {/* TV Application - Primary Platform */}
+      <Route path="/tv" component={TVHome} />
+
       {/* Public Routes */}
       <Route path="/" component={Home} />
       <Route path="/auth" component={Login} />
