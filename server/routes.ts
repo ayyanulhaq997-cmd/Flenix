@@ -10,6 +10,7 @@ import { getCached, setCached, invalidateCache, cacheKeys } from "./cache";
 import { filterBySubscription, checkContentAccess } from "./subscriptions";
 import { getS3Client, getStorageConfig, generatePresignedUrl, generateCDNUrl, healthCheck } from "./cloud-storage";
 import { buildStreamingUrl, generateHLSPlaylist, generateDASHManifest } from "./streaming";
+import { startTranscodingJob } from "./transcoding";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   // OpenAPI Documentation
@@ -762,6 +763,222 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       res.status(201).json(importResults);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ===== CLOUD STORAGE & STREAMING ENDPOINTS =====
+
+  // Storage health check
+  app.get("/api/storage/health", async (req, res) => {
+    try {
+      const isHealthy = await healthCheck();
+      res.json({
+        status: isHealthy ? "healthy" : "unhealthy",
+        provider: getStorageConfig().provider,
+        bucket: getStorageConfig().bucket,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(503).json({
+        status: "error",
+        error: error.message,
+      });
+    }
+  });
+
+  // Video upload with cloud storage backend
+  app.post("/api/videos/upload", authMiddleware, async (req, res) => {
+    try {
+      const { title, description, genre, duration, fileBuffer } = req.body;
+
+      if (!fileBuffer || !title) {
+        return res.status(400).json({ error: "Missing title or file" });
+      }
+
+      const buffer = Buffer.from(fileBuffer, "base64");
+      const filename = `${Date.now()}-${title.replace(/\s+/g, "-")}.mp4`;
+
+      // Upload to cloud storage
+      const videoKey = await (
+        await import("./cloud-storage")
+      ).uploadVideo(filename, buffer, "video/mp4", {
+        title,
+        uploadedBy: req.user?.email || "unknown",
+      });
+
+      // Start transcoding job if enabled
+      let transcodingJobId = "";
+      if (process.env.TRANSCODING_ENABLED === "true") {
+        try {
+          const { startTranscodingJob } = await import("./transcoding");
+          transcodingJobId = await startTranscodingJob(
+            videoKey,
+            title,
+            getStorageConfig().bucket
+          );
+        } catch (err) {
+          console.warn("[api] Transcoding not available:", err);
+        }
+      }
+
+      // Create movie record in database
+      const movie = await storage.createMovie({
+        title,
+        description,
+        genre,
+        year: new Date().getFullYear(),
+        duration: duration || 120,
+        videoUrl: generateCDNUrl(videoKey),
+        posterUrl: "", // Will be set later
+        status: "processing",
+        requiredPlan: "free",
+        cast: [],
+      });
+
+      // Invalidate cache
+      await invalidateCache("cache:movies:*");
+
+      res.status(201).json({
+        movieId: movie.id,
+        videoKey,
+        transcodingJobId,
+        status: "processing",
+        streamingUrl: generateCDNUrl(videoKey),
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Generate streaming URLs (HLS/DASH)
+  app.get("/api/videos/:id/stream", async (req, res) => {
+    try {
+      const movieId = Number(req.params.id);
+      const format = (req.query.format as string) || "hls"; // hls or dash
+
+      // Get movie from database
+      const movie = await storage.getMovie(movieId);
+      if (!movie) {
+        return res.status(404).json({ error: "Movie not found" });
+      }
+
+      // Check subscription access
+      const userPlan = req.user?.plan || "free";
+      const hasAccess = await checkContentAccess(
+        "movie",
+        movieId,
+        userPlan
+      );
+
+      if (!hasAccess) {
+        return res.status(403).json({
+          error: "Access denied. This content requires a higher subscription tier.",
+          requiredPlan: movie.requiredPlan,
+          userPlan: userPlan,
+        });
+      }
+
+      // Generate streaming configuration
+      const qualities = (
+        process.env.STREAMING_QUALITIES || "hd1080,hd720,sd480"
+      ).split(",");
+
+      const streamingConfig = buildStreamingUrl(
+        movie.videoUrl,
+        getStorageConfig().cdnUrl || generateCDNUrl(""),
+        (format as "hls" | "dash") || "hls",
+        qualities,
+        movie.duration || 0,
+        movie.posterUrl
+      );
+
+      // Generate playlists
+      let playlistContent = "";
+      if (format === "hls") {
+        playlistContent = generateHLSPlaylist(
+          movie.videoUrl,
+          qualities,
+          getStorageConfig().cdnUrl || ""
+        );
+      } else {
+        playlistContent = generateDASHManifest(
+          movie.videoUrl,
+          qualities,
+          getStorageConfig().cdnUrl || "",
+          movie.duration || 0
+        );
+      }
+
+      res.json({
+        movieId,
+        title: movie.title,
+        format,
+        streamingUrl: streamingConfig.playlistUrl,
+        qualities,
+        duration: movie.duration,
+        poster: movie.posterUrl,
+        playlist: playlistContent, // For direct playlist access
+        // For mobile apps that need signed URLs
+        signedUrls: {
+          hls: `${process.env.CDN_URL}/${movie.videoUrl}/playlist.m3u8`,
+          dash: `${process.env.CDN_URL}/${movie.videoUrl}/manifest.mpd`,
+        },
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get video streaming manifest (HLS or DASH)
+  app.get("/api/videos/:id/playlist.m3u8", async (req, res) => {
+    try {
+      const movieId = Number(req.params.id);
+      const movie = await storage.getMovie(movieId);
+
+      if (!movie) {
+        return res.status(404).json({ error: "Not found" });
+      }
+
+      const qualities = (
+        process.env.STREAMING_QUALITIES || "hd1080,hd720,sd480"
+      ).split(",");
+      const playlist = generateHLSPlaylist(
+        movie.videoUrl,
+        qualities,
+        getStorageConfig().cdnUrl || ""
+      );
+
+      res.type("application/vnd.apple.mpegurl");
+      res.send(playlist);
+    } catch (error) {
+      res.status(500).send("Error generating playlist");
+    }
+  });
+
+  // Get video DASH manifest
+  app.get("/api/videos/:id/manifest.mpd", async (req, res) => {
+    try {
+      const movieId = Number(req.params.id);
+      const movie = await storage.getMovie(movieId);
+
+      if (!movie) {
+        return res.status(404).json({ error: "Not found" });
+      }
+
+      const qualities = (
+        process.env.STREAMING_QUALITIES || "hd1080,hd720,sd480"
+      ).split(",");
+      const manifest = generateDASHManifest(
+        movie.videoUrl,
+        qualities,
+        getStorageConfig().cdnUrl || "",
+        movie.duration || 0
+      );
+
+      res.type("application/dash+xml");
+      res.send(manifest);
+    } catch (error) {
+      res.status(500).send("Error generating manifest");
     }
   });
 
