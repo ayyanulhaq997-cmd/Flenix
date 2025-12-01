@@ -28,6 +28,7 @@ import Watch from "@/pages/watch";
 import AdminDashboardMetrics from "@/pages/admin-dashboard-metrics";
 import AdminContentList from "@/pages/admin-content-list";
 import AdminUserManagement from "@/pages/admin-user-management";
+import AdminBilling from "@/pages/admin-billing";
 import UnifiedHome from "@/pages/unified-home";
 import PlanSelection from "@/pages/plan-selection";
 import PaymentPage from "@/pages/payment";
@@ -87,6 +88,7 @@ function Router() {
       <Route path="/admin" component={(props) => <AdminRoute component={AdminDashboardMetrics} {...props} />} />
       <Route path="/admin/content" component={(props) => <AdminRoute component={AdminContentList} {...props} />} />
       <Route path="/admin/users" component={(props) => <AdminRoute component={AdminUserManagement} {...props} />} />
+      <Route path="/admin/billing" component={(props) => <AdminRoute component={AdminBilling} {...props} />} />
       <Route path="/admin/api-keys" component={(props) => <AdminRoute component={ApiKeys} {...props} />} />
       <Route path="/admin/migration" component={(props) => <AdminRoute component={Migration} {...props} />} />
       <Route path="/admin/bulk-import" component={(props) => <AdminRoute component={BulkImport} {...props} />} />
