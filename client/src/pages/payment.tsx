@@ -112,12 +112,58 @@ export default function PaymentPage() {
     paymentMutation.mutate();
   };
 
-  const handleSkipPayment = () => {
-    // For free plan, skip payment
+  const handleSkipPayment = async () => {
+    // For free plan, register and activate account
     if (planPrice === 0) {
-      localStorage.removeItem("signupPlanData");
-      localStorage.removeItem("signupEmail");
-      setLocation("/");
+      setIsLoading(true);
+      try {
+        // Get password from signup process or use a generated one
+        const password = localStorage.getItem("signupPassword") || Math.random().toString(36).slice(2, 15);
+        
+        const response = await fetch("/api/auth/register-free-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: userEmail,
+            name: userEmail.split("@")[0],
+            password,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to activate free plan");
+        }
+
+        const data = await response.json();
+        
+        // Save auth token
+        localStorage.setItem("appToken", data.token);
+        localStorage.setItem("userId", data.user.id.toString());
+        localStorage.setItem("userPlan", data.user.plan);
+        
+        // Clear signup data
+        localStorage.removeItem("signupPlanData");
+        localStorage.removeItem("signupEmail");
+        localStorage.removeItem("signupPassword");
+        
+        // Show success message and redirect to home
+        toast({
+          title: "Success!",
+          description: "Your free plan has been activated. Welcome to Fenix!",
+        });
+        
+        setTimeout(() => {
+          setLocation("/");
+        }, 1500);
+      } catch (error: any) {
+        toast({
+          title: "Activation Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+      }
     }
   };
 

@@ -180,6 +180,64 @@ export async function registerAccountRoutes(app: Express) {
     }
   });
 
+  // Register free plan - creates user, profile, and returns token
+  app.post("/api/auth/register-free-plan", async (req, res) => {
+    try {
+      const { email, name, password } = req.body;
+
+      if (!email || !name || !password) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getAppUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Email already registered" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create user with free plan
+      const user = await storage.createAppUser({
+        name,
+        email,
+        passwordHash: hashedPassword,
+        plan: "free",
+        status: "active",
+      });
+
+      // Create default profile for the user
+      const profile = await storage.createUserProfile({
+        userId: user.id,
+        name: "My Profile",
+        isKidsProfile: false,
+      });
+
+      // Generate JWT token
+      const { generateToken } = await import("./auth");
+      const token = generateToken({
+        userId: user.id,
+        email: user.email,
+        plan: user.plan,
+      });
+
+      res.status(201).json({
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          plan: user.plan,
+        },
+        profile,
+        token,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Set profile PIN
   app.post("/api/profiles/:profileId/set-pin", authMiddleware, async (req, res) => {
     try {
