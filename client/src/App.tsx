@@ -34,6 +34,17 @@ import PlanSelection from "@/pages/plan-selection";
 import PaymentPage from "@/pages/payment";
 import { isAdmin, isAuthenticated } from "@/lib/auth-utils";
 
+/**
+ * Admin Route Protection - Redirects non-admins to Browse
+ * Required for CRITICAL SECURITY TEST: Non-admins typing /admin must be redirected
+ */
+function AdminRoute({ component: Component, ...props }: any) {
+  if (!isAdmin()) {
+    return <Browse />;
+  }
+  return <Component {...props} />;
+}
+
 function Router() {
   return (
     <Switch>
@@ -60,17 +71,17 @@ function Router() {
       <Route path="/channels" component={Channels} />
       <Route path="/account" component={AccountSettings} />
       
-      {/* Admin Routes - All Accessible */}
-      <Route path="/admin/dashboard" component={AdminDashboardMetrics} />
-      <Route path="/admin" component={AdminDashboardMetrics} />
-      <Route path="/admin/content" component={AdminContentList} />
-      <Route path="/admin/users" component={AdminUserManagement} />
-      <Route path="/admin/billing" component={AdminBilling} />
-      <Route path="/admin/api-keys" component={ApiKeys} />
-      <Route path="/admin/migration" component={Migration} />
-      <Route path="/admin/bulk-import" component={BulkImport} />
-      <Route path="/admin/settings" component={Settings} />
-      <Route path="/admin/dashboard/metrics" component={AdminDashboardMetrics} />
+      {/* Admin Routes - Protected (redirects non-admins to Browse) */}
+      <Route path="/admin/dashboard" component={(props) => <AdminRoute component={AdminDashboardMetrics} {...props} />} />
+      <Route path="/admin" component={(props) => <AdminRoute component={AdminDashboardMetrics} {...props} />} />
+      <Route path="/admin/content" component={(props) => <AdminRoute component={AdminContentList} {...props} />} />
+      <Route path="/admin/users" component={(props) => <AdminRoute component={AdminUserManagement} {...props} />} />
+      <Route path="/admin/billing" component={(props) => <AdminRoute component={AdminBilling} {...props} />} />
+      <Route path="/admin/api-keys" component={(props) => <AdminRoute component={ApiKeys} {...props} />} />
+      <Route path="/admin/migration" component={(props) => <AdminRoute component={Migration} {...props} />} />
+      <Route path="/admin/bulk-import" component={(props) => <AdminRoute component={BulkImport} {...props} />} />
+      <Route path="/admin/settings" component={(props) => <AdminRoute component={Settings} {...props} />} />
+      <Route path="/admin/dashboard/metrics" component={(props) => <AdminRoute component={AdminDashboardMetrics} {...props} />} />
       
       <Route component={NotFound} />
     </Switch>
