@@ -19,12 +19,8 @@ export default function TVProfiles() {
   const [showAddProfile, setShowAddProfile] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
 
-  // Check authentication - redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      setLocation('/login');
-    }
-  }, [setLocation, location]);
+  // Check authentication - show login option if not authenticated
+  const isLoggedIn = isAuthenticated();
 
   // Fetch profiles with React Query
   const { data: fetchedProfiles = [], isLoading: isProfilesLoading } = useQuery({
@@ -32,12 +28,12 @@ export default function TVProfiles() {
     queryFn: async () => {
       const token = localStorage.getItem('authToken');
       if (!token) return [];
-      const { data } = await axios.get('/api/user-profiles', {
+      const { data } = await axios.get('/api/profiles', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       return data || [];
     },
-    enabled: isAuthenticated(),
+    enabled: isLoggedIn,
     retry: 1,
   });
 
@@ -116,20 +112,34 @@ export default function TVProfiles() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [focusedIndex, profiles, showAddProfile, setLocation]);
 
-  const handleAddProfile = () => {
-    if (newProfileName.trim()) {
-      const newProfile: Profile = {
-        id: Math.max(...profiles.map(p => p.id), 0) + 1,
-        name: newProfileName,
-      };
-      setProfiles([...profiles, newProfile]);
-      setNewProfileName('');
-      setShowAddProfile(false);
+  const handleAddProfile = async () => {
+    if (!newProfileName.trim()) return;
+    
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setLocation('/login');
+        return;
+      }
+
+      const response = await axios.post('/api/profiles', 
+        { name: newProfileName.trim(), isKidsProfile: false },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+
+      if (response.status === 201) {
+        // Add new profile to local state
+        setProfiles([...profiles, response.data]);
+        setNewProfileName('');
+        setShowAddProfile(false);
+      }
+    } catch (error: any) {
+      console.error('Error creating profile:', error.response?.data?.error || error.message);
     }
   };
 
   // Show loading spinner while profiles are loading
-  if (isProfilesLoading) {
+  if (isProfilesLoading && isLoggedIn) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
         <div className="text-center">
@@ -140,9 +150,39 @@ export default function TVProfiles() {
     );
   }
 
-  // Redirect if not authenticated (should be caught by useEffect, but double-check)
-  if (!isAuthenticated()) {
-    return null;
+  // Show sign-in/sign-up option if not authenticated
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <TVHeader isFocused={false} />
+        
+        <main className="pt-32 px-20 flex flex-col items-center justify-center min-h-[80vh]">
+          <div className="text-center space-y-8">
+            <h1 className="text-5xl font-bold mb-4" data-testid="text-welcome">
+              Bienvenido a Fenix
+            </h1>
+            <p className="text-2xl text-gray-400 mb-12">Inicia sesión para acceder a tus perfiles</p>
+            
+            <div className="flex gap-6 justify-center">
+              <button
+                onClick={() => setLocation('/login')}
+                className="px-12 py-4 bg-red-600 hover:bg-red-700 rounded-lg font-bold text-xl transition-all shadow-lg"
+                data-testid="button-signin"
+              >
+                Iniciar Sesión
+              </button>
+              <button
+                onClick={() => setLocation('/signup')}
+                className="px-12 py-4 bg-gray-700 hover:bg-gray-600 rounded-lg font-bold text-xl transition-all shadow-lg"
+                data-testid="button-signup"
+              >
+                Crear Cuenta
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (
