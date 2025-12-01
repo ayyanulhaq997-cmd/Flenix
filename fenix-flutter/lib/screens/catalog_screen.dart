@@ -21,14 +21,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
   final AuthService _authService = AuthService();
   List<dynamic> _movies = [];
   bool _isLoading = true;
-  String _selectedCategory = 'All Content';
-  final List<String> _categories = [
-    'All Content',
-    'Actors',
-    'Series',
-    'Genres',
-    'Recent',
-    'Trending'
+  String _selectedFilter = 'Recién visto';
+  final List<String> _filters = [
+    'Recién visto',
+    'Recién agregado',
+    'Estreno',
+    'Favoritos'
   ];
 
   @override
@@ -66,14 +64,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   List<dynamic> _getFilteredMovies() {
-    if (_selectedCategory == 'All Content') {
-      return _movies;
-    }
-    return _movies
-        .where((movie) =>
-            movie['genre']?.toString().toLowerCase() ==
-            _selectedCategory.toLowerCase())
-        .toList();
+    // In production, this would filter by watch history, recently added, new releases, favorites
+    // For now, return all movies for each filter
+    return _movies;
   }
 
   @override
@@ -83,36 +76,27 @@ class _CatalogScreenState extends State<CatalogScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF0a0a0a),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color(0xFF1a1a2e),
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text(
-          'FENIX',
+          'Películas',
           style: TextStyle(
-            color: Color(0xFF3B82F6),
+            color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 28,
+            fontSize: 20,
           ),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Center(
-              child: Text(
-                'Today, 3:11 am',
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 12,
-                ),
-              ),
-            ),
-          ),
           IconButton(
-            icon: const Icon(Icons.favorite_border),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {},
+            icon: const Icon(Icons.search, color: Color(0xFF3B82F6)),
+            tooltip: 'Search (Lupa)',
+            onPressed: () {
+              // TODO: Implement search functionality
+            },
           ),
         ],
       ),
@@ -122,47 +106,60 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 valueColor: AlwaysStoppedAnimation(Color(0xFF3B82F6)),
               ),
             )
-          : Row(
+          : Column(
               children: [
-                // Sidebar with categories - Blue (#3B82F6) styled
+                // Filter tabs - horizontal
                 Container(
-                  width: 140,
                   color: const Color(0xFF1a1a2e),
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    children: _categories.map((category) {
-                      final isSelected = _selectedCategory == category;
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedCategory = category;
-                          });
-                        },
-                        child: Container(
-                          color: isSelected
-                              ? const Color(0xFF3B82F6)
-                              : Colors.transparent,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _filters.map((filter) {
+                        final isSelected = _selectedFilter == filter;
+                        return Padding(
                           padding: const EdgeInsets.symmetric(
-                              vertical: 14, horizontal: 16),
-                          child: Text(
-                            category,
-                            style: TextStyle(
-                              color: isSelected
-                                  ? Colors.white
-                                  : Colors.grey[400],
-                              fontSize: 13,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
-                              letterSpacing: 0.3,
+                              horizontal: 8, vertical: 12),
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _selectedFilter = filter;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected
+                                    ? const Color(0xFF3B82F6)
+                                    : Colors.transparent,
+                                border: Border.all(
+                                  color: isSelected
+                                      ? const Color(0xFF3B82F6)
+                                      : Colors.grey[700]!,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                filter,
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : Colors.grey[400],
+                                  fontSize: 13,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    }).toList(),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
-                // Movies grid or empty state
+                // Movies grid
                 Expanded(
                   child: filteredMovies.isEmpty
                       ? Center(
@@ -184,7 +181,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'in $_selectedCategory category',
+                                'in $_selectedFilter',
                                 style: TextStyle(
                                   color: Colors.grey[600],
                                   fontSize: 12,
@@ -194,12 +191,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           ),
                         )
                       : GridView.builder(
-                          padding: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(16),
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 3,
                             childAspectRatio: 0.65,
-                            crossAxisSpacing: 16,
+                            crossAxisSpacing: 12,
                             mainAxisSpacing: 16,
                           ),
                           itemCount: filteredMovies.length,
