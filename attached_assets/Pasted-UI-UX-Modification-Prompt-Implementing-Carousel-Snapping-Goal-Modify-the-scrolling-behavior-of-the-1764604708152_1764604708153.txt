@@ -1,0 +1,32 @@
+UI/UX Modification Prompt: Implementing Carousel Snapping
+Goal: Modify the scrolling behavior of the content rows (built in TVContentRow.tsx) on the TV application to eliminate the standard horizontal scrollbar and implement a smooth, calculated Carousel Snapping effect, matching the premium Netflix viewing experience.
+
+I. 🛑 Hide Manual Scroll Elements
+Action: Modify the CSS for the content row container in TVContentRow.tsx to completely hide the horizontal scrollbar.
+
+Requirement: Ensure the underlying scrolling functionality is not disabled, only the visual scrollbar itself.
+
+II. ➡️ Implement Calculated Translation (Snap Behavior)
+Action: Rewrite the logic that handles horizontal movement (triggered by the Left and Right remote keys).
+
+Current Logic: Currently moves the row by a few pixels (pixel-by-pixel shift).
+
+Desired Logic:
+
+When the focused poster reaches a threshold position (e.g., the 4th visible poster), calculate the exact distance required to shift the entire row container.
+
+Apply a smooth CSS transform: translateX() to move the container to align the next set of posters cleanly on the screen.
+
+The movement must be fixed—not continuous—meaning the content snaps into the next viewing window.
+
+III. ⚡ Update Fast-Scroll Logic
+Action: Update the existing Fast-scroll logic (which accelerates the movement when a key is held down).
+
+Desired Behavior: Holding the Left/Right key should trigger the calculated snap-shift function repeatedly and quickly, allowing the user to rapidly cycle through content windows without the visual stutter of accelerated pixel scrolling.
+
+IV. State Management Checklist
+Ensure the component accurately tracks the focusedIndex (the single poster with the red border).
+
+Ensure the component tracks the containerOffset (the calculated translateX value) to manage the alignment of the currently focused poster within the viewport.
+
+This ensures the scrolling logic is converted from a standard web scroll to a responsive, fixed-window TV app carousel.
