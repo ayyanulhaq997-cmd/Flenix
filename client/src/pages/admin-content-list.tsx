@@ -16,7 +16,7 @@ interface ContentItem {
 }
 
 export default function AdminContentList() {
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('appToken');
   const [activeTab, setActiveTab] = useState('movies');
 
   // Fetch movies

@@ -15,7 +15,7 @@ interface AppUser {
 }
 
 export default function AdminUserManagement() {
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('appToken');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterPlan, setFilterPlan] = useState('all');
 
