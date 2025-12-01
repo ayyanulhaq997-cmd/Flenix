@@ -17,8 +17,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   // Import and register sub-routes
   const { registerAccountRoutes } = await import("./account-routes");
   const { registerStreamingRoutes } = await import("./streaming-routes");
+  const { registerPaymentRoutes } = await import("./payment-routes");
   await registerAccountRoutes(app);
   await registerStreamingRoutes(app);
+  await registerPaymentRoutes(app);
 
   // OpenAPI Documentation
   app.get("/api/docs", (req, res) => {

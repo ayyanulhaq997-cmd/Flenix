@@ -4,9 +4,11 @@ import { useLocation } from 'wouter';
 interface TVVideoPlayerProps {
   title: string;
   duration: number;
+  contentId?: number;
+  videoUrl?: string;
 }
 
-export function TVVideoPlayer({ title, duration }: TVVideoPlayerProps) {
+export function TVVideoPlayer({ title, duration, contentId, videoUrl }: TVVideoPlayerProps) {
   const [, setLocation] = useLocation();
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -14,6 +16,8 @@ export function TVVideoPlayer({ title, duration }: TVVideoPlayerProps) {
   const [showAudioMenu, setShowAudioMenu] = useState(false);
   const [selectedAudio, setSelectedAudio] = useState('Spanish');
   const [selectedSubtitle, setSelectedSubtitle] = useState('Spanish');
+  const [playlistUrl, setPlaylistUrl] = useState<string>('');
+  const videoRef = useRef<HTMLVideoElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const playbackIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -24,9 +28,22 @@ export function TVVideoPlayer({ title, duration }: TVVideoPlayerProps) {
     controlsTimeoutRef.current = setTimeout(() => setShowControls(false), 5000);
   };
 
-  // Simulate video playback
+  // Fetch HLS playlist URL
   useEffect(() => {
-    if (isPlaying) {
+    if (contentId) {
+      const token = localStorage.getItem('authToken');
+      fetch(`/api/stream/${contentId}/manifest.m3u8`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      })
+        .then(res => res.text())
+        .then(data => setPlaylistUrl(data))
+        .catch(err => console.error('Error fetching HLS playlist:', err));
+    }
+  }, [contentId]);
+
+  // Simulate video playback (fallback for demo)
+  useEffect(() => {
+    if (isPlaying && !videoRef.current?.src) {
       playbackIntervalRef.current = setInterval(() => {
         setCurrentTime(prev => {
           if (prev >= duration) {

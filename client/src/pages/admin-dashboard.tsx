@@ -8,6 +8,7 @@ import axios from 'axios';
 import AdminBatchImport from './admin-batch-import';
 import AdminUsers from './admin-users';
 import AdminParentalControls from './admin-parental-controls';
+import AdminBilling from './admin-billing';
 
 interface Movie {
   id: number;
@@ -86,13 +87,14 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 bg-slate-800">
+          <TabsList className="grid w-full grid-cols-7 bg-slate-800">
             <TabsTrigger value="movies" className="text-white">PELÍCULAS</TabsTrigger>
             <TabsTrigger value="series" className="text-white">SERIES</TabsTrigger>
             <TabsTrigger value="channels" className="text-white">CANALES</TabsTrigger>
             <TabsTrigger value="import" className="text-white">IMPORTAR</TabsTrigger>
             <TabsTrigger value="users" className="text-white">USUARIOS</TabsTrigger>
             <TabsTrigger value="controls" className="text-white">CONTROLES</TabsTrigger>
+            <TabsTrigger value="billing" className="text-white">FACTURACIÓN</TabsTrigger>
           </TabsList>
 
           {/* Movies Tab */}
@@ -276,6 +278,11 @@ export default function AdminDashboard() {
           {/* Parental Controls Tab */}
           <TabsContent value="controls" className="mt-6">
             <AdminParentalControls />
+          </TabsContent>
+
+          {/* Billing Tab */}
+          <TabsContent value="billing" className="mt-6">
+            <AdminBilling />
           </TabsContent>
         </Tabs>
       </div>
