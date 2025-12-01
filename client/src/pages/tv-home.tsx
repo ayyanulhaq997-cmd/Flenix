@@ -56,16 +56,19 @@ const TABS = [
   { id: 'movies', label: 'PELÍCULAS' },
   { id: 'series', label: 'SERIES' },
   { id: 'channels', label: 'CANALES TV' },
+  { id: 'search', label: 'BUSCAR' },
 ];
 
 export default function TVHome() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState(0);
-  const [focusedElement, setFocusedElement] = useState<'header' | 'hero' | 'tab' | 'row'>('row');
+  const [focusedElement, setFocusedElement] = useState<'header' | 'hero' | 'tab' | 'row' | 'search'>('row');
   const [focusedTabIndex, setFocusedTabIndex] = useState(0);
   const [focusedRowIndex, setFocusedRowIndex] = useState(0);
   const [focusedColIndex, setFocusedColIndex] = useState(0);
   const [showExitDialog, setShowExitDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchMode, setSearchMode] = useState(false);
   const keyPressTimeRef = useRef<Record<string, number>>({});
   const fastScrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -167,7 +170,34 @@ export default function TVHome() {
 
         case 'Escape':
           e.preventDefault();
-          setShowExitDialog(true);
+          if (searchMode) {
+            setSearchMode(false);
+            setSearchQuery('');
+          } else {
+            setShowExitDialog(true);
+          }
+          break;
+
+        case '/':
+          // Quick search activation (/ key)
+          if (!searchMode) {
+            e.preventDefault();
+            setSearchMode(true);
+            setActiveTab(4);
+            setFocusedElement('search');
+            setFocusedRowIndex(0);
+            setFocusedColIndex(0);
+          }
+          break;
+
+        default:
+          // Type characters for search when in search mode
+          if (searchMode && e.key.length === 1 && /[a-zA-Z0-9 ]/.test(e.key)) {
+            setSearchQuery(prev => prev + e.key);
+          } else if (searchMode && e.key === 'Backspace') {
+            e.preventDefault();
+            setSearchQuery(prev => prev.slice(0, -1));
+          }
           break;
 
         default:
