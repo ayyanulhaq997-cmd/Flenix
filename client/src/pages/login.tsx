@@ -14,13 +14,8 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Redirect to dashboard if already logged in
-  useEffect(() => {
-    const token = localStorage.getItem("appToken");
-    if (token) {
-      setLocation("/");
-    }
-  }, [setLocation]);
+  // Don't redirect - allow users to visit /login page even if logged in
+  // This enables logout functionality
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
