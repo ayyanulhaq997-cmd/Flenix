@@ -9,15 +9,19 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Search, LayoutGrid, List, Film } from "lucide-react";
+import { Search, LayoutGrid, List, Film, Heart, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function Movies() {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [watchlist, setWatchlist] = useState<Set<number>>(new Set());
+  const queryClient = useQueryClient();
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ['movies'],
@@ -27,6 +31,88 @@ export default function Movies() {
       return response.json();
     },
   });
+
+  // Load user's favorites and watchlist
+  React.useEffect(() => {
+    const loadUserLists = async () => {
+      try {
+        const [favRes, watchRes] = await Promise.all([
+          fetch('/api/favorites'),
+          fetch('/api/watchlist')
+        ]);
+        
+        if (favRes.ok) {
+          const favs = await favRes.json();
+          setFavorites(new Set(favs.filter((f: any) => f.contentType === 'movie').map((f: any) => f.contentId)));
+        }
+        
+        if (watchRes.ok) {
+          const watch = await watchRes.json();
+          setWatchlist(new Set(watch.filter((w: any) => w.contentType === 'movie').map((w: any) => w.contentId)));
+        }
+      } catch (error) {
+        console.error('Failed to load user lists', error);
+      }
+    };
+
+    loadUserLists();
+  }, []);
+
+  const toggleFavorite = async (movieId: number) => {
+    try {
+      if (favorites.has(movieId)) {
+        const response = await fetch(`/api/favorites/${movieId}/movie`, { method: 'DELETE' });
+        if (response.ok) {
+          setFavorites(prev => {
+            const next = new Set(prev);
+            next.delete(movieId);
+            return next;
+          });
+          toast.success('Removed from favorites');
+        }
+      } else {
+        const response = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contentId: movieId, contentType: 'movie' })
+        });
+        if (response.ok) {
+          setFavorites(prev => new Set([...prev, movieId]));
+          toast.success('Added to favorites');
+        }
+      }
+    } catch (error) {
+      toast.error('Failed to update favorites');
+    }
+  };
+
+  const toggleWatchlist = async (movieId: number) => {
+    try {
+      if (watchlist.has(movieId)) {
+        const response = await fetch(`/api/watchlist/${movieId}/movie`, { method: 'DELETE' });
+        if (response.ok) {
+          setWatchlist(prev => {
+            const next = new Set(prev);
+            next.delete(movieId);
+            return next;
+          });
+          toast.success('Removed from watchlist');
+        }
+      } else {
+        const response = await fetch('/api/watchlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contentId: movieId, contentType: 'movie' })
+        });
+        if (response.ok) {
+          setWatchlist(prev => new Set([...prev, movieId]));
+          toast.success('Added to watchlist');
+        }
+      }
+    } catch (error) {
+      toast.error('Failed to update watchlist');
+    }
+  };
 
   const filteredMovies = movies.filter((movie: any) => 
     movie.title.toLowerCase().includes(search.toLowerCase())
@@ -154,7 +240,27 @@ export default function Movies() {
                       <Film className="w-12 h-12 text-muted-foreground" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleFavorite(movie.id)}
+                        className={favorites.has(movie.id) ? 'text-red-500 hover:text-red-400' : 'text-white'}
+                        data-testid={`button-favorite-${movie.id}`}
+                      >
+                        <Heart className={`w-4 h-4 ${favorites.has(movie.id) ? 'fill-current' : ''}`} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleWatchlist(movie.id)}
+                        className="text-white"
+                        data-testid={`button-watchlist-${movie.id}`}
+                      >
+                        <Clock className={`w-4 h-4 ${watchlist.has(movie.id) ? 'fill-current' : ''}`} />
+                      </Button>
+                    </div>
                     <p className="text-xs text-white/80 line-clamp-2">
                       {movie.genre} • {movie.year}
                     </p>

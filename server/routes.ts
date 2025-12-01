@@ -1167,5 +1167,109 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  // Favorites API
+  app.post("/api/favorites", authMiddleware, async (req, res) => {
+    try {
+      const { contentId, contentType } = req.body;
+      const userId = (req as any).user.userId;
+      
+      if (!contentId || !contentType) {
+        return res.status(400).json({ error: "Missing contentId or contentType" });
+      }
+
+      const favorite = await storage.addFavorite({ userId, contentId, contentType });
+      res.status(201).json(favorite);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/favorites/:contentId/:contentType", authMiddleware, async (req, res) => {
+    try {
+      const { contentId, contentType } = req.params;
+      const userId = (req as any).user.userId;
+      
+      await storage.removeFavorite(userId, Number(contentId), contentType);
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/favorites", authMiddleware, async (req, res) => {
+    try {
+      const userId = (req as any).user.userId;
+      const favorites = await storage.getUserFavorites(userId);
+      res.json(favorites);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/favorites/check/:contentId/:contentType", authMiddleware, async (req, res) => {
+    try {
+      const { contentId, contentType } = req.params;
+      const userId = (req as any).user.userId;
+      
+      const isFav = await storage.isFavorite(userId, Number(contentId), contentType);
+      res.json({ isFavorite: isFav });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Watchlist API
+  app.post("/api/watchlist", authMiddleware, async (req, res) => {
+    try {
+      const { contentId, contentType } = req.body;
+      const userId = (req as any).user.userId;
+      
+      if (!contentId || !contentType) {
+        return res.status(400).json({ error: "Missing contentId or contentType" });
+      }
+
+      const watchlist = await storage.addToWatchlist({ userId, contentId, contentType });
+      res.status(201).json(watchlist);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete("/api/watchlist/:contentId/:contentType", authMiddleware, async (req, res) => {
+    try {
+      const { contentId, contentType } = req.params;
+      const userId = (req as any).user.userId;
+      
+      await storage.removeFromWatchlist(userId, Number(contentId), contentType);
+      res.status(204).send();
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/watchlist", authMiddleware, async (req, res) => {
+    try {
+      const userId = (req as any).user.userId;
+      const watchlist = await storage.getUserWatchlist(userId);
+      
+      // Fetch content details for each watchlist item
+      const enriched = await Promise.all(
+        watchlist.map(async (item: any) => {
+          let content;
+          if (item.contentType === "movie") {
+            content = await storage.getMovie(item.contentId);
+          } else if (item.contentType === "series") {
+            content = await storage.getSeries(item.contentId);
+          }
+          return { ...item, content };
+        })
+      );
+      
+      res.json(enriched);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   return httpServer;
 }
