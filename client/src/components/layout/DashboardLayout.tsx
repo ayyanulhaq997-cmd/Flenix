@@ -40,6 +40,7 @@ export function Sidebar() {
 
   // Admin-only nav items (hidden for subscribers)
   const adminNavItems = [
+    { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard", adminOnly: true },
     { icon: Users, label: "Users", href: "/admin/users", adminOnly: true },
     { icon: Key, label: "API Keys", href: "/admin/api-keys", adminOnly: true },
     { icon: Upload, label: "Bulk Import", href: "/admin/bulk-import", adminOnly: true },
@@ -47,8 +48,8 @@ export function Sidebar() {
     { icon: Settings, label: "Settings", href: "/admin/settings", adminOnly: true },
   ];
 
-  const publicNavItems = [
-    { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
+  // User browsing nav items (visible to all users)
+  const userNavItems = [
     { icon: Film, label: "Movies", href: "/movies" },
     { icon: Tv, label: "Series", href: "/series" },
     { icon: Radio, label: "Channels", href: "/channels" },
@@ -56,8 +57,8 @@ export function Sidebar() {
 
   // Build nav items based on user role
   const navItems = userIsAdmin 
-    ? [...publicNavItems, ...adminNavItems]
-    : publicNavItems;
+    ? [...adminNavItems, ...userNavItems]
+    : userNavItems;
 
   return (
     <div className="w-64 h-screen bg-sidebar border-r border-white/5 flex flex-col fixed left-0 top-0 z-50 backdrop-blur-xl">
