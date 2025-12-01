@@ -403,7 +403,7 @@ class _TVPlayerScreenState extends State<TVPlayerScreen> {
                                 const SizedBox(height: 20),
                                 Row(
                                   children: [
-                                    const Text(
+                                    Text(
                                       '← Rewind 10s',
                                       style: TextStyle(
                                         color: Colors.grey[400],
@@ -411,7 +411,7 @@ class _TVPlayerScreenState extends State<TVPlayerScreen> {
                                       ),
                                     ),
                                     const SizedBox(width: 32),
-                                    const Text(
+                                    Text(
                                       'Play/Pause',
                                       style: TextStyle(
                                         color: Colors.grey[400],
@@ -419,7 +419,7 @@ class _TVPlayerScreenState extends State<TVPlayerScreen> {
                                       ),
                                     ),
                                     const SizedBox(width: 32),
-                                    const Text(
+                                    Text(
                                       'Forward 10s →',
                                       style: TextStyle(
                                         color: Colors.grey[400],

@@ -1,0 +1,34 @@
+C:\Users\PC\Downloads\fenix-flutter\fenix-flutter>flutter run -d chrome
+Launching lib\main.dart on Chrome in debug mode...
+lib/screens/search_screen.dart:93:31: Error: Member not found: 'movie_not_supported_outlined'.
+                        Icons.movie_not_supported_outlined,
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/screens/tv_player_screen.dart:406:43: Error: Constant evaluation error:
+                                    const Text(
+                                          ^
+lib/screens/tv_player_screen.dart:409:59: Context: The method '[]' can't be invoked on 'MaterialColor {}' in a constant
+expression.
+ - 'MaterialColor' is from 'package:flutter/src/material/colors.dart'
+ ('/C:/app/flutter_windows_3.38.3-stable/flutter/packages/flutter/lib/src/material/colors.dart').
+                                        color: Colors.grey[400],
+                                                          ^
+lib/screens/tv_player_screen.dart:414:43: Error: Constant evaluation error:
+                                    const Text(
+                                          ^
+lib/screens/tv_player_screen.dart:417:59: Context: The method '[]' can't be invoked on 'MaterialColor {}' in a constant
+expression.
+ - 'MaterialColor' is from 'package:flutter/src/material/colors.dart'
+ ('/C:/app/flutter_windows_3.38.3-stable/flutter/packages/flutter/lib/src/material/colors.dart').
+                                        color: Colors.grey[400],
+                                                          ^
+lib/screens/tv_player_screen.dart:422:43: Error: Constant evaluation error:
+                                    const Text(
+                                          ^
+lib/screens/tv_player_screen.dart:425:59: Context: The method '[]' can't be invoked on 'MaterialColor {}' in a constant
+expression.
+ - 'MaterialColor' is from 'package:flutter/src/material/colors.dart'
+ ('/C:/app/flutter_windows_3.38.3-stable/flutter/packages/flutter/lib/src/material/colors.dart').
+                                        color: Colors.grey[400],
+                                                          ^
+Waiting for connection from debug service on Chrome...             32.3s
+Failed to compile application.
