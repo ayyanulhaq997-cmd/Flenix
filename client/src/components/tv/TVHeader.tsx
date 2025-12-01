@@ -1,4 +1,5 @@
 import { User } from 'lucide-react';
+import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
 
 interface TVHeaderProps {
@@ -6,6 +7,12 @@ interface TVHeaderProps {
 }
 
 export function TVHeader({ isFocused = false }: TVHeaderProps) {
+  const [, setLocation] = useLocation();
+
+  const handleProfileClick = () => {
+    setLocation('/tv/profiles');
+  };
+
   return (
     <div className={cn(
       "fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black to-transparent px-8 py-4 flex items-center justify-between",
@@ -22,8 +29,13 @@ export function TVHeader({ isFocused = false }: TVHeaderProps) {
 
       {/* Right side: User Profile */}
       <div className="flex items-center gap-8">
-        {/* User Profile */}
-        <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-900/20 transition-colors group">
+        {/* User Profile Button - Navigate to Profile Management */}
+        <button 
+          onClick={handleProfileClick}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-900/20 transition-colors group cursor-pointer"
+          data-testid="button-profile-icon"
+          aria-label="Ir a perfil"
+        >
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
             <User size={16} className="text-white" />
           </div>
