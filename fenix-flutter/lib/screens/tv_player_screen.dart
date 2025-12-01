@@ -96,36 +96,53 @@ class _TVPlayerScreenState extends State<TVPlayerScreen> {
             color: const Color(0xFF1a1a2e),
             child: Stack(
               children: [
-                // Poster background
-                if (posterUrl != null)
+                // Video player or poster background
+                if (_isLoading)
+                  Container(
+                    color: const Color(0xFF1a1a2e),
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(Color(0xFF3B82F6)),
+                      ),
+                    ),
+                  )
+                else if (_errorMessage.isNotEmpty)
+                  Container(
+                    color: const Color(0xFF1a1a2e),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: Color(0xFF3B82F6),
+                            size: 80,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            _errorMessage,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else if (_videoController.value.isInitialized)
+                  VideoPlayer(_videoController)
+                else if (posterUrl != null)
                   Image.network(
                     posterUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stack) {
                       return Container(
                         color: const Color(0xFF1a1a2e),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment:
-                                MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.movie,
-                                color: Color(0xFF3B82F6),
-                                size: 120,
-                              ),
-                              const SizedBox(height: 24),
-                              Text(
-                                title,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
+                        child: const Center(
+                          child: Icon(Icons.movie,
+                              color: Color(0xFF3B82F6), size: 120),
                         ),
                       );
                     },
@@ -133,28 +150,9 @@ class _TVPlayerScreenState extends State<TVPlayerScreen> {
                 else
                   Container(
                     color: const Color(0xFF1a1a2e),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.movie,
-                            color: Color(0xFF3B82F6),
-                            size: 120,
-                          ),
-                          const SizedBox(height: 24),
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
+                    child: const Center(
+                      child: Icon(Icons.movie,
+                          color: Color(0xFF3B82F6), size: 120),
                     ),
                   ),
                 // Gradient overlay
@@ -170,15 +168,11 @@ class _TVPlayerScreenState extends State<TVPlayerScreen> {
                     ),
                   ),
                 ),
-                // Large centered play button
-                if (widget.item['videoUrl'] != null)
+                // Large centered play button (only when video is ready)
+                if (_videoController.value.isInitialized)
                   Center(
                     child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _isPlaying = !_isPlaying;
-                        });
-                      },
+                      onTap: _togglePlayPause,
                       child: Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
@@ -195,7 +189,7 @@ class _TVPlayerScreenState extends State<TVPlayerScreen> {
                         ),
                         padding: const EdgeInsets.all(24),
                         child: Icon(
-                          _isPlaying
+                          _videoController.value.isPlaying
                               ? Icons.pause
                               : Icons.play_arrow,
                           color: Colors.white,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 class PlayerScreen extends StatefulWidget {
   final dynamic movie;
@@ -15,10 +16,64 @@ class PlayerScreen extends StatefulWidget {
 }
 
 class _PlayerScreenState extends State<PlayerScreen> {
-  bool _isPlaying = false;
+  late VideoPlayerController _videoController;
+  bool _isLoading = true;
+  String _errorMessage = '';
   String _selectedSubtitleColor = 'white';
   String _selectedSubtitleSize = 'Mediano';
   String _selectedLanguage = 'Español';
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeVideo();
+  }
+
+  void _initializeVideo() {
+    final videoUrl = widget.movie['videoUrl'];
+    if (videoUrl != null && videoUrl.isNotEmpty) {
+      _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
+        ..initialize().then((_) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
+        }).catchError((error) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _errorMessage = 'Failed to load video: $error';
+            });
+          }
+        });
+    } else {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'No video URL available';
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoController.dispose();
+    super.dispose();
+  }
+
+  void _togglePlayPause() {
+    if (_videoController.value.isInitialized) {
+      setState(() {
+        if (_videoController.value.isPlaying) {
+          _videoController.pause();
+        } else {
+          _videoController.play();
+        }
+      });
+    }
+  }
 
   void _showSubtitlePreferences() {
     showModalBottomSheet(
