@@ -706,6 +706,62 @@ export class DatabaseStorage implements IStorage {
 
     return recommended.filter(m => !watchedIds.includes(m.id));
   }
+
+  // Audio Tracks
+  async getAudioTracks(contentId: number): Promise<AudioTrack[]> {
+    return await db.select().from(audioTracks).where(eq(audioTracks.contentId, contentId));
+  }
+
+  async createAudioTrack(track: InsertAudioTrack): Promise<AudioTrack> {
+    const [newTrack] = await db.insert(audioTracks).values(track).returning();
+    return newTrack;
+  }
+
+  async deleteAudioTrack(trackId: number): Promise<void> {
+    await db.delete(audioTracks).where(eq(audioTracks.id, trackId));
+  }
+
+  // Subtitles
+  async getSubtitles(contentId: number): Promise<Subtitle[]> {
+    return await db.select().from(subtitles).where(eq(subtitles.contentId, contentId));
+  }
+
+  async createSubtitle(subtitle: InsertSubtitle): Promise<Subtitle> {
+    const [newSubtitle] = await db.insert(subtitles).values(subtitle).returning();
+    return newSubtitle;
+  }
+
+  async deleteSubtitle(subtitleId: number): Promise<void> {
+    await db.delete(subtitles).where(eq(subtitles.id, subtitleId));
+  }
+
+  // Downloads
+  async createDownload(download: InsertDownload): Promise<Download> {
+    const [newDownload] = await db.insert(downloads).values(download).returning();
+    return newDownload;
+  }
+
+  async getDownload(downloadId: number): Promise<Download | undefined> {
+    const [download] = await db.select().from(downloads).where(eq(downloads.id, downloadId));
+    return download || undefined;
+  }
+
+  async getUserDownloads(userId: number): Promise<Download[]> {
+    return await db.select().from(downloads).where(eq(downloads.userId, userId)).orderBy(desc(downloads.downloadedAt));
+  }
+
+  async updateDownload(downloadId: number, download: Partial<InsertDownload>): Promise<Download | undefined> {
+    const [updated] = await db
+      .update(downloads)
+      .set(download)
+      .where(eq(downloads.id, downloadId))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteDownload(downloadId: number): Promise<void> {
+    await db.delete(downloads).where(eq(downloads.id, downloadId));
+  }
 }
 
 export const storage = new DatabaseStorage();

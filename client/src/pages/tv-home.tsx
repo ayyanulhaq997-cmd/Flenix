@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { TVHeader } from '@/components/tv/TVHeader';
 import { TVHero } from '@/components/tv/TVHero';
 import { TVNavigationTabs } from '@/components/tv/TVNavigationTabs';
@@ -11,6 +12,15 @@ interface ContentItem {
   year: number;
   posterUrl?: string;
   progress?: number;
+  description?: string;
+  genre?: string;
+  duration?: number;
+}
+
+interface NavigationState {
+  tab: number;
+  rowIndex: number;
+  colIndex: number;
 }
 
 // Mock data
@@ -49,11 +59,17 @@ const TABS = [
 ];
 
 export default function TVHome() {
+  const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState(0);
   const [focusedElement, setFocusedElement] = useState<'header' | 'hero' | 'tab' | 'row'>('row');
   const [focusedTabIndex, setFocusedTabIndex] = useState(0);
   const [focusedRowIndex, setFocusedRowIndex] = useState(0);
   const [focusedColIndex, setFocusedColIndex] = useState(0);
+  const [navigationHistory, setNavigationHistory] = useState<NavigationState[]>([]);
+  const [showExitDialog, setShowExitDialog] = useState(false);
+  const [scrollPosition, setScrollPosition] = useState<Record<string, number>>({});
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Handle keyboard navigation
   useEffect(() => {
