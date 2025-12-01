@@ -1,4 +1,4 @@
-import { User, Wifi, Battery } from 'lucide-react';
+import { User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface TVHeaderProps {
@@ -20,20 +20,8 @@ export function TVHeader({ isFocused = false }: TVHeaderProps) {
         <h1 className="text-2xl font-bold text-white">FENIX</h1>
       </div>
 
-      {/* Right side: User Profile, Battery, Connection */}
+      {/* Right side: User Profile */}
       <div className="flex items-center gap-8">
-        {/* Connection Status */}
-        <div className="flex items-center gap-2 text-white/70 hover:text-white transition-colors">
-          <Wifi size={18} className="text-green-500" />
-          <span className="text-xs">En línea</span>
-        </div>
-
-        {/* Battery Status */}
-        <div className="flex items-center gap-2 text-white/70">
-          <Battery size={18} className="text-green-500" />
-          <span className="text-xs">100%</span>
-        </div>
-
         {/* User Profile */}
         <button className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-red-900/20 transition-colors group">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center">
