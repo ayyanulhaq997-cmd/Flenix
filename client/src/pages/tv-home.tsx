@@ -227,18 +227,23 @@ export default function TVHome() {
       window.removeEventListener('keyup', handleKeyUp);
       if (fastScrollIntervalRef.current) clearInterval(fastScrollIntervalRef.current);
     };
-  }, [focusedElement, focusedTabIndex, focusedColIndex, focusedRowIndex, activeTab, setLocation]);
+  }, [focusedElement, focusedTabIndex, focusedColIndex, focusedRowIndex, activeTab, setLocation, moviesData, seriesData, channelsData]);
 
   function getActiveRowData(): ContentItem[] {
-    switch (TABS[activeTab]?.id) {
-      case 'movies':
-        return moviesData;
-      case 'series':
-        return seriesData;
-      case 'channels':
-        return channelsData;
-      default:
-        return moviesData;
+    try {
+      switch (TABS[activeTab]?.id) {
+        case 'movies':
+          return moviesData || [];
+        case 'series':
+          return seriesData || [];
+        case 'channels':
+          return channelsData || [];
+        default:
+          return moviesData || [];
+      }
+    } catch (error) {
+      console.error('Error in getActiveRowData:', error);
+      return [];
     }
   }
 
