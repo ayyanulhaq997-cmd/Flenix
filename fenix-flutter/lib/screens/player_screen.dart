@@ -248,9 +248,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final title = widget.movie['title'] ?? 'Unknown';
     final description = widget.movie['description'] ?? 'No description';
     final genre = widget.movie['genre'] ?? 'Unknown';
-    final year = widget.movie['year'] ?? 'Unknown';
+    final year = '${widget.movie['year'] ?? 'Unknown'}';
     final posterUrl = widget.movie['posterUrl'];
-    final duration = widget.movie['duration'] ?? '120';
+    final duration = '${widget.movie['duration'] ?? 120}';
     final actors = widget.movie['actors'] ?? [];
 
     return Scaffold(
