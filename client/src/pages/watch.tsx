@@ -20,6 +20,7 @@ interface ContentItem {
 export default function Watch() {
   const [, setLocation] = useLocation();
   const [content, setContent] = useState<ContentItem | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
     // Get content from URL params
@@ -35,7 +36,28 @@ export default function Watch() {
     }
   }, []);
 
-  const handleBack = () => {
+  const handleBack = async () => {
+    // Save viewing progress before leaving
+    if (content && currentTime > 0) {
+      try {
+        const token = localStorage.getItem('appToken');
+        await fetch('/api/viewing-progress', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            contentId: content.id,
+            currentTimeSeconds: Math.round(currentTime),
+            durationSeconds: content.duration || 0,
+            contentType: content.type || 'movie',
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to save viewing progress:', error);
+      }
+    }
     setLocation(`/tv/details?id=${content?.id}`);
   };
 
@@ -75,7 +97,9 @@ export default function Watch() {
         <TVVideoPlayer
           videoUrl={content.videoUrl || content.posterUrl}
           title={content.title}
+          duration={content.duration || 0}
           onBack={handleBack}
+          onTimeUpdate={setCurrentTime}
         />
       </div>
 

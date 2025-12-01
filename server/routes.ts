@@ -1102,5 +1102,35 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  // Save viewing progress (for resume watching)
+  app.post("/api/viewing-progress", authMiddleware, async (req, res) => {
+    try {
+      const { contentId, currentTimeSeconds, durationSeconds, contentType } = req.body;
+      const userId = (req as any).user.userId;
+
+      if (!contentId || currentTimeSeconds === undefined || durationSeconds === undefined) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const completionPercentage = Math.round((currentTimeSeconds / durationSeconds) * 100);
+      
+      // Update viewing progress
+      const result = await storage.updateViewingProgress(
+        userId,
+        contentId,
+        currentTimeSeconds,
+        durationSeconds
+      );
+
+      res.json({
+        success: true,
+        completionPercentage,
+        lastWatched: result?.lastWatchedAt || new Date().toISOString(),
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   return httpServer;
 }
