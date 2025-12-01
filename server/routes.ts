@@ -3,7 +3,7 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { insertMovieSchema, insertSeriesSchema, insertEpisodeSchema, insertChannelSchema, insertAppUserSchema, insertSubscriptionPlanSchema, insertChannelContentSchema, insertApiKeySchema, insertFileSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
-import { authMiddleware, generateToken, generateStreamingUrl } from "./auth";
+import { authMiddleware, adminMiddleware, generateToken, generateStreamingUrl } from "./auth";
 import { openApiSpec } from "./openapi";
 import { log } from "./index";
 import { getCached, setCached, invalidateCache, cacheKeys } from "./cache";
@@ -60,7 +60,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.post("/api/movies", authMiddleware, async (req, res) => {
+  app.post("/api/movies", adminMiddleware, async (req, res) => {
     try {
       const result = insertMovieSchema.safeParse(req.body);
       if (!result.success) {
@@ -75,7 +75,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.patch("/api/movies/:id", authMiddleware, async (req, res) => {
+  app.patch("/api/movies/:id", adminMiddleware, async (req, res) => {
     try {
       const movie = await storage.updateMovie(Number(req.params.id), req.body);
       if (!movie) {
@@ -89,7 +89,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.delete("/api/movies/:id", authMiddleware, async (req, res) => {
+  app.delete("/api/movies/:id", adminMiddleware, async (req, res) => {
     try {
       await storage.deleteMovie(Number(req.params.id));
       // Invalidate cache on delete
@@ -134,7 +134,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.post("/api/series", authMiddleware, async (req, res) => {
+  app.post("/api/series", adminMiddleware, async (req, res) => {
     try {
       const result = insertSeriesSchema.safeParse(req.body);
       if (!result.success) {
@@ -149,7 +149,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.patch("/api/series/:id", authMiddleware, async (req, res) => {
+  app.patch("/api/series/:id", adminMiddleware, async (req, res) => {
     try {
       const series = await storage.updateSeries(Number(req.params.id), req.body);
       if (!series) {
@@ -161,7 +161,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.delete("/api/series/:id", authMiddleware, async (req, res) => {
+  app.delete("/api/series/:id", adminMiddleware, async (req, res) => {
     try {
       await storage.deleteSeries(Number(req.params.id));
       res.status(204).send();
@@ -180,7 +180,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.post("/api/episodes", authMiddleware, async (req, res) => {
+  app.post("/api/episodes", adminMiddleware, async (req, res) => {
     try {
       const result = insertEpisodeSchema.safeParse(req.body);
       if (!result.success) {
@@ -193,7 +193,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.patch("/api/episodes/:id", authMiddleware, async (req, res) => {
+  app.patch("/api/episodes/:id", adminMiddleware, async (req, res) => {
     try {
       const episode = await storage.updateEpisode(Number(req.params.id), req.body);
       if (!episode) {
@@ -205,7 +205,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.delete("/api/episodes/:id", authMiddleware, async (req, res) => {
+  app.delete("/api/episodes/:id", adminMiddleware, async (req, res) => {
     try {
       await storage.deleteEpisode(Number(req.params.id));
       res.status(204).send();
@@ -236,7 +236,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.post("/api/channels", authMiddleware, async (req, res) => {
+  app.post("/api/channels", adminMiddleware, async (req, res) => {
     try {
       const result = insertChannelSchema.safeParse(req.body);
       if (!result.success) {
@@ -249,7 +249,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.patch("/api/channels/:id", authMiddleware, async (req, res) => {
+  app.patch("/api/channels/:id", adminMiddleware, async (req, res) => {
     try {
       const channel = await storage.updateChannel(Number(req.params.id), req.body);
       if (!channel) {
@@ -261,7 +261,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.delete("/api/channels/:id", authMiddleware, async (req, res) => {
+  app.delete("/api/channels/:id", adminMiddleware, async (req, res) => {
     try {
       await storage.deleteChannel(Number(req.params.id));
       res.status(204).send();
@@ -564,7 +564,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Channel Content: Add content to channel
-  app.post("/api/channels/:channelId/content", authMiddleware, async (req, res) => {
+  app.post("/api/channels/:channelId/content", adminMiddleware, async (req, res) => {
     try {
       const { contentType, contentId } = req.body;
       const channelId = Number(req.params.channelId);
@@ -596,7 +596,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Channel Content: Remove content from channel
-  app.delete("/api/channels/:channelId/content/:contentId", authMiddleware, async (req, res) => {
+  app.delete("/api/channels/:channelId/content/:contentId", adminMiddleware, async (req, res) => {
     try {
       await storage.removeContentFromChannel(
         Number(req.params.contentId),
@@ -620,7 +620,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.post("/api/admin/keys", authMiddleware, async (req, res) => {
+  app.post("/api/admin/keys", adminMiddleware, async (req, res) => {
     try {
       const { appName, createdBy } = req.body;
       
@@ -646,7 +646,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.post("/api/admin/keys/:id/revoke", authMiddleware, async (req, res) => {
+  app.post("/api/admin/keys/:id/revoke", adminMiddleware, async (req, res) => {
     try {
       const key = await storage.revokeApiKey(Number(req.params.id));
       if (!key) {
@@ -710,7 +710,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Import/Export data
-  app.post("/api/admin/import", authMiddleware, async (req, res) => {
+  app.post("/api/admin/import", adminMiddleware, async (req, res) => {
     try {
       const { movies = [], series: seriesData = [], channels = [], users = [] } = req.body;
       
@@ -794,7 +794,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   });
 
   // Video upload with cloud storage backend
-  app.post("/api/videos/upload", authMiddleware, async (req, res) => {
+  app.post("/api/videos/upload", adminMiddleware, async (req, res) => {
     try {
       const { title, description, genre, duration, fileBuffer } = req.body;
 

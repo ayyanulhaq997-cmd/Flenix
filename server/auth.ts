@@ -16,6 +16,7 @@ export interface AuthPayload {
   userId: number;
   email: string;
   plan: string;
+  role?: "admin" | "subscriber"; // Role-based access control
 }
 
 declare global {
@@ -40,7 +41,10 @@ export function verifyToken(token: string): AuthPayload | null {
   }
 }
 
-// Middleware to check authentication
+/**
+ * Middleware to check authentication (all authenticated users)
+ * Used for subscriber API endpoints and protected routes
+ */
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const token = req.headers.authorization?.split(" ")[1];
 
@@ -54,6 +58,46 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   }
 
   req.user = decoded;
+  next();
+}
+
+/**
+ * Strict admin middleware for backend security
+ * Checks user role in JWT payload - prevents bypassing frontend restrictions
+ * Returns 403 Forbidden if user is not admin, even if authenticated
+ * 
+ * Security Note: This is the primary defense against unauthorized access to admin APIs.
+ * Frontend cannot be trusted - users can modify localStorage and bypass UI restrictions.
+ * This middleware enforces role restrictions at the server level.
+ */
+export function adminMiddleware(req: Request, res: Response, next: NextFunction) {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  // 1. Check if token exists
+  if (!token) {
+    return res.status(401).json({ error: "No token provided. Admin access required." });
+  }
+
+  // 2. Verify token validity
+  const decoded = verifyToken(token);
+  if (!decoded) {
+    return res.status(401).json({ error: "Invalid or expired token. Admin access required." });
+  }
+
+  // 3. Attach user to request
+  req.user = decoded;
+
+  // 4. Check role - STRICT enforcement
+  // User must have admin role, even if they're otherwise authenticated
+  if (decoded.role !== "admin") {
+    return res.status(403).json({
+      error: "Access denied. Admin role required.",
+      userRole: decoded.role || "subscriber",
+      requiresRole: "admin"
+    });
+  }
+
+  // All checks passed - user is authenticated admin
   next();
 }
 
