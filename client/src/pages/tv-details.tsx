@@ -201,6 +201,19 @@ export default function TVDetails() {
     <div className="min-h-screen bg-black text-white overflow-y-auto">
       <TVHeader isFocused={false} />
 
+      {/* Persistent Back Button */}
+      <div className="fixed top-24 left-8 z-40">
+        <button
+          onClick={() => setLocation('/tv')}
+          className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition-all shadow-lg"
+          data-testid="button-back-details"
+          aria-label="Volver al inicio"
+        >
+          <span className="text-2xl">←</span>
+          <span>ATRÁS</span>
+        </button>
+      </div>
+
       <main className="pt-20">
         <div className="px-20 py-12">
           <div className="grid grid-cols-3 gap-12">
