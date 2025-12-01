@@ -110,7 +110,8 @@ export function Sidebar() {
         </div>
         <button 
           onClick={() => {
-            localStorage.removeItem("auth_token");
+            localStorage.clear();
+            sessionStorage.clear();
             window.location.href = "/login";
           }}
           className="flex items-center gap-3 px-4 py-3 w-full text-sm font-medium text-muted-foreground hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10 group"

@@ -24,15 +24,31 @@ export default function Watch() {
   const [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
-    // Get content from URL params
+    // Get content from URL params or sessionStorage
     const params = new URLSearchParams(window.location.search);
     const contentId = params.get('id');
+    const titleParam = params.get('title');
     
     if (contentId) {
+      // First try to get from sessionStorage
       const contentData = sessionStorage.getItem(`content_${contentId}`);
       if (contentData) {
         const parsed = JSON.parse(contentData);
         setContent(parsed);
+      } else if (titleParam) {
+        // If sessionStorage miss, create content from params
+        const content: ContentItem = {
+          id: contentId,
+          title: titleParam,
+          type: (params.get('type') as 'movie' | 'series') || 'movie',
+          posterUrl: params.get('poster') || undefined,
+          description: params.get('description') || undefined,
+          genre: params.get('genre') || undefined,
+          duration: params.get('duration') ? parseInt(params.get('duration')!) : undefined,
+          rating: params.get('rating') || undefined,
+          requiredPlan: params.get('plan') || 'free',
+        };
+        setContent(content);
       }
     }
   }, []);
