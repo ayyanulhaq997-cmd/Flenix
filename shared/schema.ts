@@ -260,6 +260,69 @@ export const insertUserWatchlistSchema = createInsertSchema(userWatchlist).omit(
 export type InsertUserWatchlist = z.infer<typeof insertUserWatchlistSchema>;
 export type UserWatchlist = typeof userWatchlist.$inferSelect;
 
+// User Profiles table (up to 5 profiles per account)
+export const userProfiles = pgTable("user_profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  avatarUrl: text("avatar_url"),
+  maturityRating: text("maturity_rating").default("18"), // 7+, 13+, 18+
+  isPinProtected: boolean("is_pin_protected").default(false),
+  pinHash: text("pin_hash"), // hashed PIN for profile lock
+  isKidsProfile: boolean("is_kids_profile").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertUserProfileSchema = createInsertSchema(userProfiles).omit({
+  id: true,
+  createdAt: true,
+  pinHash: true,
+});
+
+export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;
+export type UserProfile = typeof userProfiles.$inferSelect;
+
+// Parental Controls table
+export const parentalControls = pgTable("parental_controls", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  profileId: integer("profile_id").references(() => userProfiles.id, { onDelete: "cascade" }),
+  maturityRating: text("maturity_rating").notNull(), // 7+, 13+, 18+
+  blockedGenres: text("blocked_genres").array().default(sql`ARRAY[]::text[]`),
+  requiresApproval: boolean("requires_approval").default(false),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertParentalControlSchema = createInsertSchema(parentalControls).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type InsertParentalControl = z.infer<typeof insertParentalControlSchema>;
+export type ParentalControl = typeof parentalControls.$inferSelect;
+
+// User Sessions table (for device management & sign out all)
+export const userSessions = pgTable("user_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  deviceName: text("device_name").notNull(), // e.g., "iPhone 13", "Chrome on Windows"
+  deviceType: text("device_type").notNull(), // mobile, web, tv
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  lastActivityAt: timestamp("last_activity_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at"), // session expiry
+});
+
+export const insertUserSessionSchema = createInsertSchema(userSessions).omit({
+  id: true,
+  lastActivityAt: true,
+  createdAt: true,
+});
+
+export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
+export type UserSession = typeof userSessions.$inferSelect;
+
 // File Storage table (for Wasabi/S3 uploads)
 export const files = pgTable("files", {
   id: serial("id").primaryKey(),

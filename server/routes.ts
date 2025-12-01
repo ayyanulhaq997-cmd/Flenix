@@ -14,6 +14,10 @@ import { startTranscodingJob } from "./transcoding";
 import { generateSignedUrl, generateSignedHLSUrl, generateSignedDASHUrl, isSignedUrlValid } from "./cloudfront-signing";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
+  // Import and register account routes
+  const { registerAccountRoutes } = await import("./account-routes");
+  await registerAccountRoutes(app);
+
   // OpenAPI Documentation
   app.get("/api/docs", (req, res) => {
     res.json(openApiSpec);
