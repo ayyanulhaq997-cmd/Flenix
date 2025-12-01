@@ -17,7 +17,6 @@ import { useQuery } from "@tanstack/react-query";
 export default function Movies() {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const { toast } = useToast();
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ['movies'],
