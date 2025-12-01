@@ -9,14 +9,18 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Search, LayoutGrid, List, Tv } from "lucide-react";
+import { Search, LayoutGrid, List, Tv, Heart, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function Series() {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [favorites, setFavorites] = useState<Set<number>>(new Set());
+  const [watchlist, setWatchlist] = useState<Set<number>>(new Set());
+  const queryClient = useQueryClient();
 
   const { data: series = [], isLoading } = useQuery({
     queryKey: ['series'],
@@ -26,6 +30,88 @@ export default function Series() {
       return response.json();
     },
   });
+
+  // Load user's favorites and watchlist
+  React.useEffect(() => {
+    const loadUserLists = async () => {
+      try {
+        const [favRes, watchRes] = await Promise.all([
+          fetch('/api/favorites'),
+          fetch('/api/watchlist')
+        ]);
+        
+        if (favRes.ok) {
+          const favs = await favRes.json();
+          setFavorites(new Set(favs.filter((f: any) => f.contentType === 'series').map((f: any) => f.contentId)));
+        }
+        
+        if (watchRes.ok) {
+          const watch = await watchRes.json();
+          setWatchlist(new Set(watch.filter((w: any) => w.contentType === 'series').map((w: any) => w.contentId)));
+        }
+      } catch (error) {
+        console.error('Failed to load user lists', error);
+      }
+    };
+
+    loadUserLists();
+  }, []);
+
+  const toggleFavorite = async (seriesId: number) => {
+    try {
+      if (favorites.has(seriesId)) {
+        const response = await fetch(`/api/favorites/${seriesId}/series`, { method: 'DELETE' });
+        if (response.ok) {
+          setFavorites(prev => {
+            const next = new Set(prev);
+            next.delete(seriesId);
+            return next;
+          });
+          toast.success('Removed from favorites');
+        }
+      } else {
+        const response = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contentId: seriesId, contentType: 'series' })
+        });
+        if (response.ok) {
+          setFavorites(prev => new Set([...prev, seriesId]));
+          toast.success('Added to favorites');
+        }
+      }
+    } catch (error) {
+      toast.error('Failed to update favorites');
+    }
+  };
+
+  const toggleWatchlist = async (seriesId: number) => {
+    try {
+      if (watchlist.has(seriesId)) {
+        const response = await fetch(`/api/watchlist/${seriesId}/series`, { method: 'DELETE' });
+        if (response.ok) {
+          setWatchlist(prev => {
+            const next = new Set(prev);
+            next.delete(seriesId);
+            return next;
+          });
+          toast.success('Removed from watchlist');
+        }
+      } else {
+        const response = await fetch('/api/watchlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contentId: seriesId, contentType: 'series' })
+        });
+        if (response.ok) {
+          setWatchlist(prev => new Set([...prev, seriesId]));
+          toast.success('Added to watchlist');
+        }
+      }
+    } catch (error) {
+      toast.error('Failed to update watchlist');
+    }
+  };
 
   const filteredSeries = series.filter((show: any) => 
     show.title.toLowerCase().includes(search.toLowerCase())
@@ -126,14 +212,40 @@ export default function Series() {
             {filteredSeries.map((show: any) => (
               <div key={show.id} className="group relative flex flex-col gap-2">
                 <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-primary/20 group-hover:ring-2 ring-primary/50 ring-offset-2 ring-offset-background">
-                  <img 
-                    src={show.image} 
-                    alt={show.title} 
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+                  {show.posterUrl ? (
+                    <img 
+                      src={show.posterUrl} 
+                      alt={show.title} 
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center bg-muted/20">
+                      <Tv className="w-12 h-12 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4">
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleFavorite(show.id)}
+                        className={favorites.has(show.id) ? 'text-red-500 hover:text-red-400' : 'text-white'}
+                        data-testid={`button-favorite-${show.id}`}
+                      >
+                        <Heart className={`w-4 h-4 ${favorites.has(show.id) ? 'fill-current' : ''}`} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => toggleWatchlist(show.id)}
+                        className="text-white"
+                        data-testid={`button-watchlist-${show.id}`}
+                      >
+                        <Clock className={`w-4 h-4 ${watchlist.has(show.id) ? 'fill-current' : ''}`} />
+                      </Button>
+                    </div>
                     <p className="text-xs text-white/80">
-                      {show.seasons} Seasons • {show.episodes} Eps
+                      {show.totalSeasons} Seasons
                     </p>
                   </div>
                   <div className="absolute top-2 right-2">

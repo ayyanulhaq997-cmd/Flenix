@@ -12,7 +12,9 @@ import {
   Bell,
   Key,
   Database,
-  Upload
+  Upload,
+  Heart,
+  Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { isAdmin } from "@/lib/auth-utils";
@@ -53,6 +55,8 @@ export function Sidebar() {
     { icon: Film, label: "Movies", href: "/movies" },
     { icon: Tv, label: "Series", href: "/series" },
     { icon: Radio, label: "Channels", href: "/channels" },
+    { icon: Heart, label: "My Favorites", href: "/my-favorites" },
+    { icon: Clock, label: "My Watchlist", href: "/my-watchlist" },
   ];
 
   // Build nav items based on user role

@@ -32,6 +32,8 @@ import AdminBilling from "@/pages/admin-billing";
 import UnifiedHome from "@/pages/unified-home";
 import PlanSelection from "@/pages/plan-selection";
 import PaymentPage from "@/pages/payment";
+import MyWatchlist from "@/pages/my-watchlist";
+import MyFavorites from "@/pages/my-favorites";
 import { isAdmin, isAuthenticated } from "@/lib/auth-utils";
 
 /**
@@ -70,6 +72,8 @@ function Router() {
       <Route path="/series" component={Series} />
       <Route path="/channels" component={Channels} />
       <Route path="/account" component={AccountSettings} />
+      <Route path="/my-watchlist" component={MyWatchlist} />
+      <Route path="/my-favorites" component={MyFavorites} />
       
       {/* Admin Routes - Protected (redirects non-admins to Browse) */}
       <Route path="/admin/dashboard" component={(props) => <AdminRoute component={AdminDashboardMetrics} {...props} />} />
