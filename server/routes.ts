@@ -1132,5 +1132,40 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
+  // Admin: Get billing transactions
+  app.get("/api/admin/transactions", adminMiddleware, async (req, res) => {
+    try {
+      // Return mock transactions for now - in production this would query payment history
+      const mockTransactions = [
+        {
+          id: 1,
+          userId: 4,
+          planId: 2,
+          planName: "Standard",
+          amount: 9.99,
+          status: "paid",
+          paymentMethod: "Stripe",
+          transactionId: "pi_1234567890abcdef",
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: 2,
+          userId: 5,
+          planId: 3,
+          planName: "Premium",
+          amount: 19.99,
+          status: "paid",
+          paymentMethod: "Stripe",
+          transactionId: "pi_0987654321fedcba",
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+        },
+      ];
+      
+      res.json(mockTransactions);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   return httpServer;
 }
