@@ -196,7 +196,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Icons.movie_not_supported_outlined,
+                                Icons.videocam_off,
                                 color: Colors.grey[600],
                                 size: 64,
                               ),
