@@ -76,7 +76,8 @@ export default function Home() {
               onClick={() => setLocation("/login")}
               variant="outline"
               size="lg"
-              className="px-8"
+              className="px-8 cursor-pointer pointer-events-auto"
+              data-testid="button-signin"
             >
               Sign In
             </Button>
