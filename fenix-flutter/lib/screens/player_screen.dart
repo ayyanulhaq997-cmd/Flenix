@@ -16,7 +16,6 @@ class PlayerScreen extends StatefulWidget {
   State<PlayerScreen> createState() => _PlayerScreenState();
 }
 
-// Helper function to extract YouTube video ID from URL
 String? _extractYouTubeId(String url) {
   try {
     if (url.contains('youtube.com') || url.contains('youtu.be')) {
@@ -38,9 +37,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _isLoading = true;
   String _errorMessage = '';
   bool _isYouTube = false;
-  String _selectedSubtitleColor = 'white';
-  String _selectedSubtitleSize = 'Mediano';
-  String _selectedLanguage = 'Español';
 
   @override
   void initState() {
@@ -52,9 +48,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final videoUrl = widget.movie['videoUrl'];
     if (videoUrl != null && videoUrl.isNotEmpty) {
       final youtubeId = _extractYouTubeId(videoUrl);
-      
       if (youtubeId != null) {
-        // Initialize YouTube player
         _isYouTube = true;
         _youtubeController = YoutubePlayerController(
           initialVideoId: youtubeId,
@@ -68,30 +62,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
             _isLoading = false;
           });
         }
-      } else {
-        // Initialize regular video player
-        _isYouTube = false;
-        _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
-          ..initialize().then((_) {
-            if (mounted) {
-              setState(() {
-                _isLoading = false;
-              });
-            }
-          }).catchError((error) {
-            if (mounted) {
-              setState(() {
-                _isLoading = false;
-                _errorMessage = 'Failed to load video: $error';
-              });
-            }
-          });
       }
     } else {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'No video URL available';
+          _errorMessage = 'No video available';
         });
       }
     }
@@ -101,146 +77,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void dispose() {
     if (_isYouTube) {
       _youtubeController.dispose();
-    } else {
-      _videoController.dispose();
     }
     super.dispose();
-  }
-
-  void _togglePlayPause() {
-    if (_isYouTube) {
-      setState(() {
-        _youtubeController.value.isPlaying
-            ? _youtubeController.pause()
-            : _youtubeController.play();
-      });
-    } else {
-      if (_videoController.value.isInitialized) {
-        setState(() {
-          if (_videoController.value.isPlaying) {
-            _videoController.pause();
-          } else {
-            _videoController.play();
-          }
-        });
-      }
-    }
-  }
-
-  void _showSubtitlePreferences() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1a1a2e),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Video preview at top
-              Container(
-                height: 120,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  image: DecorationImage(
-                    image: NetworkImage(widget.movie['posterUrl'] ?? ''),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Rating and info
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.star, color: Colors.amber, size: 16),
-                          const SizedBox(width: 4),
-                          Text(
-                            '7.5',
-                            style: TextStyle(
-                              color: Colors.grey[300],
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${widget.movie['year'] ?? '2025'}',
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    '1h 89min\nHD',
-                    style: TextStyle(
-                      color: Colors.grey[300],
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.right,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // Audio preferences
-              const Text(
-                'Preferencia de audio',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              ..._buildLanguageOptions(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-
-
-  List<Widget> _buildLanguageOptions() {
-    return ['Desactivar', 'Español', 'Inglés'].map((lang) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            Radio<String>(
-              value: lang,
-              groupValue: _selectedLanguage,
-              onChanged: (value) {
-                setState(() {
-                  _selectedLanguage = value!;
-                });
-                Navigator.pop(context);
-              },
-              activeColor: const Color(0xFF3B82F6),
-            ),
-            Text(
-              lang,
-              style: TextStyle(
-                color: Colors.grey[300],
-                fontSize: 14,
-              ),
-            ),
-          ],
-        ),
-      );
-    }).toList();
   }
 
   @override
@@ -251,7 +89,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final year = '${widget.movie['year'] ?? 'Unknown'}';
     final posterUrl = widget.movie['posterUrl'];
     final duration = '${widget.movie['duration'] ?? 120}';
-    final actors = widget.movie['actors'] ?? [];
+    final cast = widget.movie['cast'] ?? [];
 
     return Scaffold(
       backgroundColor: const Color(0xFF0a0a0a),
@@ -261,150 +99,79 @@ class _PlayerScreenState extends State<PlayerScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Video Player with Controls
-                Container(
-                  height: 280,
-                  width: double.infinity,
-                  color: const Color(0xFF1a1a2e),
-                  child: _isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(
-                            valueColor:
-                                AlwaysStoppedAnimation(Color(0xFF3B82F6)),
-                          ),
-                        )
-                      : _errorMessage.isNotEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.error_outline,
-                                      color: Color(0xFF3B82F6), size: 64),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    _errorMessage,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
-                            )
-                          : _isYouTube
-                              ? YoutubePlayer(
-                                  controller: _youtubeController,
-                                  showVideoProgressIndicator: true,
-                                  progressIndicatorColor:
-                                      const Color(0xFF3B82F6),
-                                )
-                              : Stack(
-                                  children: [
-                                    if (_videoController.value.isInitialized)
-                                      VideoPlayer(_videoController)
-                                    else
-                                      Container(
-                                        color: const Color(0xFF1a1a2e),
-                                        child: posterUrl != null
-                                            ? Image.network(
-                                                posterUrl,
-                                                fit: BoxFit.cover,
-                                                width: double.infinity,
-                                                errorBuilder: (context, error,
-                                                    stack) {
-                                                  return const Center(
-                                                    child: Icon(Icons.movie,
-                                                        color: Color(
-                                                            0xFF3B82F6),
-                                                        size: 64),
-                                                  );
-                                                },
-                                              )
-                                            : const Center(
-                                                child: Icon(Icons.movie,
-                                                    color:
-                                                        Color(0xFF3B82F6),
-                                                    size: 64),
-                                              ),
-                                      ),
-                                    // Gradient overlay
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          begin: Alignment.topCenter,
-                                          end: Alignment.bottomCenter,
-                                          colors: [
-                                            Colors.transparent,
-                                            Colors.black.withOpacity(0.8),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    // Player controls
-                                    Center(
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          GestureDetector(
-                                            onTap: () {},
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.all(12),
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: Colors.white
-                                                    .withOpacity(0.3),
-                                              ),
-                                              child: const Icon(Icons.replay_10,
-                                                  color: Colors.white,
-                                                  size: 24),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 32),
-                                          GestureDetector(
-                                            onTap: _togglePlayPause,
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.all(16),
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: const Color(0xFF3B82F6),
-                                              ),
-                                              child: Icon(
-                                                _videoController.value
-                                                        .isPlaying
-                                                    ? Icons.pause
-                                                    : Icons.play_arrow,
-                                                color: Colors.white,
-                                                size: 32,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 32),
-                                          GestureDetector(
-                                            onTap: () {},
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.all(12),
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: Colors.white
-                                                    .withOpacity(0.3),
-                                              ),
-                                              child: const Icon(Icons.forward_10,
-                                                  color: Colors.white,
-                                                  size: 24),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                // HERO POSTER IMAGE - LARGE at top
+                Stack(
+                  children: [
+                    // Big poster image
+                    posterUrl != null
+                        ? Image.network(
+                            posterUrl,
+                            width: double.infinity,
+                            height: 450,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stack) {
+                              return Container(
+                                width: double.infinity,
+                                height: 450,
+                                color: const Color(0xFF1a1a2e),
+                                child: const Icon(
+                                  Icons.movie,
+                                  color: Color(0xFF3B82F6),
+                                  size: 96,
                                 ),
+                              );
+                            },
+                          )
+                        : Container(
+                            width: double.infinity,
+                            height: 450,
+                            color: const Color(0xFF1a1a2e),
+                            child: const Icon(
+                              Icons.movie,
+                              color: Color(0xFF3B82F6),
+                              size: 96,
+                            ),
+                          ),
+                    // Gradient overlay
+                    Container(
+                      width: double.infinity,
+                      height: 450,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.8),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Play button overlay
+                    Positioned(
+                      top: 180,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFF3B82F6).withOpacity(0.9),
+                          ),
+                          child: const Icon(
+                            Icons.play_arrow,
+                            color: Colors.white,
+                            size: 40,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                // Movie Info Section
+
+                // Movie Info Section - Below poster
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -415,56 +182,56 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         title,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 24,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      // Rating, year, duration
+                      const SizedBox(height: 8),
+
+                      // Genre and other info
+                      Text(
+                        genre,
+                        style: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Rating, Year, Duration
                       Row(
                         children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.star,
-                                  color: Colors.amber, size: 16),
-                              const SizedBox(width: 4),
-                              Text(
-                                '7.5',
-                                style: TextStyle(
-                                  color: Colors.grey[300],
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 16),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey[600]!),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                            child: Text(
-                              year,
-                              style: TextStyle(
-                                color: Colors.grey[300],
-                                fontSize: 12,
-                              ),
+                          const Icon(Icons.star, color: Colors.amber, size: 14),
+                          const SizedBox(width: 4),
+                          Text(
+                            '7.5',
+                            style: TextStyle(
+                              color: Colors.grey[300],
+                              fontSize: 12,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
+                          Text(
+                            year,
+                            style: TextStyle(
+                              color: Colors.grey[300],
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
                           Text(
                             '${duration}min',
                             style: TextStyle(
                               color: Colors.grey[300],
-                              fontSize: 13,
+                              fontSize: 12,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 12),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFF3B82F6),
                               borderRadius: BorderRadius.circular(2),
@@ -473,7 +240,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
                               'HD',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 11,
+                                fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -481,104 +248,105 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
+
+                      // TABS for sections
+                      Row(
+                        children: [
+                          _buildTab('RESUMEN', true),
+                          _buildTab('PELÍCULAS', false),
+                          _buildTab('SERIES', false),
+                          _buildTab('CANALES TV', false),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
                       // Description
                       Text(
                         description,
                         style: TextStyle(
                           color: Colors.grey[300],
                           fontSize: 13,
-                          height: 1.6,
+                          height: 1.5,
                         ),
                       ),
                       const SizedBox(height: 20),
-                      // Action buttons - Play & Trailer
+
+                      // Action buttons
                       Row(
                         children: [
                           Expanded(
                             child: ElevatedButton.icon(
-                              onPressed: _togglePlayPause,
-                              icon: const Icon(Icons.play_arrow),
-                              label: const Text('Play'),
+                              onPressed: () {},
+                              icon: const Icon(Icons.play_arrow, size: 18),
+                              label: const Text('JUGAR'),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF3B82F6),
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Trailer functionality coming soon'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(Icons.videocam),
-                              label: const Text('Trailer'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF3B82F6),
-                                side: const BorderSide(color: Color(0xFF3B82F6), width: 2),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                              ),
-                            ),
+                          IconButton(
+                            onPressed: () {},
+                            icon: const Icon(Icons.favorite_border),
+                            color: const Color(0xFF3B82F6),
+                          ),
+                          IconButton(
+                            onPressed: () {},
+                            icon: const Icon(Icons.share),
+                            color: const Color(0xFF3B82F6),
                           ),
                         ],
                       ),
                       const SizedBox(height: 24),
+
                       // Actors section
                       const Text(
                         'Actores',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 12),
                       SizedBox(
-                        height: 100,
+                        height: 90,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
-                          itemCount: actors.length > 4 ? 4 : actors.length,
+                          itemCount: 3,
                           itemBuilder: (context, index) {
                             return Padding(
                               padding: const EdgeInsets.only(right: 16),
                               child: Column(
                                 children: [
                                   CircleAvatar(
-                                    radius: 32,
+                                    radius: 28,
                                     backgroundColor: const Color(0xFF3B82F6),
                                     child: Text(
-                                      (actors[index]['name'] ?? 'Actor')[0]
-                                          .toUpperCase(),
+                                      'A${index + 1}',
                                       style: const TextStyle(
                                         color: Colors.white,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 6),
                                   SizedBox(
-                                    width: 80,
+                                    width: 70,
                                     child: Text(
-                                      actors[index]['name'] ?? 'Actor',
+                                      'Actor ${index + 1}',
                                       textAlign: TextAlign.center,
-                                      maxLines: 2,
+                                      maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                         color: Colors.grey[300],
-                                        fontSize: 12,
+                                        fontSize: 11,
                                       ),
                                     ),
                                   ),
@@ -589,51 +357,55 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      // Related Content section
+
+                      // Related content
                       const Text(
                         'Contenidos relacionados',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 12),
                       SizedBox(
-                        height: 140,
+                        height: 120,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
-                          itemCount: widget.allMovies.length > 3
-                              ? 3
-                              : widget.allMovies.length,
+                          itemCount:
+                              widget.allMovies.length > 3 ? 3 : widget.allMovies.length,
                           itemBuilder: (context, index) {
                             final relatedMovie = widget.allMovies[index];
                             final relatedPoster = relatedMovie['posterUrl'];
 
                             return Padding(
-                              padding: const EdgeInsets.only(right: 12),
+                              padding: const EdgeInsets.only(right: 10),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(6),
                                 child: relatedPoster != null
                                     ? Image.network(
                                         relatedPoster,
-                                        width: 100,
+                                        width: 90,
                                         fit: BoxFit.cover,
                                         errorBuilder:
                                             (context, error, stack) {
                                           return Container(
-                                            width: 100,
+                                            width: 90,
                                             color: const Color(0xFF1a1a2e),
-                                            child: const Icon(Icons.movie,
-                                                color: Color(0xFF3B82F6)),
+                                            child: const Icon(
+                                              Icons.movie,
+                                              color: Color(0xFF3B82F6),
+                                            ),
                                           );
                                         },
                                       )
                                     : Container(
-                                        width: 100,
+                                        width: 90,
                                         color: const Color(0xFF1a1a2e),
-                                        child: const Icon(Icons.movie,
-                                            color: Color(0xFF3B82F6)),
+                                        child: const Icon(
+                                          Icons.movie,
+                                          color: Color(0xFF3B82F6),
+                                        ),
                                       ),
                               ),
                             );
@@ -641,32 +413,26 @@ class _PlayerScreenState extends State<PlayerScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
+
                       // Remove from history button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Removed from history'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          },
+                          onPressed: () {},
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFE91E63),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 11),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(3),
                             ),
                           ),
                           child: const Text(
                             'REMOVER DEL HISTORIAL',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 13,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
+                              letterSpacing: 0.3,
                             ),
                           ),
                         ),
@@ -696,8 +462,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   onPressed: () {},
                 ),
                 IconButton(
-                  icon: const Icon(Icons.settings),
-                  onPressed: _showSubtitlePreferences,
+                  icon: const Icon(Icons.share),
+                  onPressed: () {},
                 ),
                 IconButton(
                   icon: const Icon(Icons.more_vert),
@@ -707,6 +473,32 @@ class _PlayerScreenState extends State<PlayerScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTab(String label, bool isActive) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF3B82F6) : Colors.transparent,
+          border: Border(
+            bottom: BorderSide(
+              color: isActive ? const Color(0xFF3B82F6) : Colors.grey[700]!,
+              width: 2,
+            ),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? Colors.white : Colors.grey[400],
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
