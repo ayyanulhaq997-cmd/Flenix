@@ -25,7 +25,7 @@ interface Channel {
 }
 
 export default function AdminDashboardMetrics() {
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('appToken');
 
   // Fetch users
   const { data: users = [] } = useQuery({

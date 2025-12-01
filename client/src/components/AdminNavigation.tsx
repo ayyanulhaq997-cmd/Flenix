@@ -18,8 +18,8 @@ export function AdminNavigation() {
   ];
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('adminRole');
+    localStorage.removeItem('appToken');
+    localStorage.removeItem('appUser');
     setLocation('/login');
   };
 
