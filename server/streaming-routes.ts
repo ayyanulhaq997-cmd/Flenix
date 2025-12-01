@@ -5,13 +5,13 @@ import { generateSignedUrl } from "./cloudfront-signing";
 import { canStreamAtQuality, getSubscriptionFeatures, canStartStream } from "./subscriptions";
 import { geoblockingMiddleware } from "./geoblocking";
 
-export async function registerStreamingRoutes(app: Express) {
+export function registerStreamingRoutes(app: Express) {
   // Get HLS manifest with adaptive bitrate streaming
   // Protected by subscription tier and geoblocking
   app.get(
     "/api/stream/:contentId/manifest.m3u8",
     authMiddleware,
-    geoblockingMiddleware(),
+    geoblockingMiddleware,
     async (req, res) => {
       try {
         const { contentId } = req.params;
