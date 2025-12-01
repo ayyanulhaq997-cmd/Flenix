@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
+import AdminDashboard from "@/pages/admin-dashboard";
 import Dashboard from "@/pages/dashboard";
 import Browse from "@/pages/browse";
 import Movies from "@/pages/movies";
@@ -68,7 +69,8 @@ function Router() {
       <Route path="/account" component={AccountSettings} />
       
       {/* Admin Routes (Protected - requires admin role) */}
-      <Route path="/admin/dashboard" component={(props) => <AdminRoute component={Dashboard} {...props} />} />
+      <Route path="/admin/dashboard" component={(props) => <AdminRoute component={AdminDashboard} {...props} />} />
+      <Route path="/admin" component={(props) => <AdminRoute component={AdminDashboard} {...props} />} />
       <Route path="/admin/users" component={(props) => <AdminRoute component={Users} {...props} />} />
       <Route path="/admin/api-keys" component={(props) => <AdminRoute component={ApiKeys} {...props} />} />
       <Route path="/admin/migration" component={(props) => <AdminRoute component={Migration} {...props} />} />
