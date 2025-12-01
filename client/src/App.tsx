@@ -19,14 +19,26 @@ import Login from "@/pages/login";
 import Signup from "@/pages/signup";
 import ProfileSelector from "@/pages/profile-selector";
 import AccountSettings from "@/pages/account-settings";
+import { isAdmin, isAuthenticated } from "@/lib/auth-utils";
 
-// Protected route wrapper for admin routes
-function ProtectedRoute({ component: Component, ...props }: any) {
-  // In production, check JWT token here
-  const token = localStorage.getItem("adminToken");
-  if (!token) {
+/**
+ * Protected route wrapper for admin routes
+ * Checks if user is authenticated AND has admin role
+ * Redirects to home page for subscribers, to login for unauthenticated
+ */
+function AdminRoute({ component: Component, ...props }: any) {
+  // Check if user is authenticated
+  if (!isAuthenticated()) {
     return <Login />;
   }
+
+  // Check if user has admin role
+  if (!isAdmin()) {
+    // Redirect subscribers/non-admins to home page
+    window.location.href = "/";
+    return null;
+  }
+
   return <Component {...props} />;
 }
 
@@ -47,13 +59,13 @@ function Router() {
       <Route path="/channels" component={Channels} />
       <Route path="/account" component={AccountSettings} />
       
-      {/* Admin Routes (Protected) */}
-      <Route path="/admin/dashboard" component={Dashboard} />
-      <Route path="/admin/users" component={Users} />
-      <Route path="/admin/api-keys" component={ApiKeys} />
-      <Route path="/admin/migration" component={Migration} />
-      <Route path="/admin/bulk-import" component={BulkImport} />
-      <Route path="/admin/settings" component={Settings} />
+      {/* Admin Routes (Protected - requires admin role) */}
+      <Route path="/admin/dashboard" component={(props) => <AdminRoute component={Dashboard} {...props} />} />
+      <Route path="/admin/users" component={(props) => <AdminRoute component={Users} {...props} />} />
+      <Route path="/admin/api-keys" component={(props) => <AdminRoute component={ApiKeys} {...props} />} />
+      <Route path="/admin/migration" component={(props) => <AdminRoute component={Migration} {...props} />} />
+      <Route path="/admin/bulk-import" component={(props) => <AdminRoute component={BulkImport} {...props} />} />
+      <Route path="/admin/settings" component={(props) => <AdminRoute component={Settings} {...props} />} />
       
       <Route component={NotFound} />
     </Switch>

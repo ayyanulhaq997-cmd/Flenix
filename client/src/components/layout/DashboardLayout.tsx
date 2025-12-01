@@ -15,6 +15,7 @@ import {
   Upload
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isAdmin } from "@/lib/auth-utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,18 +36,28 @@ import {
 
 export function Sidebar() {
   const [location] = useLocation();
+  const userIsAdmin = isAdmin();
 
-  const navItems = [
-    { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+  // Admin-only nav items (hidden for subscribers)
+  const adminNavItems = [
+    { icon: Users, label: "Users", href: "/admin/users", adminOnly: true },
+    { icon: Key, label: "API Keys", href: "/admin/api-keys", adminOnly: true },
+    { icon: Upload, label: "Bulk Import", href: "/admin/bulk-import", adminOnly: true },
+    { icon: Database, label: "Migration", href: "/admin/migration", adminOnly: true },
+    { icon: Settings, label: "Settings", href: "/admin/settings", adminOnly: true },
+  ];
+
+  const publicNavItems = [
+    { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
     { icon: Film, label: "Movies", href: "/movies" },
     { icon: Tv, label: "Series", href: "/series" },
     { icon: Radio, label: "Channels", href: "/channels" },
-    { icon: Users, label: "Users", href: "/users" },
-    { icon: Key, label: "API Keys", href: "/api-keys" },
-    { icon: Upload, label: "Bulk Import", href: "/bulk-import" },
-    { icon: Database, label: "Migration", href: "/migration" },
-    { icon: Settings, label: "Settings", href: "/settings" },
   ];
+
+  // Build nav items based on user role
+  const navItems = userIsAdmin 
+    ? [...publicNavItems, ...adminNavItems]
+    : publicNavItems;
 
   return (
     <div className="w-64 h-screen bg-sidebar border-r border-white/5 flex flex-col fixed left-0 top-0 z-50 backdrop-blur-xl">
