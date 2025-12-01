@@ -26,6 +26,7 @@ import TVProfiles from "@/pages/tv-profiles";
 import AdminDashboardMetrics from "@/pages/admin-dashboard-metrics";
 import AdminContentList from "@/pages/admin-content-list";
 import AdminUserManagement from "@/pages/admin-user-management";
+import UnifiedHome from "@/pages/unified-home";
 import { isAdmin, isAuthenticated } from "@/lib/auth-utils";
 
 /**
@@ -52,13 +53,16 @@ function AdminRoute({ component: Component, ...props }: any) {
 function Router() {
   return (
     <Switch>
+      {/* Unified Home - Detects device and routes to TV or Web */}
+      <Route path="/" component={UnifiedHome} />
+
       {/* TV Application - Primary Platform */}
       <Route path="/tv" component={TVHome} />
       <Route path="/tv/details" component={TVDetails} />
       <Route path="/tv/profiles" component={TVProfiles} />
 
       {/* Public Routes */}
-      <Route path="/" component={Home} />
+      <Route path="/home" component={Home} />
       <Route path="/auth" component={Login} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />

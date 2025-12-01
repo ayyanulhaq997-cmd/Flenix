@@ -6,28 +6,28 @@ export default function Home() {
   const [, setLocation] = useLocation();
   
   useEffect(() => {
-    // Check if user is authenticated
+    // Check if user is authenticated (only redirect if not already on this page)
     const token = localStorage.getItem("appToken");
-    if (token) {
+    if (token && window.location.pathname === "/") {
       // Redirect to browse page if authenticated
       setLocation("/browse");
     }
   }, [setLocation]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 flex items-center justify-center px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl w-full text-center">
         <div className="mb-8">
-          <h1 className="text-5xl font-bold text-white mb-4">
+          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
             Fenix Streaming
           </h1>
-          <p className="text-xl text-slate-300">
+          <p className="text-lg sm:text-xl text-slate-300">
             Watch movies, series, and live channels anytime, anywhere
           </p>
         </div>
 
-        <div className="bg-slate-800 rounded-lg p-8 mb-8 border border-slate-700">
-          <h2 className="text-2xl font-semibold text-white mb-6">
+        <div className="bg-slate-800 rounded-lg p-6 sm:p-8 mb-8 border border-slate-700">
+          <h2 className="text-xl sm:text-2xl font-semibold text-white mb-6">
             Welcome to Your Entertainment Hub
           </h2>
           <p className="text-slate-300 mb-8 leading-relaxed">
