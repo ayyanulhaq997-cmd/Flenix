@@ -1,5 +1,5 @@
 import { useLocation } from 'wouter';
-import { LayoutDashboard, FileText, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, Users, LogOut, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -15,6 +15,7 @@ export function AdminNavigation() {
     { label: 'Dashboard', href: '/admin/dashboard', icon: <LayoutDashboard size={20} /> },
     { label: 'Content', href: '/admin/content', icon: <FileText size={20} /> },
     { label: 'Users', href: '/admin/users', icon: <Users size={20} /> },
+    { label: 'Billing', href: '/admin/billing', icon: <CreditCard size={20} /> },
   ];
 
   const handleLogout = () => {
