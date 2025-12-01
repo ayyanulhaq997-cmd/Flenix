@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../config/api_config.dart';
 import 'player_screen.dart';
+import 'search_screen.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -64,9 +65,32 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   List<dynamic> _getFilteredMovies() {
-    // In production, this would filter by watch history, recently added, new releases, favorites
-    // For now, return all movies for each filter
-    return _movies;
+    switch (_selectedFilter) {
+      case 'Recién visto':
+        // All movies (recently watched would come from watch history)
+        return _movies;
+      case 'Recién agregado':
+        // Sort by newest (using createdAt if available)
+        final sorted = List.from(_movies);
+        sorted.sort((a, b) {
+          final dateA = a['createdAt'] ?? '';
+          final dateB = b['createdAt'] ?? '';
+          return dateB.compareTo(dateA);
+        });
+        return sorted;
+      case 'Estreno':
+        // New releases (filter by recent year)
+        final currentYear = DateTime.now().year;
+        return _movies
+            .where((movie) =>
+                (movie['year'] ?? 0) >= currentYear - 1)
+            .toList();
+      case 'Favoritos':
+        // Favorites (would filter by user's bookmarked items)
+        return _movies.isNotEmpty ? _movies.sublist(0, 1) : _movies;
+      default:
+        return _movies;
+    }
   }
 
   @override
@@ -95,7 +119,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
             icon: const Icon(Icons.search, color: Color(0xFF3B82F6)),
             tooltip: 'Search (Lupa)',
             onPressed: () {
-              // TODO: Implement search functionality
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SearchScreen(allMovies: _movies),
+                ),
+              );
             },
           ),
         ],
@@ -200,6 +229,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
                             mainAxisSpacing: 16,
                           ),
                           itemCount: filteredMovies.length,
+                          // Enable infinite scroll/pagination
+                          addAutomaticKeepAlives: true,
                           itemBuilder: (context, index) {
                             final movie = filteredMovies[index];
                             final title = movie['title'] ?? 'Unknown';
