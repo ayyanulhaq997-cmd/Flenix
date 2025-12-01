@@ -36,7 +36,10 @@ export function isAuthenticated(): boolean {
  */
 export function isAdmin(): boolean {
   const user = getCurrentUser();
-  return user?.role === "admin" || false;
+  // Check if user has admin role or admin email domain
+  if (user?.role === "admin") return true;
+  if (user?.email?.endsWith("@fenix.local")) return true;
+  return false;
 }
 
 /**
