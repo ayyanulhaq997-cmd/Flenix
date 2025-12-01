@@ -38,14 +38,29 @@ export default function AdminUserManagement() {
     return matchesSearch && matchesPlan;
   });
 
-  const handleResetPassword = (userId: number) => {
-    console.log('Reset password for user:', userId);
-    // Implementation would send password reset email
+  const handleResetPassword = async (userId: number) => {
+    try {
+      await axios.post(`/api/users/${userId}/reset-password`, {}, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      alert('Password reset email sent!');
+    } catch (error: any) {
+      alert('Error: ' + (error.response?.data?.error || error.message));
+    }
   };
 
-  const handleChangePlan = (userId: number, newPlan: string) => {
-    console.log('Change plan for user:', userId, 'to:', newPlan);
-    // Implementation would update user subscription plan
+  const handleChangePlan = async (userId: number, newPlan: string) => {
+    try {
+      const response = await axios.put(`/api/users/${userId}`, 
+        { plan: newPlan },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      alert(`Plan changed to ${newPlan} successfully!`);
+      // Refetch users to show updated plan
+      window.location.reload();
+    } catch (error: any) {
+      alert('Error: ' + (error.response?.data?.error || error.message));
+    }
   };
 
   const formatDate = (dateString?: string) => {
