@@ -122,6 +122,17 @@ app.use((req, res, next) => {
   } else {
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
+    
+    // Also add SPA fallback in development for routes that don't exist
+    // This ensures /login, /admin/dashboard, etc. serve index.html
+    const distPath = require("path").resolve(__dirname, "../dist/public");
+    const fs = require("fs");
+    if (fs.existsSync(distPath)) {
+      app.use(express.static(distPath));
+      app.use("*", (_req: Request, res: Response) => {
+        res.sendFile(require("path").resolve(distPath, "index.html"));
+      });
+    }
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
