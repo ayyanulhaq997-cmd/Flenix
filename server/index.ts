@@ -4,12 +4,35 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { setupCluster } from "./cluster";
 import { initRedis } from "./cache";
+import { initializeCloudStorage, type CloudStorageConfig } from "./cloud-storage";
 
 // Setup clustering for production (uses all CPU cores)
 setupCluster();
 
 // Initialize Redis for caching
 initRedis();
+
+// Initialize Cloud Storage if credentials are provided
+if (process.env.STORAGE_PROVIDER) {
+  const storageConfig: CloudStorageConfig = {
+    provider: (process.env.STORAGE_PROVIDER as "s3" | "wasabi" | "gcs") || "s3",
+    accessKeyId: process.env.STORAGE_ACCESS_KEY || "",
+    secretAccessKey: process.env.STORAGE_SECRET_KEY || "",
+    bucket: process.env.STORAGE_BUCKET || "",
+    region: process.env.STORAGE_REGION || "us-east-1",
+    endpoint: process.env.STORAGE_ENDPOINT,
+    cdnUrl: process.env.CDN_URL,
+  };
+
+  if (storageConfig.accessKeyId && storageConfig.bucket) {
+    try {
+      initializeCloudStorage(storageConfig);
+      console.log("[server] Cloud storage initialized successfully");
+    } catch (error) {
+      console.warn("[server] Cloud storage initialization failed:", error);
+    }
+  }
+}
 
 const app = express();
 const httpServer = createServer(app);

@@ -8,6 +8,8 @@ import { openApiSpec } from "./openapi";
 import { log } from "./index";
 import { getCached, setCached, invalidateCache, cacheKeys } from "./cache";
 import { filterBySubscription, checkContentAccess } from "./subscriptions";
+import { getS3Client, getStorageConfig, generatePresignedUrl, generateCDNUrl, healthCheck } from "./cloud-storage";
+import { buildStreamingUrl, generateHLSPlaylist, generateDASHManifest } from "./streaming";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   // OpenAPI Documentation
