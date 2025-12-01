@@ -6,9 +6,11 @@ interface TVVideoPlayerProps {
   duration: number;
   contentId?: number;
   videoUrl?: string;
+  onCurrentTimeChange?: (time: number) => void;
+  onExit?: () => void;
 }
 
-export function TVVideoPlayer({ title, duration, contentId, videoUrl }: TVVideoPlayerProps) {
+export function TVVideoPlayer({ title, duration, contentId, videoUrl, onCurrentTimeChange, onExit }: TVVideoPlayerProps) {
   const [, setLocation] = useLocation();
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -61,6 +63,11 @@ export function TVVideoPlayer({ title, duration, contentId, videoUrl }: TVVideoP
     };
   }, [isPlaying, duration]);
 
+  // Notify parent component of time changes
+  useEffect(() => {
+    onCurrentTimeChange?.(currentTime);
+  }, [currentTime, onCurrentTimeChange]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       scheduleControlsHide();
@@ -102,9 +109,12 @@ export function TVVideoPlayer({ title, duration, contentId, videoUrl }: TVVideoP
 
         case 'Escape':
           e.preventDefault();
-          // Save viewing progress to backend (mock)
-          console.log(`Saved progress: ${currentTime}s / ${duration}s`);
-          setLocation('/tv');
+          // Call parent exit handler if provided, otherwise navigate
+          if (onExit) {
+            onExit();
+          } else {
+            setLocation('/tv');
+          }
           break;
 
         default:
@@ -127,8 +137,11 @@ export function TVVideoPlayer({ title, duration, contentId, videoUrl }: TVVideoP
   const progressPercent = (currentTime / duration) * 100;
 
   const handleExit = () => {
-    console.log(`Saved progress: ${currentTime}s / ${duration}s`);
-    setLocation('/tv');
+    if (onExit) {
+      onExit();
+    } else {
+      setLocation('/tv');
+    }
   };
 
   return (
