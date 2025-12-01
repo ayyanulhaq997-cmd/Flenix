@@ -11,6 +11,7 @@ import { filterBySubscription, checkContentAccess } from "./subscriptions";
 import { getS3Client, getStorageConfig, generatePresignedUrl, generateCDNUrl, healthCheck } from "./cloud-storage";
 import { buildStreamingUrl, generateHLSPlaylist, generateDASHManifest } from "./streaming";
 import { startTranscodingJob } from "./transcoding";
+import { generateSignedUrl, generateSignedHLSUrl, generateSignedDASHUrl, isSignedUrlValid } from "./cloudfront-signing";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   // OpenAPI Documentation
@@ -850,7 +851,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  // Generate streaming URLs (HLS/DASH)
+  // Generate streaming URLs (HLS/DASH) with CloudFront signing
   app.get("/api/videos/:id/stream", async (req, res) => {
     try {
       const movieId = Number(req.params.id);
@@ -909,19 +910,52 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         );
       }
 
+      // Generate CloudFront signed URLs if private key is available
+      let signedUrls: any = {
+        hls: `${process.env.CDN_URL}/${movie.videoUrl}/playlist.m3u8`,
+        dash: `${process.env.CDN_URL}/${movie.videoUrl}/manifest.mpd`,
+      };
+
+      if (process.env.CLOUDFRONT_PRIVATE_KEY && process.env.CLOUDFRONT_KEY_PAIR_ID && process.env.CLOUDFRONT_DOMAIN) {
+        try {
+          const hlsSignedUrl = generateSignedHLSUrl(movieId, {
+            privateKey: process.env.CLOUDFRONT_PRIVATE_KEY,
+            keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID,
+            domainName: process.env.CLOUDFRONT_DOMAIN,
+            expireTime: parseInt(process.env.CLOUDFRONT_URL_EXPIRY || "3600"),
+          });
+
+          const dashSignedUrl = generateSignedDASHUrl(movieId, {
+            privateKey: process.env.CLOUDFRONT_PRIVATE_KEY,
+            keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID,
+            domainName: process.env.CLOUDFRONT_DOMAIN,
+            expireTime: parseInt(process.env.CLOUDFRONT_URL_EXPIRY || "3600"),
+          });
+
+          signedUrls = {
+            hls: hlsSignedUrl.url,
+            dash: dashSignedUrl.url,
+          };
+        } catch (err) {
+          console.warn("[api] Failed to generate signed URLs:", err);
+          // Fallback to unsigned URLs if signing fails
+        }
+      }
+
       res.json({
         movieId,
         title: movie.title,
         format,
-        streamingUrl: streamingConfig.playlistUrl,
+        streamingUrl: signedUrls[format] || streamingConfig.playlistUrl,
         qualities,
         duration: movie.duration,
         poster: movie.posterUrl,
         playlist: playlistContent, // For direct playlist access
-        // For mobile apps that need signed URLs
-        signedUrls: {
-          hls: `${process.env.CDN_URL}/${movie.videoUrl}/playlist.m3u8`,
-          dash: `${process.env.CDN_URL}/${movie.videoUrl}/manifest.mpd`,
+        signedUrls, // Signed URLs for secure access
+        security: {
+          signed: !!process.env.CLOUDFRONT_PRIVATE_KEY,
+          provider: "CloudFront",
+          expiry: parseInt(process.env.CLOUDFRONT_URL_EXPIRY || "3600"),
         },
       });
     } catch (error: any) {
