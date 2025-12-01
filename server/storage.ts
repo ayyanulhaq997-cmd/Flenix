@@ -1,5 +1,5 @@
 import { 
-  movies, series, episodes, channels, appUsers, admins, subscriptionPlans, channelContent, apiKeys, files, userFavorites, userWatchlist,
+  movies, series, episodes, channels, appUsers, admins, subscriptionPlans, channelContent, apiKeys, files, userFavorites, userWatchlist, viewingHistory, userProfiles, userSessions,
   type Movie, type InsertMovie,
   type Series, type InsertSeries,
   type Episode, type InsertEpisode,
@@ -11,7 +11,10 @@ import {
   type ApiKey, type InsertApiKey,
   type File, type InsertFile,
   type UserFavorites, type InsertUserFavorites,
-  type UserWatchlist, type InsertUserWatchlist
+  type UserWatchlist, type InsertUserWatchlist,
+  type ViewingHistory, type InsertViewingHistory,
+  type UserProfile, type InsertUserProfile,
+  type UserSession, type InsertUserSession
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, like, and, ilike, or } from "drizzle-orm";
@@ -101,6 +104,31 @@ export interface IStorage {
   removeFromWatchlist(userId: number, contentId: number, contentType: string): Promise<void>;
   getUserWatchlist(userId: number): Promise<UserWatchlist[]>;
   updateWatchlistProgress(userId: number, contentId: number, contentType: string, percentage: number): Promise<UserWatchlist | undefined>;
+
+  // Viewing History
+  recordViewingHistory(history: InsertViewingHistory): Promise<ViewingHistory>;
+  getViewingHistory(userId: number, profileId?: number): Promise<ViewingHistory[]>;
+  getViewingHistoryItem(userId: number, contentType: string, contentId: number): Promise<ViewingHistory | undefined>;
+  updateViewingProgress(userId: number, contentId: number, currentTime: number, duration: number): Promise<ViewingHistory | undefined>;
+  getContinueWatchingList(userId: number, profileId?: number, limit?: number): Promise<any[]>;
+
+  // Profiles
+  getUserProfiles(userId: number): Promise<UserProfile[]>;
+  getUserProfile(profileId: number): Promise<UserProfile | undefined>;
+  createUserProfile(profile: InsertUserProfile): Promise<UserProfile>;
+  updateUserProfile(profileId: number, profile: Partial<InsertUserProfile>): Promise<UserProfile | undefined>;
+  deleteUserProfile(profileId: number): Promise<void>;
+
+  // Sessions
+  createUserSession(session: InsertUserSession): Promise<UserSession>;
+  getUserSessions(userId: number): Promise<UserSession[]>;
+  getUserSession(sessionId: number): Promise<UserSession | undefined>;
+  deleteSession(sessionId: number): Promise<void>;
+  deleteAllUserSessions(userId: number): Promise<void>;
+
+  // Recommendations
+  getTrendingContent(limit?: number): Promise<any[]>;
+  getRecommendedContent(userId: number, limit?: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {

@@ -323,6 +323,28 @@ export const insertUserSessionSchema = createInsertSchema(userSessions).omit({
 export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
 export type UserSession = typeof userSessions.$inferSelect;
 
+// Viewing History table (tracks watch progress)
+export const viewingHistory = pgTable("viewing_history", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  profileId: integer("profile_id").references(() => userProfiles.id, { onDelete: "cascade" }),
+  contentType: text("content_type").notNull(), // "movie" or "series"
+  contentId: integer("content_id").notNull(),
+  episodeId: integer("episode_id"), // for series only
+  currentTimeSeconds: integer("current_time_seconds").notNull().default(0),
+  durationSeconds: integer("duration_seconds").notNull(),
+  completionPercentage: integer("completion_percentage").notNull().default(0),
+  lastWatchedAt: timestamp("last_watched_at").defaultNow().notNull(),
+});
+
+export const insertViewingHistorySchema = createInsertSchema(viewingHistory).omit({
+  id: true,
+  lastWatchedAt: true,
+});
+
+export type InsertViewingHistory = z.infer<typeof insertViewingHistorySchema>;
+export type ViewingHistory = typeof viewingHistory.$inferSelect;
+
 // File Storage table (for Wasabi/S3 uploads)
 export const files = pgTable("files", {
   id: serial("id").primaryKey(),
