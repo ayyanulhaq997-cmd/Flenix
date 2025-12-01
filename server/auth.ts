@@ -1,7 +1,15 @@
 import jwt from "jsonwebtoken";
 import { type Request, Response, NextFunction } from "express";
 
-const JWT_SECRET = process.env.JWT_SECRET || "fenix-secret-key-change-in-production";
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  throw new Error(
+    "CRITICAL: JWT_SECRET environment variable is not set. " +
+    "Please set JWT_SECRET before starting the server. " +
+    "Generate a secure secret with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
+  );
+}
 const TOKEN_EXPIRY = "7d";
 
 export interface AuthPayload {
