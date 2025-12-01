@@ -301,7 +301,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.patch("/api/users/:id", async (req, res) => {
+  app.patch("/api/users/:id", adminMiddleware, async (req, res) => {
     try {
       // Don't allow password updates through this endpoint
       const { passwordHash, ...updates } = req.body;
@@ -316,7 +316,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  app.delete("/api/users/:id", async (req, res) => {
+  app.delete("/api/users/:id", adminMiddleware, async (req, res) => {
     try {
       await storage.deleteAppUser(Number(req.params.id));
       res.status(204).send();
@@ -469,7 +469,7 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  // User login endpoint
+  // User login endpoint - checks both app users and admins
   app.post("/api/auth/login", async (req, res) => {
     try {
       const { email, password } = req.body;
@@ -478,13 +478,41 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: "Email and password required" });
       }
 
+      // Check if user is an admin first
+      const admin = await storage.getAdminByEmail(email);
+      if (admin) {
+        // Verify admin password
+        const isPasswordValid = await require('bcryptjs').compare(password, admin.passwordHash);
+        if (!isPasswordValid) {
+          return res.status(401).json({ error: "Invalid credentials" });
+        }
+
+        const token = generateToken({
+          userId: admin.id,
+          email: admin.email,
+          plan: "admin",
+          role: "admin",
+        });
+
+        res.json({ 
+          id: admin.id, 
+          email: admin.email, 
+          username: admin.username,
+          role: "admin", 
+          token 
+        });
+        return;
+      }
+
+      // Check app users
       const user = await storage.getAppUserByEmail(email);
       if (!user) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
-      // Simple password check - in production, use bcrypt
-      if (user.passwordHash !== password) {
+      // Verify password using bcrypt
+      const isPasswordValid = await require('bcryptjs').compare(password, user.passwordHash);
+      if (!isPasswordValid) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
@@ -492,10 +520,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         userId: user.id,
         email: user.email,
         plan: user.plan,
+        role: "subscriber",
       });
 
       const { passwordHash: _, ...safeUser } = user;
-      res.json({ ...safeUser, token });
+      res.json({ ...safeUser, token, role: "subscriber" });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }

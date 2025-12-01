@@ -330,6 +330,11 @@ export class DatabaseStorage implements IStorage {
     return admin || undefined;
   }
 
+  async getAdminByEmail(email: string): Promise<Admin | undefined> {
+    const [admin] = await db.select().from(admins).where(eq(admins.email, email));
+    return admin || undefined;
+  }
+
   async createAdmin(admin: InsertAdmin): Promise<Admin> {
     const [newAdmin] = await db.insert(admins).values(admin).returning();
     return newAdmin;
