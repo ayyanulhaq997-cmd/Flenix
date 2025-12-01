@@ -65,8 +65,11 @@ export default function TVHome() {
           // Navigate from rows -> tabs -> hero
           if (focusedElement === 'row') {
             setFocusedElement('tab');
+            setFocusedRowIndex(0);
+            setFocusedColIndex(0);
           } else if (focusedElement === 'tab') {
             setFocusedElement('hero');
+            setFocusedTabIndex(0);
           }
           break;
 
@@ -77,14 +80,16 @@ export default function TVHome() {
             setFocusedElement('tab');
           } else if (focusedElement === 'tab') {
             setFocusedElement('row');
+            setFocusedRowIndex(0);
           }
           break;
 
         case 'ArrowLeft':
           e.preventDefault();
           if (focusedElement === 'tab') {
-            setFocusedTabIndex(Math.max(0, focusedTabIndex - 1));
-            setActiveTab(Math.max(0, focusedTabIndex - 1));
+            const newTabIndex = Math.max(0, focusedTabIndex - 1);
+            setFocusedTabIndex(newTabIndex);
+            setActiveTab(newTabIndex);
           } else if (focusedElement === 'row') {
             setFocusedColIndex(Math.max(0, focusedColIndex - 1));
           }
@@ -93,8 +98,9 @@ export default function TVHome() {
         case 'ArrowRight':
           e.preventDefault();
           if (focusedElement === 'tab') {
-            setFocusedTabIndex(Math.min(TABS.length - 1, focusedTabIndex + 1));
-            setActiveTab(Math.min(TABS.length - 1, focusedTabIndex + 1));
+            const newTabIndex = Math.min(TABS.length - 1, focusedTabIndex + 1);
+            setFocusedTabIndex(newTabIndex);
+            setActiveTab(newTabIndex);
           } else if (focusedElement === 'row') {
             const maxItems = getActiveRowData().length;
             setFocusedColIndex(Math.min(maxItems - 1, focusedColIndex + 1));
@@ -103,12 +109,26 @@ export default function TVHome() {
 
         case 'Enter':
           e.preventDefault();
-          if (focusedElement === 'row') {
+          if (focusedElement === 'tab') {
+            // Tab already switches on focus change
+          } else if (focusedElement === 'row') {
             const item = getActiveRowData()[focusedColIndex];
             if (item) {
-              console.log('Selected:', item);
+              console.log('Selected item:', item);
+              // TODO: Navigate to detail page
             }
+          } else if (focusedElement === 'hero') {
+            console.log('Play hero content');
           }
+          break;
+
+        case 'Escape':
+          // Back button - reset focus to row
+          e.preventDefault();
+          setFocusedElement('row');
+          setFocusedTabIndex(0);
+          setFocusedRowIndex(0);
+          setFocusedColIndex(0);
           break;
 
         default:
@@ -118,7 +138,7 @@ export default function TVHome() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [focusedElement, focusedTabIndex, focusedColIndex]);
+  }, [focusedElement, focusedTabIndex, focusedColIndex, focusedRowIndex]);
 
   function getActiveRowData(): ContentItem[] {
     switch (TABS[activeTab]?.id) {
