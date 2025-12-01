@@ -264,14 +264,17 @@ export default function TVHome() {
       {/* Main Content */}
       <main className="pt-20">
         {/* Hero Section */}
-        <TVHero
-          title={getActiveRowData()[0]?.title || "Avengers Doomsday"}
-          genres={["Acción", "Aventura", "Ciencia Ficción"]}
-          summary="Un equipo de superhéroes se reúne para salvar el mundo de una amenaza intergaláctica que amenaza la existencia de todos."
-          isFocused={focusedElement === 'hero'}
-          onPlay={() => console.log('Play clicked')}
-          onMoreInfo={() => console.log('More info clicked')}
-        />
+        {getActiveRowData()[0] && (
+          <TVHero
+            title={getActiveRowData()[0]?.title || "Avengers Doomsday"}
+            genres={getActiveRowData()[0]?.genre ? [getActiveRowData()[0].genre] : ["Acción", "Aventura"]}
+            summary={getActiveRowData()[0]?.description || "Un equipo de superhéroes se reúne para salvar el mundo de una amenaza intergaláctica que amenaza la existencia de todos."}
+            backgroundImage={getActiveRowData()[0]?.posterUrl}
+            isFocused={focusedElement === 'hero'}
+            onPlay={() => console.log('Play clicked')}
+            onMoreInfo={() => navigateToContent(getActiveRowData()[0])}
+          />
+        )}
 
         {/* Navigation Tabs */}
         <TVNavigationTabs

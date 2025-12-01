@@ -15,12 +15,15 @@ interface Episode {
 interface ContentItem {
   id: string | number;
   title: string;
-  year: number;
+  year?: number;
   type?: 'movie' | 'series';
   posterUrl?: string;
   description?: string;
   genre?: string;
   duration?: number;
+  rating?: string;
+  cast?: string[];
+  requiredPlan?: string;
 }
 
 // Mock episodes data
@@ -172,7 +175,9 @@ export default function TVDetails() {
   if (!content) {
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p>Cargando...</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
+          <p>Cargando...</p>
       </div>
     );
   }
@@ -241,6 +246,38 @@ export default function TVDetails() {
                 </p>
               </div>
 
+              {/* Metadata: Rating, Cast */}
+              <div className="grid grid-cols-2 gap-6 py-6 border-y border-gray-700">
+                {content.rating && (
+                  <div>
+                    <h3 className="text-sm text-gray-400 mb-2">Clasificación</h3>
+                    <p className="text-lg font-semibold" data-testid="text-rating">{content.rating}</p>
+                  </div>
+                )}
+                {content.requiredPlan && (
+                  <div>
+                    <h3 className="text-sm text-gray-400 mb-2">Plan Requerido</h3>
+                    <span className="px-3 py-1 bg-blue-600/20 text-blue-400 rounded text-sm" data-testid="text-plan">
+                      {content.requiredPlan === 'free' ? 'Gratis' : content.requiredPlan}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Cast and Crew */}
+              {content.cast && content.cast.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Elenco</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {content.cast.map((actor, idx) => (
+                      <span key={idx} className="px-3 py-1 bg-gray-800 text-gray-300 rounded text-sm" data-testid={`cast-${idx}`}>
+                        {actor}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="flex gap-4 pt-6">
                 <button
@@ -295,6 +332,30 @@ export default function TVDetails() {
                   ← ATRÁS
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Related Content - "More like this" */}
+          <div className="mt-16 pt-12 border-t border-gray-700">
+            <h2 className="text-3xl font-bold mb-6" data-testid="text-related-title">
+              Contenido Similar
+            </h2>
+            <div className="grid grid-cols-5 gap-4">
+              {[...Array(5)].map((_, idx) => (
+                <div
+                  key={idx}
+                  className="bg-gradient-to-br from-gray-800 to-black rounded-lg overflow-hidden cursor-pointer hover:scale-105 transition-transform"
+                  data-testid={`related-content-${idx}`}
+                >
+                  <div className="w-full h-40 bg-cover bg-center flex items-center justify-center border-2 border-gray-700">
+                    <p className="text-3xl">🎬</p>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-white font-semibold text-sm truncate">{content.title} {idx + 1}</p>
+                    <p className="text-gray-400 text-xs">{content.genre || 'Entretenimiento'}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
