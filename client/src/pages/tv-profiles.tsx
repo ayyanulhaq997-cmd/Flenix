@@ -61,8 +61,8 @@ export default function TVProfiles() {
       if (response.status === 200) {
         // Store active profile in localStorage
         localStorage.setItem('activeProfileId', String(profileId));
-        // Navigate to plan selection
-        setLocation('/plans');
+        // Navigate to home page with personalized content
+        setLocation('/tv');
       }
     } catch (error) {
       console.error('Error selecting profile:', error);
@@ -148,12 +148,12 @@ export default function TVProfiles() {
       );
 
       if (response.status === 201) {
-        // Store new profile and navigate to plan selection
+        // Store new profile and navigate to home
         localStorage.setItem('activeProfileId', String(response.data.id));
         setNewProfileName('');
         setShowAddProfile(false);
-        // Navigate to plan selection after creating profile
-        setLocation('/plans');
+        // Navigate to home after creating profile
+        setLocation('/tv');
       }
     } catch (error: any) {
       console.error('Error creating profile:', error.response?.data?.error || error.message);
