@@ -9,26 +9,9 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Plus, Search, MoreVertical, Film, Edit, Trash2, LayoutGrid, List } from "lucide-react";
+import { Search, LayoutGrid, List } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { useState } from "react";
-import { MovieForm } from "@/components/forms/MovieForm";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,9 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function Movies() {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [isAddOpen, setIsAddOpen] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: movies = [], isLoading } = useQuery({
     queryKey: ['movies'],
@@ -49,107 +30,16 @@ export default function Movies() {
     },
   });
 
-  const addMovieMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch('/api/movies', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Failed to add movie');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['movies'] });
-      queryClient.invalidateQueries({ queryKey: ['stats'] });
-      setIsAddOpen(false);
-      toast({
-        title: "Movie Added",
-        description: "The movie has been successfully added to the catalog.",
-        className: "bg-green-600 border-green-700 text-white",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to add movie. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteMovieMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`/api/movies/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to delete movie');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['movies'] });
-      queryClient.invalidateQueries({ queryKey: ['stats'] });
-      toast({
-        title: "Movie Deleted",
-        description: "The movie has been removed from the catalog.",
-        className: "bg-green-600 border-green-700 text-white",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete movie. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
   const filteredMovies = movies.filter((movie: any) => 
     movie.title.toLowerCase().includes(search.toLowerCase())
   );
-
-  const handleAddSubmit = (data: any) => {
-    addMovieMutation.mutate(data);
-  };
-
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this movie?")) {
-      deleteMovieMutation.mutate(id);
-    }
-  };
 
   return (
     <Layout>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Movies Catalog</h1>
-          <p className="text-muted-foreground">Manage your streaming library.</p>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <Sheet open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <SheetTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 text-white gap-2 shadow-lg shadow-primary/20" data-testid="button-add-movie">
-                <Plus className="w-4 h-4" /> Add Movie
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="bg-card border-l border-white/10 text-foreground sm:max-w-md backdrop-blur-xl">
-              <SheetHeader>
-                <SheetTitle className="text-white">Add New Movie</SheetTitle>
-                <SheetDescription>
-                  Add a new movie to your streaming catalog. Fill in the metadata below.
-                </SheetDescription>
-              </SheetHeader>
-              <MovieForm onSubmit={handleAddSubmit} />
-            </SheetContent>
-          </Sheet>
+          <p className="text-muted-foreground">Browse our streaming library.</p>
         </div>
       </div>
 

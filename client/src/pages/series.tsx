@@ -9,35 +9,15 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Plus, Search, MoreVertical, Tv, Edit, Trash2, LayoutGrid, List } from "lucide-react";
+import { Search, LayoutGrid, List } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { useState } from "react";
-import { SeriesForm } from "@/components/forms/SeriesForm";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function Series() {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: series = [], isLoading } = useQuery({
     queryKey: ['series'],
@@ -48,76 +28,17 @@ export default function Series() {
     },
   });
 
-  const deleteSeriesMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const token = localStorage.getItem('auth_token');
-      const response = await fetch(`/api/series/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Failed to delete series');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['series'] });
-      toast({
-        title: "Series Deleted",
-        description: "The series has been removed from the catalog.",
-        className: "bg-green-600 border-green-700 text-white",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete series. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
   const filteredSeries = series.filter((show: any) => 
     show.title.toLowerCase().includes(search.toLowerCase())
   );
-
-  const handleAddSubmit = () => {
-    setIsAddOpen(false);
-    toast({
-      title: "Series Created",
-      description: "The series and episodes have been added to the library.",
-      className: "bg-green-600 border-green-700 text-white",
-    });
-    queryClient.invalidateQueries({ queryKey: ['series'] });
-  };
-
-  const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this series?")) {
-      deleteSeriesMutation.mutate(id);
-    }
-  };
 
   return (
     <Layout>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">TV Series</h1>
-          <p className="text-muted-foreground">Manage TV shows, seasons, and episodes.</p>
+          <p className="text-muted-foreground">Browse TV shows, seasons, and episodes.</p>
         </div>
-        
-        <Sheet open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <SheetTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90 text-white gap-2 shadow-lg shadow-primary/20" data-testid="button-add-series">
-              <Plus className="w-4 h-4" /> Add Series
-            </Button>
-          </SheetTrigger>
-          <SheetContent className="bg-card border-l border-white/10 text-foreground sm:max-w-md backdrop-blur-xl overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle className="text-white">Add New Series</SheetTitle>
-              <SheetDescription>
-                Create a new series and upload episodes directly to the server.
-              </SheetDescription>
-            </SheetHeader>
-            <SeriesForm onSubmit={handleAddSubmit} />
-          </SheetContent>
-        </Sheet>
       </div>
 
       <div className="bg-card/50 backdrop-blur-md border border-white/5 rounded-xl overflow-hidden">
