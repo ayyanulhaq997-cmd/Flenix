@@ -323,7 +323,7 @@ export const insertUserSessionSchema = createInsertSchema(userSessions).omit({
 export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
 export type UserSession = typeof userSessions.$inferSelect;
 
-// Viewing History table (tracks watch progress)
+// Viewing History table (tracks watch progress for cross-device sync)
 export const viewingHistory = pgTable("viewing_history", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
@@ -344,6 +344,75 @@ export const insertViewingHistorySchema = createInsertSchema(viewingHistory).omi
 
 export type InsertViewingHistory = z.infer<typeof insertViewingHistorySchema>;
 export type ViewingHistory = typeof viewingHistory.$inferSelect;
+
+// Audio Tracks table (for dubs/language support)
+export const audioTracks = pgTable("audio_tracks", {
+  id: serial("id").primaryKey(),
+  contentType: text("content_type").notNull(), // "movie" or "series"
+  contentId: integer("content_id").notNull(),
+  episodeId: integer("episode_id"), // for series only
+  language: text("language").notNull(), // e.g., "en", "es", "fr", "pt"
+  languageName: text("language_name").notNull(), // e.g., "English", "Spanish"
+  audioUrl: text("audio_url").notNull(),
+  codec: text("codec").notNull(), // "aac", "ac3", "eac3"
+  bitrate: integer("bitrate").notNull(), // in kbps
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertAudioTrackSchema = createInsertSchema(audioTracks).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertAudioTrack = z.infer<typeof insertAudioTrackSchema>;
+export type AudioTrack = typeof audioTracks.$inferSelect;
+
+// Subtitles table (for captions/closed captions)
+export const subtitles = pgTable("subtitles", {
+  id: serial("id").primaryKey(),
+  contentType: text("content_type").notNull(), // "movie" or "series"
+  contentId: integer("content_id").notNull(),
+  episodeId: integer("episode_id"), // for series only
+  language: text("language").notNull(), // e.g., "en", "es", "fr", "pt"
+  languageName: text("language_name").notNull(), // e.g., "English", "Spanish"
+  subtitleUrl: text("subtitle_url").notNull(), // VTT/SRT file URL
+  format: text("format").notNull(), // "vtt", "srt", "ass"
+  isDefault: boolean("is_default").default(false),
+  isCC: boolean("is_cc").default(false), // Closed Captions (includes audio descriptions)
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertSubtitleSchema = createInsertSchema(subtitles).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertSubtitle = z.infer<typeof insertSubtitleSchema>;
+export type Subtitle = typeof subtitles.$inferSelect;
+
+// Downloads table (for offline viewing on mobile)
+export const downloads = pgTable("downloads", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  contentType: text("content_type").notNull(), // "movie" or "series"
+  contentId: integer("content_id").notNull(),
+  episodeId: integer("episode_id"), // for series only
+  quality: text("quality").notNull(), // "standard" (480p), "high" (720p)
+  fileSize: bigint("file_size", { mode: "number" }).notNull(),
+  downloadedAt: timestamp("downloaded_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at"), // DRM license expiry (30 days default)
+  status: text("status").notNull().default("completed"), // downloading, completed, expired
+  localPath: text("local_path"), // Device storage path (client-side)
+});
+
+export const insertDownloadSchema = createInsertSchema(downloads).omit({
+  id: true,
+  downloadedAt: true,
+});
+
+export type InsertDownload = z.infer<typeof insertDownloadSchema>;
+export type Download = typeof downloads.$inferSelect;
 
 // File Storage table (for Wasabi/S3 uploads)
 export const files = pgTable("files", {

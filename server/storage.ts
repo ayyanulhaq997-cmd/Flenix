@@ -1,5 +1,5 @@
 import { 
-  movies, series, episodes, channels, appUsers, admins, subscriptionPlans, channelContent, apiKeys, files, userFavorites, userWatchlist, viewingHistory, userProfiles, userSessions,
+  movies, series, episodes, channels, appUsers, admins, subscriptionPlans, channelContent, apiKeys, files, userFavorites, userWatchlist, viewingHistory, userProfiles, userSessions, audioTracks, subtitles, downloads,
   type Movie, type InsertMovie,
   type Series, type InsertSeries,
   type Episode, type InsertEpisode,
@@ -14,7 +14,10 @@ import {
   type UserWatchlist, type InsertUserWatchlist,
   type ViewingHistory, type InsertViewingHistory,
   type UserProfile, type InsertUserProfile,
-  type UserSession, type InsertUserSession
+  type UserSession, type InsertUserSession,
+  type AudioTrack, type InsertAudioTrack,
+  type Subtitle, type InsertSubtitle,
+  type Download, type InsertDownload
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, like, and, ilike, or } from "drizzle-orm";
@@ -129,6 +132,22 @@ export interface IStorage {
   // Recommendations
   getTrendingContent(limit?: number): Promise<any[]>;
   getRecommendedContent(userId: number, limit?: number): Promise<any[]>;
+
+  // Audio & Subtitles
+  getAudioTracks(contentId: number): Promise<AudioTrack[]>;
+  createAudioTrack(track: InsertAudioTrack): Promise<AudioTrack>;
+  deleteAudioTrack(trackId: number): Promise<void>;
+
+  getSubtitles(contentId: number): Promise<Subtitle[]>;
+  createSubtitle(subtitle: InsertSubtitle): Promise<Subtitle>;
+  deleteSubtitle(subtitleId: number): Promise<void>;
+
+  // Downloads
+  createDownload(download: InsertDownload): Promise<Download>;
+  getDownload(downloadId: number): Promise<Download | undefined>;
+  getUserDownloads(userId: number): Promise<Download[]>;
+  updateDownload(downloadId: number, download: Partial<InsertDownload>): Promise<Download | undefined>;
+  deleteDownload(downloadId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
