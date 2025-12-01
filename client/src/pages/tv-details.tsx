@@ -63,16 +63,22 @@ export default function TVDetails() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const contentId = params.get('id');
+    const autoplay = params.get('autoplay') === 'true';
     const contentData = sessionStorage.getItem(`content_${contentId}`);
     
     if (contentData) {
       const parsed = JSON.parse(contentData);
-      setContent({
+      const contentWithType = {
         ...parsed,
         type: parseInt(contentId as string) > 100 ? 'series' : 'movie',
-      });
+      };
+      setContent(contentWithType);
       if (seasonEpisodes.length > 0) {
         setSelectedEpisode(seasonEpisodes[0]);
+      }
+      // Auto-play if requested
+      if (autoplay) {
+        setIsPlaying(true);
       }
     }
   }, []);
@@ -178,6 +184,7 @@ export default function TVDetails() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500 mx-auto mb-4"></div>
           <p>Cargando...</p>
+        </div>
       </div>
     );
   }

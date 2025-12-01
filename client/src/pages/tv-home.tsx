@@ -92,6 +92,17 @@ export default function TVHome() {
     setLocation(`/tv/details?id=${item.id}`);
   };
 
+  // Skip details page and play directly
+  const playContentDirectly = (item: ContentItem) => {
+    sessionStorage.setItem(`content_${item.id}`, JSON.stringify(item));
+    sessionStorage.setItem('last_nav', JSON.stringify({
+      tab: activeTab,
+      rowIndex: focusedRowIndex,
+      colIndex: focusedColIndex,
+    }));
+    setLocation(`/tv/details?id=${item.id}&autoplay=true`);
+  };
+
   // Handle keyboard navigation with fast-scroll support
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -271,7 +282,7 @@ export default function TVHome() {
             summary={getActiveRowData()[0]?.description || "Un equipo de superhéroes se reúne para salvar el mundo de una amenaza intergaláctica que amenaza la existencia de todos."}
             backgroundImage={getActiveRowData()[0]?.posterUrl}
             isFocused={focusedElement === 'hero'}
-            onPlay={() => console.log('Play clicked')}
+            onPlay={() => playContentDirectly(getActiveRowData()[0])}
             onMoreInfo={() => navigateToContent(getActiveRowData()[0])}
           />
         )}
