@@ -47,9 +47,8 @@ function AdminRoute({ component: Component, ...props }: any) {
 
   // Check if user has admin role
   if (!isAdmin()) {
-    // Redirect subscribers/non-admins to home page
-    window.location.href = "/";
-    return null;
+    // Not admin - show Browse instead of forcing redirect
+    return <Browse />;
   }
 
   return <Component {...props} />;

@@ -4,19 +4,6 @@ import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const [, setLocation] = useLocation();
-  
-  useEffect(() => {
-    try {
-      // Check if user is authenticated
-      const token = localStorage?.getItem("appToken");
-      if (token) {
-        // Redirect to browse page if authenticated
-        setLocation("/browse");
-      }
-    } catch (err) {
-      console.warn("Auth check failed:", err);
-    }
-  }, [setLocation]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-950 flex items-center justify-center px-4 sm:px-6 lg:px-8">
