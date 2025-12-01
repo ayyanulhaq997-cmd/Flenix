@@ -65,20 +65,30 @@ export default function TVHome() {
   const [focusedTabIndex, setFocusedTabIndex] = useState(0);
   const [focusedRowIndex, setFocusedRowIndex] = useState(0);
   const [focusedColIndex, setFocusedColIndex] = useState(0);
-  const [navigationHistory, setNavigationHistory] = useState<NavigationState[]>([]);
   const [showExitDialog, setShowExitDialog] = useState(false);
-  const [scrollPosition, setScrollPosition] = useState<Record<string, number>>({});
-  const [isScrolling, setIsScrolling] = useState(false);
-  const scrollTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const keyPressTimeRef = useRef<Record<string, number>>({});
+  const fastScrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Handle keyboard navigation
+  // Navigate to content details
+  const navigateToContent = (item: ContentItem) => {
+    sessionStorage.setItem(`content_${item.id}`, JSON.stringify(item));
+    sessionStorage.setItem('last_nav', JSON.stringify({
+      tab: activeTab,
+      rowIndex: focusedRowIndex,
+      colIndex: focusedColIndex,
+    }));
+    setLocation(`/tv/details?id=${item.id}`);
+  };
+
+  // Handle keyboard navigation with fast-scroll support
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // D-pad navigation
+      const now = Date.now();
+      keyPressTimeRef.current[e.key] = now;
+
       switch (e.key) {
         case 'ArrowUp':
           e.preventDefault();
-          // Navigate from rows -> tabs -> hero
           if (focusedElement === 'row') {
             setFocusedElement('tab');
             setFocusedRowIndex(0);
@@ -91,7 +101,6 @@ export default function TVHome() {
 
         case 'ArrowDown':
           e.preventDefault();
-          // Navigate from hero -> tabs -> rows
           if (focusedElement === 'hero') {
             setFocusedElement('tab');
           } else if (focusedElement === 'tab') {
@@ -109,6 +118,16 @@ export default function TVHome() {
           } else if (focusedElement === 'row') {
             setFocusedColIndex(Math.max(0, focusedColIndex - 1));
           }
+          // Start fast-scroll on hold
+          if (!fastScrollIntervalRef.current) {
+            let scrollSpeed = 0;
+            fastScrollIntervalRef.current = setInterval(() => {
+              scrollSpeed++;
+              if (scrollSpeed > 5 && focusedElement === 'row') {
+                setFocusedColIndex(prev => Math.max(0, prev - 1));
+              }
+            }, 100);
+          }
           break;
 
         case 'ArrowRight':
@@ -121,6 +140,16 @@ export default function TVHome() {
             const maxItems = getActiveRowData().length;
             setFocusedColIndex(Math.min(maxItems - 1, focusedColIndex + 1));
           }
+          // Start fast-scroll on hold
+          if (!fastScrollIntervalRef.current) {
+            let scrollSpeed = 0;
+            fastScrollIntervalRef.current = setInterval(() => {
+              scrollSpeed++;
+              if (scrollSpeed > 5 && focusedElement === 'row') {
+                setFocusedColIndex(prev => Math.min(getActiveRowData().length - 1, prev + 1));
+              }
+            }, 100);
+          }
           break;
 
         case 'Enter':
@@ -129,39 +158,16 @@ export default function TVHome() {
             // Tab already switches on focus change
           } else if (focusedElement === 'row') {
             const item = getActiveRowData()[focusedColIndex];
-            if (item) {
-              sessionStorage.setItem(`content_${item.id}`, JSON.stringify(item));
-              sessionStorage.setItem('navigation_state', JSON.stringify({
-                tab: activeTab,
-                rowIndex: focusedRowIndex,
-                colIndex: focusedColIndex,
-              }));
-              setLocation(`/tv/details?id=${item.id}`);
-            }
+            if (item) navigateToContent(item);
           } else if (focusedElement === 'hero') {
             const heroItem = getActiveRowData()[0];
-            if (heroItem) {
-              sessionStorage.setItem(`content_${heroItem.id}`, JSON.stringify(heroItem));
-              setLocation(`/tv/details?id=${heroItem.id}`);
-            }
+            if (heroItem) navigateToContent(heroItem);
           }
           break;
 
         case 'Escape':
-          // Back button
           e.preventDefault();
-          if (focusedElement === 'row' && focusedRowIndex === 0 && focusedColIndex === 0) {
-            setShowExitDialog(true);
-          } else {
-            // Restore previous navigation state
-            const navState = navigationHistory[navigationHistory.length - 1];
-            if (navState) {
-              setActiveTab(navState.tab);
-              setFocusedRowIndex(navState.rowIndex);
-              setFocusedColIndex(navState.colIndex);
-              setNavigationHistory(navigationHistory.slice(0, -1));
-            }
-          }
+          setShowExitDialog(true);
           break;
 
         default:
@@ -169,9 +175,23 @@ export default function TVHome() {
       }
     };
 
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        if (fastScrollIntervalRef.current) {
+          clearInterval(fastScrollIntervalRef.current);
+          fastScrollIntervalRef.current = null;
+        }
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [focusedElement, focusedTabIndex, focusedColIndex, focusedRowIndex]);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      if (fastScrollIntervalRef.current) clearInterval(fastScrollIntervalRef.current);
+    };
+  }, [focusedElement, focusedTabIndex, focusedColIndex, focusedRowIndex, activeTab, setLocation]);
 
   function getActiveRowData(): ContentItem[] {
     switch (TABS[activeTab]?.id) {
@@ -224,21 +244,21 @@ export default function TVHome() {
                 items={mockMovies.filter(m => m.progress! > 0 && m.progress! < 100)}
                 focusedCol={focusedElement === 'row' && focusedRowIndex === 0 ? focusedColIndex : -1}
                 rowIndex={0}
-                onItemClick={(item) => console.log('Clicked:', item)}
+                onItemClick={navigateToContent}
               />
               <TVContentRow
                 title="PELÍCULAS POPULARES"
                 items={mockMovies}
                 focusedCol={focusedElement === 'row' && focusedRowIndex === 1 ? focusedColIndex : -1}
                 rowIndex={1}
-                onItemClick={(item) => console.log('Clicked:', item)}
+                onItemClick={navigateToContent}
               />
               <TVContentRow
                 title="SERIES RECOMENDADAS"
                 items={mockSeries}
                 focusedCol={focusedElement === 'row' && focusedRowIndex === 2 ? focusedColIndex : -1}
                 rowIndex={2}
-                onItemClick={(item) => console.log('Clicked:', item)}
+                onItemClick={navigateToContent}
               />
             </>
           )}
@@ -249,7 +269,7 @@ export default function TVHome() {
               items={mockMovies}
               focusedCol={focusedElement === 'row' ? focusedColIndex : -1}
               rowIndex={0}
-              onItemClick={(item) => console.log('Clicked:', item)}
+              onItemClick={navigateToContent}
             />
           )}
 
@@ -259,7 +279,7 @@ export default function TVHome() {
               items={mockSeries}
               focusedCol={focusedElement === 'row' ? focusedColIndex : -1}
               rowIndex={0}
-              onItemClick={(item) => console.log('Clicked:', item)}
+              onItemClick={navigateToContent}
             />
           )}
 
@@ -269,7 +289,7 @@ export default function TVHome() {
               items={mockChannels}
               focusedCol={focusedElement === 'row' ? focusedColIndex : -1}
               rowIndex={0}
-              onItemClick={(item) => console.log('Clicked:', item)}
+              onItemClick={navigateToContent}
             />
           )}
         </div>
