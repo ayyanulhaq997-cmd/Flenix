@@ -9,8 +9,8 @@ import { toast } from "sonner";
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const [email, setEmail] = useState("admin@fenix.local");
-  const [password, setPassword] = useState("Admin@123456");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 

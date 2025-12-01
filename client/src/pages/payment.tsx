@@ -73,7 +73,8 @@ export default function PaymentPage() {
       // Clear signup data
       localStorage.removeItem("signupPlanData");
       localStorage.removeItem("signupEmail");
-      setLocation("/");
+      localStorage.removeItem("signupUserData");
+      setLocation("/tv/profiles");
     },
     onError: (error: any) => {
       toast({
@@ -146,15 +147,16 @@ export default function PaymentPage() {
         localStorage.removeItem("signupPlanData");
         localStorage.removeItem("signupEmail");
         localStorage.removeItem("signupPassword");
+        localStorage.removeItem("signupUserData");
         
-        // Show success message and redirect to home
+        // Show success message and redirect to profiles
         toast({
           title: "Success!",
           description: "Your free plan has been activated. Welcome to Fenix!",
         });
         
         setTimeout(() => {
-          setLocation("/");
+          setLocation("/tv/profiles");
         }, 1500);
       } catch (error: any) {
         toast({
