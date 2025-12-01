@@ -9,7 +9,7 @@ import { useTVNavigation } from '@/hooks/useTVNavigation';
 interface ContentItem {
   id: string | number;
   title: string;
-  year: number;
+  year?: number;
   posterUrl?: string;
   progress?: number;
   description?: string;
