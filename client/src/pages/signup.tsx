@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 
 export default function Signup() {
   const [, setLocation] = useLocation();
-  const [step, setStep] = useState<"plans" | "register">("plans");
+  const [step, setStep] = useState<"plans" | "register" | "payment">("plans");
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
   const [formData, setFormData] = useState({ name: "", email: "", password: "", confirmPassword: "" });
   const [isLoading, setIsLoading] = useState(false);
@@ -64,9 +64,18 @@ export default function Signup() {
     setStep("register");
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!formData.name || !formData.email || !formData.password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Error",
@@ -76,12 +85,25 @@ export default function Signup() {
       return;
     }
 
-    registerMutation.mutate({
+    // Store signup data for payment page
+    const selectedPlanData = plans.find((p: any) => p.id === selectedPlan);
+    localStorage.setItem("signupPlanData", JSON.stringify({
+      planId: selectedPlan,
+      planName: selectedPlanData?.name || 'Free',
+      planPrice: selectedPlanData?.price || 0,
+    }));
+    localStorage.setItem("signupEmail", formData.email);
+    localStorage.setItem("signupUserData", JSON.stringify({
       name: formData.name,
       email: formData.email,
-      passwordHash: formData.password,
-      plan: plans.find((p: any) => p.id === selectedPlan)?.name.toLowerCase() || 'free',
-    });
+      password: formData.password,
+    }));
+
+    // Redirect to payment page
+    setStep("payment");
+    setTimeout(() => {
+      setLocation("/payment");
+    }, 500);
   };
 
   return (
@@ -99,7 +121,18 @@ export default function Signup() {
           <h1 className="text-5xl font-bold text-white">Fenix</h1>
         </div>
 
-        {step === "plans" ? (
+        {step === "payment" ? (
+          <div className="max-w-md mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-white mb-2">Confirm Payment</h2>
+              <p className="text-muted-foreground">Redirecting to secure payment...</p>
+            </div>
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+              <p className="text-muted-foreground">Please wait while we redirect you to payment...</p>
+            </div>
+          </div>
+        ) : step === "plans" ? (
           <div className="space-y-8">
             <div className="text-center">
               <h2 className="text-3xl font-bold text-white mb-2">Choose Your Plan</h2>

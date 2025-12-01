@@ -29,6 +29,7 @@ import AdminContentList from "@/pages/admin-content-list";
 import AdminUserManagement from "@/pages/admin-user-management";
 import UnifiedHome from "@/pages/unified-home";
 import PlanSelection from "@/pages/plan-selection";
+import PaymentPage from "@/pages/payment";
 import { isAdmin, isAuthenticated } from "@/lib/auth-utils";
 
 /**
@@ -70,6 +71,7 @@ function Router() {
       <Route path="/signup" component={Signup} />
       <Route path="/profiles" component={ProfileSelector} />
       <Route path="/plans" component={PlanSelection} />
+      <Route path="/payment" component={PaymentPage} />
       
       {/* Public Content Routes */}
       <Route path="/browse" component={Browse} />
