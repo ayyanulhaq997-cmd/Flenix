@@ -206,6 +206,36 @@ export function registerPaymentRoutes(app: Express) {
     }
   });
 
+  // Simple payment processor for development/testing
+  app.post("/api/payments/process", async (req, res) => {
+    try {
+      const { planId, amount, email, cardToken } = req.body;
+
+      if (!planId || !amount || !email) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // In production, this would be replaced with real Stripe integration
+      // For now, simulate successful payment processing
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan) {
+        return res.status(404).json({ error: "Plan not found" });
+      }
+
+      // Simulate payment success
+      res.json({
+        success: true,
+        transactionId: `tx_${Date.now()}`,
+        amount,
+        planId,
+        email,
+        message: "Payment processed successfully",
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Webhook for Stripe payment events
   app.post("/api/webhooks/stripe", async (req, res) => {
     try {
