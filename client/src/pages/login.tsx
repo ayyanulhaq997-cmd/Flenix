@@ -44,8 +44,14 @@ export default function Login() {
       localStorage.setItem("appUser", JSON.stringify(data));
       localStorage.setItem("user", JSON.stringify(data));
       toast.success("Login successful!");
-      // Redirect to TV profiles screen (skip plan selection for existing users)
-      setLocation("/tv/profiles");
+      
+      // Check if user is admin and redirect accordingly
+      if (data.role === "admin") {
+        setLocation("/admin/dashboard");
+      } else {
+        // Redirect to TV profiles screen for regular users
+        setLocation("/tv/profiles");
+      }
     } catch (err: any) {
       const message = err.message || "Login failed. Please try again.";
       setError(message);
