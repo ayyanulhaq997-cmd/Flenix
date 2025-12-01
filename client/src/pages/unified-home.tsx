@@ -17,15 +17,25 @@ export default function UnifiedHome() {
   useEffect(() => {
     // Check if user is authenticated
     const token = localStorage.getItem("appToken");
-    if (token) {
-      // Redirect to appropriate browse page based on device
-      if (deviceType === 'tv') {
-        setLocation("/tv");
-      } else {
-        setLocation("/browse");
-      }
+    const user = localStorage.getItem("user") || localStorage.getItem("appUser");
+    
+    // If NOT authenticated, redirect to login
+    if (!token || !user) {
+      setLocation("/login");
+      return;
     }
-  }, [deviceType, setLocation]);
+    
+    // If authenticated on admin, redirect to admin dashboard
+    try {
+      const userData = JSON.parse(user);
+      if (userData.role === "admin") {
+        setLocation("/admin/dashboard");
+        return;
+      }
+    } catch (e) {
+      // Ignore parse errors
+    }
+  }, [setLocation]);
 
   // Render appropriate interface based on device type
   if (deviceType === 'tv') {
