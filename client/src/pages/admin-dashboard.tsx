@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus, Trash2, Edit2 } from 'lucide-react';
 import axios from 'axios';
+import AdminBatchImport from './admin-batch-import';
+import AdminUsers from './admin-users';
+import AdminParentalControls from './admin-parental-controls';
 
 interface Movie {
   id: number;
@@ -83,11 +86,13 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-slate-800">
+          <TabsList className="grid w-full grid-cols-6 bg-slate-800">
             <TabsTrigger value="movies" className="text-white">PELÍCULAS</TabsTrigger>
             <TabsTrigger value="series" className="text-white">SERIES</TabsTrigger>
             <TabsTrigger value="channels" className="text-white">CANALES</TabsTrigger>
+            <TabsTrigger value="import" className="text-white">IMPORTAR</TabsTrigger>
             <TabsTrigger value="users" className="text-white">USUARIOS</TabsTrigger>
+            <TabsTrigger value="controls" className="text-white">CONTROLES</TabsTrigger>
           </TabsList>
 
           {/* Movies Tab */}
@@ -258,18 +263,19 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
 
+          {/* Import Tab */}
+          <TabsContent value="import" className="mt-6">
+            <AdminBatchImport />
+          </TabsContent>
+
           {/* Users Tab */}
-          <TabsContent value="users" className="space-y-6 mt-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-white">Usuarios</h2>
-              <Button className="gap-2 bg-red-600 hover:bg-red-700">
-                <Plus size={18} />
-                Nuevo Usuario
-              </Button>
-            </div>
-            <div className="bg-slate-800 rounded-lg p-6 text-center text-gray-400">
-              <p>Sistema de gestión de usuarios - Próximamente</p>
-            </div>
+          <TabsContent value="users" className="mt-6">
+            <AdminUsers />
+          </TabsContent>
+
+          {/* Parental Controls Tab */}
+          <TabsContent value="controls" className="mt-6">
+            <AdminParentalControls />
           </TabsContent>
         </Tabs>
       </div>
