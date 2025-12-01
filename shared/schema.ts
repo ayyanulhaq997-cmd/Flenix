@@ -1,9 +1,9 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, serial, integer, timestamp, boolean, jsonb, bigint } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, serial, integer, timestamp, boolean, jsonb, bigint, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Movies table
+// Movies table with indexes for fast queries
 export const movies = pgTable("movies", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -21,7 +21,12 @@ export const movies = pgTable("movies", {
   views: integer("views").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  titleIdx: index("idx_movies_title").on(table.title),
+  genreIdx: index("idx_movies_genre").on(table.genre),
+  statusIdx: index("idx_movies_status").on(table.status),
+  planIdx: index("idx_movies_required_plan").on(table.requiredPlan),
+}));
 
 export const insertMovieSchema = createInsertSchema(movies).omit({
   id: true,
@@ -33,7 +38,7 @@ export const insertMovieSchema = createInsertSchema(movies).omit({
 export type InsertMovie = z.infer<typeof insertMovieSchema>;
 export type Movie = typeof movies.$inferSelect;
 
-// Series table
+// Series table with indexes for fast queries
 export const series = pgTable("series", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -47,7 +52,12 @@ export const series = pgTable("series", {
   rating: text("rating"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  titleIdx: index("idx_series_title").on(table.title),
+  genreIdx: index("idx_series_genre").on(table.genre),
+  statusIdx: index("idx_series_status").on(table.status),
+  planIdx: index("idx_series_required_plan").on(table.requiredPlan),
+}));
 
 export const insertSeriesSchema = createInsertSchema(series).omit({
   id: true,
@@ -58,7 +68,7 @@ export const insertSeriesSchema = createInsertSchema(series).omit({
 export type InsertSeries = z.infer<typeof insertSeriesSchema>;
 export type Series = typeof series.$inferSelect;
 
-// Episodes table
+// Episodes table with indexes
 export const episodes = pgTable("episodes", {
   id: serial("id").primaryKey(),
   seriesId: integer("series_id").notNull().references(() => series.id, { onDelete: "cascade" }),
@@ -73,7 +83,10 @@ export const episodes = pgTable("episodes", {
   status: text("status").notNull().default("processing"),
   views: integer("views").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  seriesIdIdx: index("idx_episodes_series_id").on(table.seriesId),
+  statusIdx: index("idx_episodes_status").on(table.status),
+}));
 
 export const insertEpisodeSchema = createInsertSchema(episodes).omit({
   id: true,
@@ -84,7 +97,7 @@ export const insertEpisodeSchema = createInsertSchema(episodes).omit({
 export type InsertEpisode = z.infer<typeof insertEpisodeSchema>;
 export type Episode = typeof episodes.$inferSelect;
 
-// Channels table
+// Channels table with status index for fast lookups
 export const channels = pgTable("channels", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -96,7 +109,9 @@ export const channels = pgTable("channels", {
   epgData: jsonb("epg_data"), // Electronic Program Guide data
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => ({
+  statusIdx: index("idx_channels_status").on(table.status),
+}));
 
 export const insertChannelSchema = createInsertSchema(channels).omit({
   id: true,

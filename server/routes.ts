@@ -6,6 +6,8 @@ import { fromZodError } from "zod-validation-error";
 import { authMiddleware, generateToken, generateStreamingUrl } from "./auth";
 import { openApiSpec } from "./openapi";
 import { log } from "./index";
+import { getCached, setCached, invalidateCache, cacheKeys } from "./cache";
+import { filterBySubscription, checkContentAccess } from "./subscriptions";
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
   // OpenAPI Documentation
@@ -13,11 +15,24 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(openApiSpec);
   });
 
-  // Movies API (Admin - requires auth)
+  // Movies API with caching
   app.get("/api/movies", async (req, res) => {
     try {
+      // Try cache first
+      const cacheKey = cacheKeys.movies();
+      const cached = await getCached(cacheKey);
+      if (cached) {
+        return res.json(cached);
+      }
+
       const movies = await storage.getMovies();
-      res.json(movies);
+      const userPlan = req.user?.plan || "free";
+      
+      // Filter by subscription and cache
+      const filtered = await filterBySubscription(movies, userPlan);
+      await setCached(cacheKey, filtered, 300); // 5 min cache
+      
+      res.json(filtered);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -42,6 +57,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: fromZodError(result.error).message });
       }
       const movie = await storage.createMovie(result.data);
+      // Invalidate cache on create
+      await invalidateCache("cache:movies:*");
       res.status(201).json(movie);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -54,6 +71,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       if (!movie) {
         return res.status(404).json({ error: "Movie not found" });
       }
+      // Invalidate cache on update
+      await invalidateCache("cache:movies:*");
       res.json(movie);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -63,17 +82,31 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   app.delete("/api/movies/:id", authMiddleware, async (req, res) => {
     try {
       await storage.deleteMovie(Number(req.params.id));
+      // Invalidate cache on delete
+      await invalidateCache("cache:movies:*");
       res.status(204).send();
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
   });
 
-  // Series API
+  // Series API with caching
   app.get("/api/series", async (req, res) => {
     try {
-      const series = await storage.getAllSeries();
-      res.json(series);
+      const cacheKey = cacheKeys.series();
+      const cached = await getCached(cacheKey);
+      if (cached) {
+        return res.json(cached);
+      }
+
+      const seriesData = await storage.getAllSeries();
+      const userPlan = req.user?.plan || "free";
+      
+      // Filter by subscription and cache
+      const filtered = await filterBySubscription(seriesData, userPlan);
+      await setCached(cacheKey, filtered, 300); // 5 min cache
+      
+      res.json(filtered);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -98,6 +131,8 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
         return res.status(400).json({ error: fromZodError(result.error).message });
       }
       const series = await storage.createSeries(result.data);
+      // Invalidate cache on create
+      await invalidateCache("cache:series:*");
       res.status(201).json(series);
     } catch (error: any) {
       res.status(500).json({ error: error.message });

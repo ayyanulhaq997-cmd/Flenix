@@ -3,9 +3,13 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { setupCluster } from "./cluster";
+import { initRedis } from "./cache";
 
 // Setup clustering for production (uses all CPU cores)
 setupCluster();
+
+// Initialize Redis for caching
+initRedis();
 
 const app = express();
 const httpServer = createServer(app);
