@@ -8,16 +8,7 @@ const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
 const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || "";
 
 export function registerPaymentRoutes(app: Express) {
-  // Get subscription plans with pricing
-  app.get("/api/subscription-plans", async (req, res) => {
-    try {
-      const plans = await storage.getSubscriptionPlans();
-      res.json(plans);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
-  });
-
+  // Note: Subscription plans endpoint is handled in routes.ts with auto-seeding logic
   // Create payment intent for subscription upgrade
   app.post("/api/payments/intent", authMiddleware, async (req, res) => {
     try {
