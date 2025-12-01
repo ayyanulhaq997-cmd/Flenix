@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
 import { TVHeader } from '@/components/tv/TVHeader';
+import { Spinner } from '@/components/ui/spinner';
+import { isAuthenticated } from '@/lib/auth-utils';
+import axios from 'axios';
 
 interface Profile {
   id: number;
@@ -8,18 +12,41 @@ interface Profile {
   avatarUrl?: string;
 }
 
-const mockProfiles: Profile[] = [
-  { id: 1, name: 'Juan' },
-  { id: 2, name: 'María' },
-  { id: 3, name: 'Niños' },
-];
-
 export default function TVProfiles() {
-  const [, setLocation] = useLocation();
-  const [profiles, setProfiles] = useState<Profile[]>(mockProfiles);
+  const [location, setLocation] = useLocation();
+  const [profiles, setProfiles] = useState<Profile[]>([]);
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [showAddProfile, setShowAddProfile] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
+
+  // Check authentication - redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      setLocation('/login');
+    }
+  }, [setLocation, location]);
+
+  // Fetch profiles with React Query
+  const { data: fetchedProfiles = [], isLoading: isProfilesLoading } = useQuery({
+    queryKey: ['user-profiles'],
+    queryFn: async () => {
+      const token = localStorage.getItem('authToken');
+      if (!token) return [];
+      const { data } = await axios.get('/api/user-profiles', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      return data || [];
+    },
+    enabled: isAuthenticated(),
+    retry: 1,
+  });
+
+  // Update local profiles when fetched data arrives
+  useEffect(() => {
+    if (fetchedProfiles.length > 0) {
+      setProfiles(fetchedProfiles);
+    }
+  }, [fetchedProfiles]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -77,6 +104,23 @@ export default function TVProfiles() {
     }
   };
 
+  // Show loading spinner while profiles are loading
+  if (isProfilesLoading) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="text-center">
+          <Spinner className="size-12 mx-auto mb-4" />
+          <p className="text-xl text-gray-300">Cargando perfiles...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated (should be caught by useEffect, but double-check)
+  if (!isAuthenticated()) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-black text-white">
       <TVHeader isFocused={false} />
@@ -87,7 +131,7 @@ export default function TVProfiles() {
         </h1>
 
         {/* Profile Grid */}
-        <div className="flex gap-12 flex-wrap">
+        <div className="flex gap-12 flex-wrap" data-testid="profiles-grid">
           {profiles.map((profile, idx) => (
             <button
               key={profile.id}
