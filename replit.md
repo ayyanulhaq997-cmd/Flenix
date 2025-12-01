@@ -69,6 +69,7 @@ Preferred communication style: Simple, everyday language.
 - Plan-based content access control (free, standard, premium)
 - Secure streaming URL generation with signed tokens (1-hour expiry)
 - Environment-based secret management
+- **Digital Rights Management (DRM):** Support for Widevine, FairPlay, and PlayReady DRM for all high-definition and premium content streams. Backend DRM licensing server issues keys upon successful authentication to ensure maximum content security for commercial-grade content licensing.
 
 ### Database Schema
 
