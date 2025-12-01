@@ -87,13 +87,18 @@ export default function AdminDashboard() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7 bg-slate-800">
+          <TabsList className="grid w-full grid-cols-12 bg-slate-800 overflow-x-auto">
             <TabsTrigger value="movies" className="text-white">PELÍCULAS</TabsTrigger>
             <TabsTrigger value="series" className="text-white">SERIES</TabsTrigger>
+            <TabsTrigger value="videos" className="text-white">VIDEOS</TabsTrigger>
+            <TabsTrigger value="drama" className="text-white">DRAMA</TabsTrigger>
+            <TabsTrigger value="songs" className="text-white">CANCIONES</TabsTrigger>
+            <TabsTrigger value="naat" className="text-white">NAAT</TabsTrigger>
+            <TabsTrigger value="cartoon" className="text-white">DIBUJOS</TabsTrigger>
             <TabsTrigger value="channels" className="text-white">CANALES</TabsTrigger>
             <TabsTrigger value="import" className="text-white">IMPORTAR</TabsTrigger>
-            <TabsTrigger value="users" className="text-white">USUARIOS</TabsTrigger>
-            <TabsTrigger value="controls" className="text-white">CONTROLES</TabsTrigger>
+            <TabsTrigger value="export" className="text-white">EXPORTAR</TabsTrigger>
+            <TabsTrigger value="api-keys" className="text-white">API KEYS</TabsTrigger>
             <TabsTrigger value="billing" className="text-white">FACTURACIÓN</TabsTrigger>
           </TabsList>
 
@@ -213,6 +218,76 @@ export default function AdminDashboard() {
             </div>
           </TabsContent>
 
+          {/* Videos Tab */}
+          <TabsContent value="videos" className="space-y-6 mt-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white">Videos</h2>
+              <Button className="gap-2 bg-red-600 hover:bg-red-700">
+                <Plus size={18} />
+                Nuevo Video
+              </Button>
+            </div>
+            <div className="bg-slate-800 rounded-lg p-6 text-center text-gray-400">
+              <p>Gesiona videos cortos, tutorials y contenido de usuario</p>
+            </div>
+          </TabsContent>
+
+          {/* Drama Tab */}
+          <TabsContent value="drama" className="space-y-6 mt-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white">Drama</h2>
+              <Button className="gap-2 bg-red-600 hover:bg-red-700">
+                <Plus size={18} />
+                Nuevo Drama
+              </Button>
+            </div>
+            <div className="bg-slate-800 rounded-lg p-6 text-center text-gray-400">
+              <p>Gesiona series de drama, programas especiales y miniseries</p>
+            </div>
+          </TabsContent>
+
+          {/* Songs Tab */}
+          <TabsContent value="songs" className="space-y-6 mt-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white">Canciones</h2>
+              <Button className="gap-2 bg-red-600 hover:bg-red-700">
+                <Plus size={18} />
+                Nueva Canción
+              </Button>
+            </div>
+            <div className="bg-slate-800 rounded-lg p-6 text-center text-gray-400">
+              <p>Gesiona música, videoclips y contenido musical</p>
+            </div>
+          </TabsContent>
+
+          {/* Naat Tab */}
+          <TabsContent value="naat" className="space-y-6 mt-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white">Naat</h2>
+              <Button className="gap-2 bg-red-600 hover:bg-red-700">
+                <Plus size={18} />
+                Nuevo Naat
+              </Button>
+            </div>
+            <div className="bg-slate-800 rounded-lg p-6 text-center text-gray-400">
+              <p>Gesiona naats islámicos y contenido religioso</p>
+            </div>
+          </TabsContent>
+
+          {/* Cartoon Tab */}
+          <TabsContent value="cartoon" className="space-y-6 mt-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-white">Dibujos Animados</h2>
+              <Button className="gap-2 bg-red-600 hover:bg-red-700">
+                <Plus size={18} />
+                Nuevo Dibujo
+              </Button>
+            </div>
+            <div className="bg-slate-800 rounded-lg p-6 text-center text-gray-400">
+              <p>Gesiona series de dibujos animados y contenido infantil</p>
+            </div>
+          </TabsContent>
+
           {/* Channels Tab */}
           <TabsContent value="channels" className="space-y-6 mt-6">
             <div className="flex justify-between items-center">
@@ -270,14 +345,72 @@ export default function AdminDashboard() {
             <AdminBatchImport />
           </TabsContent>
 
+          {/* Export Tab */}
+          <TabsContent value="export" className="space-y-6 mt-6">
+            <div className="bg-slate-800 rounded-lg p-8">
+              <h2 className="text-2xl font-bold text-white mb-6">Exportar Datos</h2>
+              <div className="space-y-4">
+                <div className="bg-slate-700 rounded-lg p-4 border border-slate-600">
+                  <h3 className="text-lg font-semibold text-white mb-2">Exportar Películas</h3>
+                  <p className="text-gray-400 mb-4">Descargue todos los metadatos de películas en formato JSON</p>
+                  <Button className="bg-blue-600 hover:bg-blue-700">Descargar Películas</Button>
+                </div>
+                <div className="bg-slate-700 rounded-lg p-4 border border-slate-600">
+                  <h3 className="text-lg font-semibold text-white mb-2">Exportar Series</h3>
+                  <p className="text-gray-400 mb-4">Descargue todos los metadatos de series en formato JSON</p>
+                  <Button className="bg-blue-600 hover:bg-blue-700">Descargar Series</Button>
+                </div>
+                <div className="bg-slate-700 rounded-lg p-4 border border-slate-600">
+                  <h3 className="text-lg font-semibold text-white mb-2">Transferencia de Datos</h3>
+                  <p className="text-gray-400 mb-4">Transfiera datos a otro servidor o servicio de almacenamiento</p>
+                  <Button className="bg-blue-600 hover:bg-blue-700">Iniciar Transferencia</Button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* API Keys Tab */}
+          <TabsContent value="api-keys" className="space-y-6 mt-6">
+            <div className="bg-slate-800 rounded-lg p-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Claves API</h2>
+                <Button className="gap-2 bg-red-600 hover:bg-red-700">
+                  <Plus size={18} />
+                  Generar Nueva Clave
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div className="bg-slate-700 rounded-lg p-4 border border-slate-600">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">Clave API Principal</h3>
+                      <p className="text-gray-400 text-sm mt-1">sk_live_abc123xyz...</p>
+                    </div>
+                    <Button variant="outline" size="sm" className="text-red-400 border-red-400 hover:bg-red-400/10">
+                      Revocar
+                    </Button>
+                  </div>
+                  <p className="text-gray-500 text-xs">Creada: 2024-12-01</p>
+                </div>
+                <div className="bg-slate-700 rounded-lg p-4 border border-slate-600">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="text-lg font-semibold text-white">Clave API de Desarrollo</h3>
+                      <p className="text-gray-400 text-sm mt-1">sk_test_def456uvw...</p>
+                    </div>
+                    <Button variant="outline" size="sm" className="text-red-400 border-red-400 hover:bg-red-400/10">
+                      Revocar
+                    </Button>
+                  </div>
+                  <p className="text-gray-500 text-xs">Creada: 2024-11-15</p>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
           {/* Users Tab */}
           <TabsContent value="users" className="mt-6">
             <AdminUsers />
-          </TabsContent>
-
-          {/* Parental Controls Tab */}
-          <TabsContent value="controls" className="mt-6">
-            <AdminParentalControls />
           </TabsContent>
 
           {/* Billing Tab */}

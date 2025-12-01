@@ -12,9 +12,7 @@ import {
 import { Search, LayoutGrid, List } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Movies() {
   const [search, setSearch] = useState("");
@@ -140,29 +138,7 @@ export default function Movies() {
                       {movie.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 p-0 hover:bg-white/10">
-                          <span className="sr-only">Open menu</span>
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-card border-white/10">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem className="cursor-pointer hover:bg-white/10">
-                          <Edit className="mr-2 h-4 w-4" /> Edit Details
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-white/10" />
-                        <DropdownMenuItem 
-                          className="cursor-pointer text-destructive hover:bg-destructive/10"
-                          onClick={() => handleDelete(movie.id)}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+                  <TableCell className="text-right"></TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -184,19 +160,6 @@ export default function Movies() {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                    <div className="flex gap-2 mb-2">
-                      <Button size="icon" className="h-8 w-8 rounded-full bg-white text-black hover:bg-white/90">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button 
-                        size="icon" 
-                        variant="destructive" 
-                        className="h-8 w-8 rounded-full"
-                        onClick={() => handleDelete(movie.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
                     <p className="text-xs text-white/80 line-clamp-2">
                       {movie.genre} • {movie.year}
                     </p>
