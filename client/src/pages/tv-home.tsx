@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { TVHeader } from '@/components/tv/TVHeader';
 import { TVHero } from '@/components/tv/TVHero';
@@ -130,21 +130,38 @@ export default function TVHome() {
           } else if (focusedElement === 'row') {
             const item = getActiveRowData()[focusedColIndex];
             if (item) {
-              console.log('Selected item:', item);
-              // TODO: Navigate to detail page
+              sessionStorage.setItem(`content_${item.id}`, JSON.stringify(item));
+              sessionStorage.setItem('navigation_state', JSON.stringify({
+                tab: activeTab,
+                rowIndex: focusedRowIndex,
+                colIndex: focusedColIndex,
+              }));
+              setLocation(`/tv/details?id=${item.id}`);
             }
           } else if (focusedElement === 'hero') {
-            console.log('Play hero content');
+            const heroItem = getActiveRowData()[0];
+            if (heroItem) {
+              sessionStorage.setItem(`content_${heroItem.id}`, JSON.stringify(heroItem));
+              setLocation(`/tv/details?id=${heroItem.id}`);
+            }
           }
           break;
 
         case 'Escape':
-          // Back button - reset focus to row
+          // Back button
           e.preventDefault();
-          setFocusedElement('row');
-          setFocusedTabIndex(0);
-          setFocusedRowIndex(0);
-          setFocusedColIndex(0);
+          if (focusedElement === 'row' && focusedRowIndex === 0 && focusedColIndex === 0) {
+            setShowExitDialog(true);
+          } else {
+            // Restore previous navigation state
+            const navState = navigationHistory[navigationHistory.length - 1];
+            if (navState) {
+              setActiveTab(navState.tab);
+              setFocusedRowIndex(navState.rowIndex);
+              setFocusedColIndex(navState.colIndex);
+              setNavigationHistory(navigationHistory.slice(0, -1));
+            }
+          }
           break;
 
         default:
@@ -257,6 +274,31 @@ export default function TVHome() {
           )}
         </div>
       </main>
+
+      {/* Exit Dialog */}
+      {showExitDialog && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-8 rounded-lg text-center">
+            <h2 className="text-2xl font-bold mb-6">¿Salir de la aplicación?</h2>
+            <div className="flex gap-6 justify-center">
+              <button
+                onClick={() => setShowExitDialog(false)}
+                className="px-8 py-3 bg-gray-700 hover:bg-gray-600 rounded font-semibold transition-all"
+                data-testid="button-cancel-exit"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => window.location.href = '/'}
+                className="px-8 py-3 bg-red-600 hover:bg-red-700 rounded font-semibold transition-all"
+                data-testid="button-confirm-exit"
+              >
+                Salir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Debug Info - Remove in production */}
       <div className="fixed bottom-4 right-4 bg-black/80 border border-red-500 p-3 rounded text-xs text-gray-400">

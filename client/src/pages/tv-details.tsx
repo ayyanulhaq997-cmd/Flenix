@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { TVHeader } from '@/components/tv/TVHeader';
+import { TVVideoPlayer } from '@/components/tv/TVVideoPlayer';
 
 interface ContentItem {
   id: string | number;
@@ -52,7 +53,6 @@ export default function TVDetails() {
           e.preventDefault();
           if (focusedButton === 'play') {
             setIsPlaying(true);
-            console.log('Starting playback for:', content?.title);
           }
           break;
         case 'Escape':
@@ -77,21 +77,7 @@ export default function TVDetails() {
   }
 
   if (isPlaying) {
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">Now Playing</h1>
-          <p className="text-xl mb-8">{content.title}</p>
-          <div className="w-full h-64 bg-gray-900 rounded-lg mb-4 flex items-center justify-center">
-            <div className="text-center">
-              <p className="text-gray-400">🎬 Video Player</p>
-              <p className="text-sm text-gray-500 mt-2">(Mock - In production, use HLS/DASH player)</p>
-            </div>
-          </div>
-          <p className="text-sm text-gray-400">Press Escape to stop playback</p>
-        </div>
-      </div>
-    );
+    return <TVVideoPlayer title={content.title} duration={content.duration || 7200} />;
   }
 
   return (
