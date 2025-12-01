@@ -11,7 +11,7 @@ export function registerStreamingRoutes(app: Express) {
   app.get(
     "/api/stream/:contentId/manifest.m3u8",
     authMiddleware,
-    geoblockingMiddleware,
+    geoblockingMiddleware(),
     async (req, res) => {
       try {
         const { contentId } = req.params;

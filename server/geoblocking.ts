@@ -68,7 +68,7 @@ export function isGeoAllowed(
  * Geoblocking middleware
  * Attach to routes that need geoblocking protection
  */
-export async function geoblockingMiddleware(
+export function geoblockingMiddleware(
   config?: GeoblockingConfig
 ) {
   return (req: Request, res: Response, next: NextFunction) => {
