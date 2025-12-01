@@ -1,14 +1,114 @@
 import type { Express } from "express";
 import { storage } from "./storage";
 import { authMiddleware, adminMiddleware } from "./auth";
-import axios from "axios";
-
-// Stripe integration for payment processing
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || "";
-const STRIPE_PUBLISHABLE_KEY = process.env.STRIPE_PUBLISHABLE_KEY || "";
+import { stripeService } from "./stripeService";
+import { getStripePublishableKey } from "./stripeClient";
 
 export function registerPaymentRoutes(app: Express) {
-  // Note: Subscription plans endpoint is handled in routes.ts with auto-seeding logic
+  // Get Stripe publishable key for frontend
+  app.get("/api/stripe/config", async (req, res) => {
+    try {
+      const publishableKey = await getStripePublishableKey();
+      res.json({ publishableKey });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create payment intent for new subscription (signup)
+  app.post("/api/payments/create-intent", async (req, res) => {
+    try {
+      const { email, planId, name } = req.body;
+
+      if (!email || !planId) {
+        return res.status(400).json({ error: "Missing email or planId" });
+      }
+
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan) {
+        return res.status(404).json({ error: "Plan not found" });
+      }
+
+      // Create or get customer
+      let customer = await storage.getStripeCustomerByEmail(email);
+      if (!customer) {
+        customer = await stripeService.createCustomer(email, 0, name);
+      }
+
+      // Create payment intent
+      const paymentIntent = await stripeService.createPaymentIntent(
+        customer.id,
+        plan.price / 100, // Convert from cents
+        email,
+        plan.name
+      );
+
+      res.json({
+        clientSecret: paymentIntent.client_secret,
+        intentId: paymentIntent.id,
+        publishableKey: await getStripePublishableKey(),
+      });
+    } catch (error: any) {
+      console.error("Payment intent error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Confirm payment and create account
+  app.post("/api/payments/confirm-and-register", async (req, res) => {
+    try {
+      const { paymentIntentId, planId, email, password, name } = req.body;
+
+      if (!paymentIntentId || !planId || !email || !password || !name) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getAppUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Email already registered" });
+      }
+
+      // Verify payment intent succeeded
+      const paymentIntent = await stripeService.confirmPaymentIntent(paymentIntentId);
+      if (paymentIntent.status !== "succeeded") {
+        return res.status(400).json({ error: "Payment not confirmed" });
+      }
+
+      const plan = await storage.getSubscriptionPlan(planId);
+      if (!plan) {
+        return res.status(404).json({ error: "Plan not found" });
+      }
+
+      // Create user account with Stripe info
+      const user = await storage.createAppUser({
+        name,
+        email,
+        passwordHash: password,
+        plan: plan.name.toLowerCase(),
+        emailVerified: true,
+        stripeCustomerId: paymentIntent.customer,
+      });
+
+      // Generate token
+      const token = await storage.generateAuthToken(user);
+
+      res.json({
+        success: true,
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          plan: user.plan,
+        },
+      });
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Create payment intent for subscription upgrade
   app.post("/api/payments/intent", authMiddleware, async (req, res) => {
     try {
@@ -19,33 +119,27 @@ export function registerPaymentRoutes(app: Express) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
+      const user = await storage.getAppUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
       const plan = await storage.getSubscriptionPlan(planId);
       if (!plan) {
         return res.status(404).json({ error: "Plan not found" });
       }
 
-      // In production, would create Stripe payment intent
-      const paymentIntentData = {
-        planId,
-        userId,
-        amount: plan.price * 100, // Convert to cents
-        currency: "usd",
-        metadata: {
-          userId,
-          planId,
-          planName: plan.name,
-        },
-      };
-
-      // Mock response - in production call Stripe API
-      const clientSecret = `pi_${Date.now()}_secret`;
+      // Create payment intent
+      const paymentIntent = await stripeService.createPaymentIntent(
+        user.stripeCustomerId || "",
+        plan.price / 100,
+        user.email,
+        plan.name
+      );
 
       res.json({
-        clientSecret,
-        amount: plan.price * 100,
-        currency: "usd",
-        planId,
-        planName: plan.name,
+        clientSecret: paymentIntent.client_secret,
+        intentId: paymentIntent.id,
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -62,28 +156,24 @@ export function registerPaymentRoutes(app: Express) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
-      // In production, would verify payment with Stripe
+      // Verify payment with Stripe
+      const paymentIntent = await stripeService.confirmPaymentIntent(paymentIntentId);
+      if (paymentIntent.status !== "succeeded") {
+        return res.status(400).json({ error: "Payment not confirmed" });
+      }
+
       const plan = await storage.getSubscriptionPlan(planId);
       if (!plan) {
         return res.status(404).json({ error: "Plan not found" });
       }
 
       // Update user subscription
-      await storage.updateUserSubscription(userId, planId);
-
-      // Create billing record
-      const billing = await storage.createBillingRecord({
-        userId,
-        planId,
-        amount: plan.price,
-        status: "paid",
-        paymentMethod: "stripe",
-        transactionId: paymentIntentId,
+      await storage.updateAppUser(userId, {
+        plan: plan.name.toLowerCase(),
       });
 
       res.json({
         success: true,
-        billing,
         message: "Subscription updated successfully",
       });
     } catch (error: any) {

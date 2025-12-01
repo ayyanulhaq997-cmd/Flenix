@@ -131,6 +131,10 @@ export const appUsers = pgTable("app_users", {
   passwordHash: text("password_hash").notNull(),
   plan: text("plan").notNull().default("free"), // free, standard, premium
   status: text("status").notNull().default("active"), // active, suspended, banned
+  emailVerified: boolean("email_verified").default(false),
+  emailVerificationToken: text("email_verification_token"),
+  stripeCustomerId: text("stripe_customer_id"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
   joinedAt: timestamp("joined_at").defaultNow().notNull(),
   lastLogin: timestamp("last_login"),
 });
@@ -139,6 +143,10 @@ export const insertAppUserSchema = createInsertSchema(appUsers).omit({
   id: true,
   joinedAt: true,
   lastLogin: true,
+  emailVerified: true,
+  emailVerificationToken: true,
+  stripeCustomerId: true,
+  stripeSubscriptionId: true,
 });
 
 export type InsertAppUser = z.infer<typeof insertAppUserSchema>;

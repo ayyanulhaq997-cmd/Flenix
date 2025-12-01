@@ -21,6 +21,8 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, like, and, ilike, or } from "drizzle-orm";
+import { generateToken } from "./auth";
+import bcrypt from "bcryptjs";
 
 export interface IStorage {
   // Movies
@@ -283,8 +285,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAppUser(user: InsertAppUser): Promise<AppUser> {
-    const [newUser] = await db.insert(appUsers).values(user).returning();
+    // Hash password before storing
+    const hashedPassword = await bcrypt.hash(user.passwordHash, 10);
+    const [newUser] = await db.insert(appUsers).values({
+      ...user,
+      passwordHash: hashedPassword,
+    }).returning();
     return newUser;
+  }
+  
+  async generateAuthToken(user: AppUser): Promise<string> {
+    return generateToken({
+      userId: user.id,
+      email: user.email,
+      plan: user.plan,
+    });
+  }
+  
+  async getStripeCustomerByEmail(email: string): Promise<any> {
+    try {
+      const [user] = await db.select().from(appUsers).where(eq(appUsers.email, email));
+      return user?.stripeCustomerId ? { id: user.stripeCustomerId } : null;
+    } catch (error) {
+      return null;
+    }
   }
 
   async updateAppUser(id: number, user: Partial<InsertAppUser>): Promise<AppUser | undefined> {
