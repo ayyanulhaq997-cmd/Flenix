@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 
 class TVPlayerScreen extends StatefulWidget {
   final dynamic item;
@@ -15,8 +16,64 @@ class TVPlayerScreen extends StatefulWidget {
 }
 
 class _TVPlayerScreenState extends State<TVPlayerScreen> {
-  bool _isPlaying = true;
+  late VideoPlayerController _videoController;
+  bool _isPlaying = false;
   bool _showControls = true;
+  bool _isLoading = true;
+  String _errorMessage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeVideo();
+  }
+
+  void _initializeVideo() {
+    final videoUrl = widget.item['videoUrl'];
+    if (videoUrl != null && videoUrl.isNotEmpty) {
+      _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
+        ..initialize().then((_) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
+        }).catchError((error) {
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+              _errorMessage = 'Failed to load video: $error';
+            });
+          }
+        });
+    } else {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'No video URL available';
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoController.dispose();
+    super.dispose();
+  }
+
+  void _togglePlayPause() {
+    if (_videoController.value.isInitialized) {
+      setState(() {
+        _isPlaying = _videoController.value.isPlaying;
+      });
+      if (_isPlaying) {
+        _videoController.pause();
+      } else {
+        _videoController.play();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
