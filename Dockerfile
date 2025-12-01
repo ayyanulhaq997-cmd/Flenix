@@ -8,8 +8,8 @@ RUN apk add --no-cache python3 make g++
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production && \
+# Install ALL dependencies (including devDependencies) for building
+RUN npm ci && \
     npm cache clean --force
 
 # Copy application code
@@ -18,8 +18,9 @@ COPY . .
 # Build TypeScript
 RUN npm run build
 
-# Remove build dependencies
-RUN apk del python3 make g++
+# Remove build dependencies and devDependencies
+RUN npm prune --production && \
+    apk del python3 make g++
 
 # Expose port
 EXPOSE 5000
