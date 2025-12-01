@@ -22,6 +22,11 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
   await registerStreamingRoutes(app);
   await registerPaymentRoutes(app);
 
+  // Health check endpoint (for load balancers & docker health checks)
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // OpenAPI Documentation
   app.get("/api/docs", (req, res) => {
     res.json(openApiSpec);
