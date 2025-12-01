@@ -335,10 +335,10 @@ class _TVCatalogScreenState extends State<TVCatalogScreen> {
                                   physics: const NeverScrollableScrollPhysics(),
                                   gridDelegate:
                                       const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 5,
-                                    childAspectRatio: 0.7,
-                                    crossAxisSpacing: 20,
-                                    mainAxisSpacing: 24,
+                                    crossAxisCount: 4,
+                                    childAspectRatio: 0.65,
+                                    crossAxisSpacing: 32,
+                                    mainAxisSpacing: 40,
                                   ),
                                   itemCount: selectedContent.length,
                                   itemBuilder: (context, index) {
@@ -420,28 +420,44 @@ class _TVCatalogScreenState extends State<TVCatalogScreen> {
                                           }
                                           return KeyEventResult.ignored;
                                         },
-                                        child: Container(
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 200),
                                           decoration: BoxDecoration(
                                             borderRadius:
-                                                BorderRadius.circular(10),
+                                                BorderRadius.circular(12),
                                             color: const Color(0xFF1a1a2e),
                                             border: Border.all(
                                               color: isFocused
                                                   ? Colors.amber
-                                                  : Colors.grey[800]!,
-                                              width: isFocused ? 3 : 1,
+                                                  : Colors.grey[700]!,
+                                              width: isFocused ? 4 : 2,
                                             ),
                                             boxShadow: isFocused
                                                 ? [
                                                     BoxShadow(
                                                       color: Colors.amber
-                                                          .withOpacity(0.6),
-                                                      blurRadius: 12,
-                                                      spreadRadius: 4,
+                                                          .withOpacity(0.8),
+                                                      blurRadius: 20,
+                                                      spreadRadius: 6,
+                                                    ),
+                                                    BoxShadow(
+                                                      color: Colors.amber
+                                                          .withOpacity(0.3),
+                                                      blurRadius: 40,
+                                                      spreadRadius: 12,
                                                     )
                                                   ]
-                                                : [],
+                                                : [
+                                                    BoxShadow(
+                                                      color: Colors.black
+                                                          .withOpacity(0.3),
+                                                      blurRadius: 8,
+                                                    )
+                                                  ],
                                           ),
+                                          transform: isFocused
+                                              ? Matrix4.identity()..scale(1.08)
+                                              : Matrix4.identity(),
                                           child: posterUrl != null
                                               ? ClipRRect(
                                                   borderRadius:
