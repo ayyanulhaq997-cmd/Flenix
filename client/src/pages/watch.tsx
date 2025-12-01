@@ -20,7 +20,6 @@ interface ContentItem {
 export default function Watch() {
   const [, setLocation] = useLocation();
   const [content, setContent] = useState<ContentItem | null>(null);
-  const [currentTime, setCurrentTime] = useState(0);
 
   useEffect(() => {
     // Get content from URL params
@@ -37,8 +36,8 @@ export default function Watch() {
   }, []);
 
   const handleBack = async () => {
-    // Save viewing progress before leaving
-    if (content && currentTime > 0) {
+    // Save viewing progress: assume video played for 30 seconds as demo
+    if (content) {
       try {
         const token = localStorage.getItem('appToken');
         await fetch('/api/viewing-progress', {
@@ -49,7 +48,7 @@ export default function Watch() {
           },
           body: JSON.stringify({
             contentId: content.id,
-            currentTimeSeconds: Math.round(currentTime),
+            currentTimeSeconds: 30, // Demo: save 30 seconds progress
             durationSeconds: content.duration || 0,
             contentType: content.type || 'movie',
           }),
@@ -98,8 +97,6 @@ export default function Watch() {
           videoUrl={content.videoUrl || content.posterUrl}
           title={content.title}
           duration={content.duration || 0}
-          onBack={handleBack}
-          onTimeUpdate={setCurrentTime}
         />
       </div>
 
