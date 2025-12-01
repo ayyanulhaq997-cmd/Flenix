@@ -208,6 +208,43 @@ export const insertApiKeySchema = createInsertSchema(apiKeys).omit({
 export type InsertApiKey = z.infer<typeof insertApiKeySchema>;
 export type ApiKey = typeof apiKeys.$inferSelect;
 
+// User Favorites table (movies/series marked as favorites)
+export const userFavorites = pgTable("user_favorites", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  contentType: text("content_type").notNull(), // "movie" or "series"
+  contentId: integer("content_id").notNull(),
+  addedAt: timestamp("added_at").defaultNow().notNull(),
+});
+
+export const insertUserFavoritesSchema = createInsertSchema(userFavorites).omit({
+  id: true,
+  addedAt: true,
+});
+
+export type InsertUserFavorites = z.infer<typeof insertUserFavoritesSchema>;
+export type UserFavorites = typeof userFavorites.$inferSelect;
+
+// User Watchlist table (movies/series added to watch later)
+export const userWatchlist = pgTable("user_watchlist", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => appUsers.id, { onDelete: "cascade" }),
+  contentType: text("content_type").notNull(), // "movie" or "series"
+  contentId: integer("content_id").notNull(),
+  watchedPercentage: integer("watched_percentage").notNull().default(0),
+  lastWatchedAt: timestamp("last_watched_at"),
+  addedAt: timestamp("added_at").defaultNow().notNull(),
+});
+
+export const insertUserWatchlistSchema = createInsertSchema(userWatchlist).omit({
+  id: true,
+  addedAt: true,
+  lastWatchedAt: true,
+});
+
+export type InsertUserWatchlist = z.infer<typeof insertUserWatchlistSchema>;
+export type UserWatchlist = typeof userWatchlist.$inferSelect;
+
 // File Storage table (for Wasabi/S3 uploads)
 export const files = pgTable("files", {
   id: serial("id").primaryKey(),

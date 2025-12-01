@@ -1,5 +1,5 @@
 import { 
-  movies, series, episodes, channels, appUsers, admins, subscriptionPlans, channelContent, apiKeys, files,
+  movies, series, episodes, channels, appUsers, admins, subscriptionPlans, channelContent, apiKeys, files, userFavorites, userWatchlist,
   type Movie, type InsertMovie,
   type Series, type InsertSeries,
   type Episode, type InsertEpisode,
@@ -9,7 +9,9 @@ import {
   type SubscriptionPlan, type InsertSubscriptionPlan,
   type ChannelContent, type InsertChannelContent,
   type ApiKey, type InsertApiKey,
-  type File, type InsertFile
+  type File, type InsertFile,
+  type UserFavorites, type InsertUserFavorites,
+  type UserWatchlist, type InsertUserWatchlist
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, like, and, ilike, or } from "drizzle-orm";
@@ -87,6 +89,18 @@ export interface IStorage {
   updateFile(id: number, file: Partial<InsertFile>): Promise<File | undefined>;
   deleteFile(id: number): Promise<void>;
   deleteFileByStorageKey(storageKey: string): Promise<void>;
+
+  // User Favorites
+  addFavorite(favorite: InsertUserFavorites): Promise<UserFavorites>;
+  removeFavorite(userId: number, contentId: number, contentType: string): Promise<void>;
+  getUserFavorites(userId: number): Promise<UserFavorites[]>;
+  isFavorite(userId: number, contentId: number, contentType: string): Promise<boolean>;
+
+  // User Watchlist
+  addToWatchlist(watchlist: InsertUserWatchlist): Promise<UserWatchlist>;
+  removeFromWatchlist(userId: number, contentId: number, contentType: string): Promise<void>;
+  getUserWatchlist(userId: number): Promise<UserWatchlist[]>;
+  updateWatchlistProgress(userId: number, contentId: number, contentType: string, percentage: number): Promise<UserWatchlist | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -427,6 +441,75 @@ export class DatabaseStorage implements IStorage {
 
   async deleteFileByStorageKey(storageKey: string): Promise<void> {
     await db.delete(files).where(eq(files.storageKey, storageKey));
+  }
+
+  // User Favorites
+  async addFavorite(favorite: InsertUserFavorites): Promise<UserFavorites> {
+    const [newFavorite] = await db.insert(userFavorites).values(favorite).returning();
+    return newFavorite;
+  }
+
+  async removeFavorite(userId: number, contentId: number, contentType: string): Promise<void> {
+    await db.delete(userFavorites).where(
+      and(
+        eq(userFavorites.userId, userId),
+        eq(userFavorites.contentId, contentId),
+        eq(userFavorites.contentType, contentType)
+      )
+    );
+  }
+
+  async getUserFavorites(userId: number): Promise<UserFavorites[]> {
+    return await db.select().from(userFavorites).where(eq(userFavorites.userId, userId)).orderBy(desc(userFavorites.addedAt));
+  }
+
+  async isFavorite(userId: number, contentId: number, contentType: string): Promise<boolean> {
+    const [favorite] = await db
+      .select()
+      .from(userFavorites)
+      .where(
+        and(
+          eq(userFavorites.userId, userId),
+          eq(userFavorites.contentId, contentId),
+          eq(userFavorites.contentType, contentType)
+        )
+      );
+    return !!favorite;
+  }
+
+  // User Watchlist
+  async addToWatchlist(watchlist: InsertUserWatchlist): Promise<UserWatchlist> {
+    const [newWatchlist] = await db.insert(userWatchlist).values(watchlist).returning();
+    return newWatchlist;
+  }
+
+  async removeFromWatchlist(userId: number, contentId: number, contentType: string): Promise<void> {
+    await db.delete(userWatchlist).where(
+      and(
+        eq(userWatchlist.userId, userId),
+        eq(userWatchlist.contentId, contentId),
+        eq(userWatchlist.contentType, contentType)
+      )
+    );
+  }
+
+  async getUserWatchlist(userId: number): Promise<UserWatchlist[]> {
+    return await db.select().from(userWatchlist).where(eq(userWatchlist.userId, userId)).orderBy(desc(userWatchlist.lastWatchedAt));
+  }
+
+  async updateWatchlistProgress(userId: number, contentId: number, contentType: string, percentage: number): Promise<UserWatchlist | undefined> {
+    const [updated] = await db
+      .update(userWatchlist)
+      .set({ watchedPercentage: percentage, lastWatchedAt: new Date() })
+      .where(
+        and(
+          eq(userWatchlist.userId, userId),
+          eq(userWatchlist.contentId, contentId),
+          eq(userWatchlist.contentType, contentType)
+        )
+      )
+      .returning();
+    return updated || undefined;
   }
 }
 
