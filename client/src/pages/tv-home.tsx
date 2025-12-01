@@ -199,9 +199,6 @@ export default function TVHome() {
             setSearchQuery(prev => prev.slice(0, -1));
           }
           break;
-
-        default:
-          break;
       }
     };
 
