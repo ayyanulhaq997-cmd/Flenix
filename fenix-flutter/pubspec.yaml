@@ -20,6 +20,9 @@ dependencies:
   # Video Player (Android TV optimized)
   video_player: ^2.7.0
   
+  # YouTube Player
+  youtube_player_flutter: ^8.1.2
+  
   # Image Caching
   cached_network_image: ^3.3.0
   

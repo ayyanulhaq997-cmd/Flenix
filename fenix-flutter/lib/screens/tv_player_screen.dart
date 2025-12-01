@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class TVPlayerScreen extends StatefulWidget {
   final dynamic item;
@@ -15,12 +16,30 @@ class TVPlayerScreen extends StatefulWidget {
   State<TVPlayerScreen> createState() => _TVPlayerScreenState();
 }
 
+// Helper function to extract YouTube video ID from URL
+String? _extractYouTubeId(String url) {
+  try {
+    if (url.contains('youtube.com') || url.contains('youtu.be')) {
+      if (url.contains('youtube.com')) {
+        return Uri.parse(url).queryParameters['v'];
+      } else if (url.contains('youtu.be')) {
+        return url.split('youtu.be/').last.split('?').first;
+      }
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
+}
+
 class _TVPlayerScreenState extends State<TVPlayerScreen> {
   late VideoPlayerController _videoController;
+  late YoutubePlayerController _youtubeController;
   bool _isPlaying = false;
   bool _showControls = true;
   bool _isLoading = true;
   String _errorMessage = '';
+  bool _isYouTube = false;
 
   @override
   void initState() {
@@ -31,21 +50,42 @@ class _TVPlayerScreenState extends State<TVPlayerScreen> {
   void _initializeVideo() {
     final videoUrl = widget.item['videoUrl'];
     if (videoUrl != null && videoUrl.isNotEmpty) {
-      _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
-        ..initialize().then((_) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-          }
-        }).catchError((error) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-              _errorMessage = 'Failed to load video: $error';
-            });
-          }
-        });
+      final youtubeId = _extractYouTubeId(videoUrl);
+      
+      if (youtubeId != null) {
+        // Initialize YouTube player
+        _isYouTube = true;
+        _youtubeController = YoutubePlayerController(
+          initialVideoId: youtubeId,
+          flags: const YoutubePlayerFlags(
+            autoPlay: false,
+            mute: false,
+          ),
+        );
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      } else {
+        // Initialize regular video player
+        _isYouTube = false;
+        _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
+          ..initialize().then((_) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+              });
+            }
+          }).catchError((error) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+                _errorMessage = 'Failed to load video: $error';
+              });
+            }
+          });
+      }
     } else {
       if (mounted) {
         setState(() {
@@ -58,19 +98,31 @@ class _TVPlayerScreenState extends State<TVPlayerScreen> {
 
   @override
   void dispose() {
-    _videoController.dispose();
+    if (_isYouTube) {
+      _youtubeController.dispose();
+    } else {
+      _videoController.dispose();
+    }
     super.dispose();
   }
 
   void _togglePlayPause() {
-    if (_videoController.value.isInitialized) {
+    if (_isYouTube) {
       setState(() {
-        _isPlaying = _videoController.value.isPlaying;
+        _youtubeController.value.isPlaying
+            ? _youtubeController.pause()
+            : _youtubeController.play();
       });
-      if (_isPlaying) {
-        _videoController.pause();
-      } else {
-        _videoController.play();
+    } else {
+      if (_videoController.value.isInitialized) {
+        setState(() {
+          _isPlaying = _videoController.value.isPlaying;
+        });
+        if (_isPlaying) {
+          _videoController.pause();
+        } else {
+          _videoController.play();
+        }
       }
     }
   }
@@ -131,6 +183,12 @@ class _TVPlayerScreenState extends State<TVPlayerScreen> {
                       ),
                     ),
                   )
+                else if (_isYouTube)
+                  YoutubePlayer(
+                    controller: _youtubeController,
+                    showVideoProgressIndicator: true,
+                    progressIndicatorColor: const Color(0xFF3B82F6),
+                  )
                 else if (_videoController.value.isInitialized)
                   VideoPlayer(_videoController)
                 else if (posterUrl != null)
@@ -169,7 +227,7 @@ class _TVPlayerScreenState extends State<TVPlayerScreen> {
                   ),
                 ),
                 // Large centered play button (only when video is ready)
-                if (_videoController.value.isInitialized)
+                if (_isYouTube || (_videoController.value.isInitialized))
                   Center(
                     child: GestureDetector(
                       onTap: _togglePlayPause,
@@ -189,9 +247,13 @@ class _TVPlayerScreenState extends State<TVPlayerScreen> {
                         ),
                         padding: const EdgeInsets.all(24),
                         child: Icon(
-                          _videoController.value.isPlaying
-                              ? Icons.pause
-                              : Icons.play_arrow,
+                          _isYouTube
+                              ? (_youtubeController.value.isPlaying
+                                  ? Icons.pause
+                                  : Icons.play_arrow)
+                              : (_videoController.value.isPlaying
+                                  ? Icons.pause
+                                  : Icons.play_arrow),
                           color: Colors.white,
                           size: 96,
                         ),

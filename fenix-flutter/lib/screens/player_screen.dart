@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class PlayerScreen extends StatefulWidget {
   final dynamic movie;
@@ -15,10 +16,28 @@ class PlayerScreen extends StatefulWidget {
   State<PlayerScreen> createState() => _PlayerScreenState();
 }
 
+// Helper function to extract YouTube video ID from URL
+String? _extractYouTubeId(String url) {
+  try {
+    if (url.contains('youtube.com') || url.contains('youtu.be')) {
+      if (url.contains('youtube.com')) {
+        return Uri.parse(url).queryParameters['v'];
+      } else if (url.contains('youtu.be')) {
+        return url.split('youtu.be/').last.split('?').first;
+      }
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
+}
+
 class _PlayerScreenState extends State<PlayerScreen> {
   late VideoPlayerController _videoController;
+  late YoutubePlayerController _youtubeController;
   bool _isLoading = true;
   String _errorMessage = '';
+  bool _isYouTube = false;
   String _selectedSubtitleColor = 'white';
   String _selectedSubtitleSize = 'Mediano';
   String _selectedLanguage = 'Español';
@@ -32,21 +51,42 @@ class _PlayerScreenState extends State<PlayerScreen> {
   void _initializeVideo() {
     final videoUrl = widget.movie['videoUrl'];
     if (videoUrl != null && videoUrl.isNotEmpty) {
-      _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
-        ..initialize().then((_) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-            });
-          }
-        }).catchError((error) {
-          if (mounted) {
-            setState(() {
-              _isLoading = false;
-              _errorMessage = 'Failed to load video: $error';
-            });
-          }
-        });
+      final youtubeId = _extractYouTubeId(videoUrl);
+      
+      if (youtubeId != null) {
+        // Initialize YouTube player
+        _isYouTube = true;
+        _youtubeController = YoutubePlayerController(
+          initialVideoId: youtubeId,
+          flags: const YoutubePlayerFlags(
+            autoPlay: false,
+            mute: false,
+          ),
+        );
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      } else {
+        // Initialize regular video player
+        _isYouTube = false;
+        _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
+          ..initialize().then((_) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+              });
+            }
+          }).catchError((error) {
+            if (mounted) {
+              setState(() {
+                _isLoading = false;
+                _errorMessage = 'Failed to load video: $error';
+              });
+            }
+          });
+      }
     } else {
       if (mounted) {
         setState(() {
@@ -59,19 +99,31 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   void dispose() {
-    _videoController.dispose();
+    if (_isYouTube) {
+      _youtubeController.dispose();
+    } else {
+      _videoController.dispose();
+    }
     super.dispose();
   }
 
   void _togglePlayPause() {
-    if (_videoController.value.isInitialized) {
+    if (_isYouTube) {
       setState(() {
-        if (_videoController.value.isPlaying) {
-          _videoController.pause();
-        } else {
-          _videoController.play();
-        }
+        _youtubeController.value.isPlaying
+            ? _youtubeController.pause()
+            : _youtubeController.play();
       });
+    } else {
+      if (_videoController.value.isInitialized) {
+        setState(() {
+          if (_videoController.value.isPlaying) {
+            _videoController.pause();
+          } else {
+            _videoController.play();
+          }
+        });
+      }
     }
   }
 
@@ -214,97 +266,143 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   height: 280,
                   width: double.infinity,
                   color: const Color(0xFF1a1a2e),
-                  child: Stack(
-                    children: [
-                      // Poster background
-                      if (posterUrl != null)
-                        Image.network(
-                          posterUrl,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          errorBuilder: (context, error, stack) {
-                            return Container(
-                              color: const Color(0xFF1a1a2e),
-                              child: const Center(
-                                child: Icon(Icons.movie,
-                                    color: Color(0xFF3B82F6), size: 64),
-                              ),
-                            );
-                          },
-                        ),
-                      // Gradient overlay
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withOpacity(0.8),
-                            ],
+                  child: _isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(
+                            valueColor:
+                                AlwaysStoppedAnimation(Color(0xFF3B82F6)),
                           ),
-                        ),
-                      ),
-                      // Player controls - horizontally centered
-                      Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            // Back button
-                            GestureDetector(
-                              onTap: () {},
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white.withOpacity(0.3),
-                                ),
-                                child: const Icon(Icons.replay_10,
-                                    color: Colors.white, size: 24),
+                        )
+                      : _errorMessage.isNotEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.error_outline,
+                                      color: Color(0xFF3B82F6), size: 64),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    _errorMessage,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(width: 32),
-                            // Play/Pause button (larger)
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _isPlaying = !_isPlaying;
-                                });
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _isPlaying
-                                      ? const Color(0xFF3B82F6)
-                                      : const Color(0xFF3B82F6).withOpacity(0.7),
+                            )
+                          : _isYouTube
+                              ? YoutubePlayer(
+                                  controller: _youtubeController,
+                                  showVideoProgressIndicator: true,
+                                  progressIndicatorColor:
+                                      const Color(0xFF3B82F6),
+                                )
+                              : Stack(
+                                  children: [
+                                    if (_videoController.value.isInitialized)
+                                      VideoPlayer(_videoController)
+                                    else
+                                      Container(
+                                        color: const Color(0xFF1a1a2e),
+                                        child: posterUrl != null
+                                            ? Image.network(
+                                                posterUrl,
+                                                fit: BoxFit.cover,
+                                                width: double.infinity,
+                                                errorBuilder: (context, error,
+                                                    stack) {
+                                                  return const Center(
+                                                    child: Icon(Icons.movie,
+                                                        color: Color(
+                                                            0xFF3B82F6),
+                                                        size: 64),
+                                                  );
+                                                },
+                                              )
+                                            : const Center(
+                                                child: Icon(Icons.movie,
+                                                    color:
+                                                        Color(0xFF3B82F6),
+                                                    size: 64),
+                                              ),
+                                      ),
+                                    // Gradient overlay
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            Colors.transparent,
+                                            Colors.black.withOpacity(0.8),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    // Player controls
+                                    Center(
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          GestureDetector(
+                                            onTap: () {},
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.all(12),
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: Colors.white
+                                                    .withOpacity(0.3),
+                                              ),
+                                              child: const Icon(Icons.replay_10,
+                                                  color: Colors.white,
+                                                  size: 24),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 32),
+                                          GestureDetector(
+                                            onTap: _togglePlayPause,
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.all(16),
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: const Color(0xFF3B82F6),
+                                              ),
+                                              child: Icon(
+                                                _videoController.value
+                                                        .isPlaying
+                                                    ? Icons.pause
+                                                    : Icons.play_arrow,
+                                                color: Colors.white,
+                                                size: 32,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 32),
+                                          GestureDetector(
+                                            onTap: () {},
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.all(12),
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: Colors.white
+                                                    .withOpacity(0.3),
+                                              ),
+                                              child: const Icon(Icons.forward_10,
+                                                  color: Colors.white,
+                                                  size: 24),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                child: Icon(
-                                  _isPlaying ? Icons.pause : Icons.play_arrow,
-                                  color: Colors.white,
-                                  size: 32,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 32),
-                            // Forward button
-                            GestureDetector(
-                              onTap: () {},
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white.withOpacity(0.3),
-                                ),
-                                child: const Icon(Icons.forward_10,
-                                    color: Colors.white, size: 24),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
                 // Movie Info Section
                 Padding(
