@@ -345,10 +345,50 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  // Subscription Plans API
+  // Subscription Plans API with auto-seed on first request
   app.get("/api/subscription-plans", async (req, res) => {
     try {
-      const plans = await storage.getSubscriptionPlans();
+      let plans = await storage.getSubscriptionPlans();
+      
+      // Auto-seed default plans if empty
+      if (plans.length === 0) {
+        const defaultPlans = [
+          {
+            name: "Free",
+            description: "Basic access with ads",
+            price: 0, // Free
+            billingPeriod: "monthly",
+            maxDevices: 1,
+            maxQuality: "480p",
+            features: ["Standard definition", "1 device", "Monthly content"],
+          },
+          {
+            name: "Standard",
+            description: "HD quality on 2 devices",
+            price: 999, // $9.99/month
+            billingPeriod: "monthly",
+            maxDevices: 2,
+            maxQuality: "1080p",
+            features: ["HD quality", "2 devices", "Offline downloads", "No ads"],
+          },
+          {
+            name: "Premium",
+            description: "Ultra HD on 4 devices",
+            price: 1999, // $19.99/month
+            billingPeriod: "monthly",
+            maxDevices: 4,
+            maxQuality: "4k",
+            features: ["4K quality", "4 devices", "Offline downloads", "No ads", "DRM content"],
+          },
+        ];
+        
+        for (const plan of defaultPlans) {
+          await storage.createSubscriptionPlan(plan);
+        }
+        
+        plans = await storage.getSubscriptionPlans();
+      }
+      
       res.json(plans);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
