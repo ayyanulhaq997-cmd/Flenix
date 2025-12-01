@@ -16,7 +16,7 @@ export default function Login() {
 
   // Redirect to dashboard if already logged in
   useEffect(() => {
-    const token = localStorage.getItem("auth_token");
+    const token = localStorage.getItem("appToken");
     if (token) {
       setLocation("/");
     }
@@ -40,8 +40,8 @@ export default function Login() {
       }
 
       const data = await response.json();
-      localStorage.setItem("auth_token", data.token);
-      localStorage.setItem("user", JSON.stringify(data));
+      localStorage.setItem("appToken", data.token);
+      localStorage.setItem("appUser", JSON.stringify(data));
       toast.success("Login successful!");
       setLocation("/");
     } catch (err: any) {
