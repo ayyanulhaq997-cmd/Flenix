@@ -108,7 +108,8 @@ export default function TVDetails() {
       setShowUpgradeModal(true);
       return;
     }
-    setIsPlaying(true);
+    // Navigate to watch page for playback
+    setLocation(`/watch?id=${content?.id}`);
   };
 
   useEffect(() => {

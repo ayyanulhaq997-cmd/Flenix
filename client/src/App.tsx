@@ -24,6 +24,7 @@ import AccountSettings from "@/pages/account-settings";
 import TVHome from "@/pages/tv-home";
 import TVDetails from "@/pages/tv-details";
 import TVProfiles from "@/pages/tv-profiles";
+import Watch from "@/pages/watch";
 import AdminDashboardMetrics from "@/pages/admin-dashboard-metrics";
 import AdminContentList from "@/pages/admin-content-list";
 import AdminUserManagement from "@/pages/admin-user-management";
@@ -63,6 +64,7 @@ function Router() {
       <Route path="/tv" component={TVHome} />
       <Route path="/tv/details" component={TVDetails} />
       <Route path="/tv/profiles" component={TVProfiles} />
+      <Route path="/watch" component={Watch} />
 
       {/* Public Routes */}
       <Route path="/home" component={Home} />
