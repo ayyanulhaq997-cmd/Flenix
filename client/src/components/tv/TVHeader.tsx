@@ -1,6 +1,7 @@
 import { User } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
+import { isAuthenticated } from '@/lib/auth-utils';
 
 interface TVHeaderProps {
   isFocused?: boolean;
@@ -10,14 +11,12 @@ export function TVHeader({ isFocused = false }: TVHeaderProps) {
   const [, setLocation] = useLocation();
 
   const handleProfileClick = () => {
-    // Check if user is logged in
-    const token = localStorage.getItem('appToken');
-    
-    if (!token) {
-      // Not logged in - go to Authentication Gate
+    // Conditional logic: Check authentication status and route accordingly
+    if (!isAuthenticated()) {
+      // Not logged in - Navigate to Authentication Gate (/login)
       setLocation('/login');
     } else {
-      // Logged in - go to profile selection
+      // Logged in - Navigate to Profile Selection (/tv/profiles)
       setLocation('/tv/profiles');
     }
   };
