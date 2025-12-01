@@ -9,8 +9,9 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
-import { Search, LayoutGrid, List } from "lucide-react";
+import { Search, LayoutGrid, List, Film } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -86,14 +87,9 @@ export default function Movies() {
               <Film className="w-8 h-8 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-semibold text-white mb-2">No Movies Found</h3>
-            <p className="text-muted-foreground mb-4">
-              {search ? "No movies match your search criteria." : "Get started by adding your first movie."}
+            <p className="text-muted-foreground">
+              {search ? "No movies match your search criteria." : "No movies available."}
             </p>
-            {!search && (
-              <Button onClick={() => setIsAddOpen(true)} className="bg-primary hover:bg-primary/90">
-                <Plus className="w-4 h-4 mr-2" /> Add Movie
-              </Button>
-            )}
           </div>
         ) : viewMode === 'list' ? (
           <Table>
