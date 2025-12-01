@@ -10,7 +10,16 @@ export function TVHeader({ isFocused = false }: TVHeaderProps) {
   const [, setLocation] = useLocation();
 
   const handleProfileClick = () => {
-    setLocation('/tv/profiles');
+    // Check if user is logged in
+    const token = localStorage.getItem('appToken');
+    
+    if (!token) {
+      // Not logged in - go to Authentication Gate
+      setLocation('/login');
+    } else {
+      // Logged in - go to profile selection
+      setLocation('/tv/profiles');
+    }
   };
 
   return (

@@ -92,42 +92,60 @@ export default function Login() {
 
         <div className="w-full space-y-8">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-white">Welcome Back</h2>
-            <p className="text-muted-foreground">Sign in to continue</p>
+            <h2 className="text-2xl font-bold text-white">Authentication Gate</h2>
+            <p className="text-muted-foreground">Sign in to your account or create a new membership</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Input 
-                  type="email" 
-                  placeholder="Email" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-white/90 border-0 text-black placeholder:text-gray-500 h-12 text-md font-medium"
-                  data-testid="input-email"
-                />
-              </div>
-              <div className="space-y-2">
-                <Input 
-                  type="password" 
-                  placeholder="Password" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-white/90 border-0 text-black placeholder:text-gray-500 h-12 text-md font-medium"
-                  data-testid="input-password"
-                />
-              </div>
+          {/* Authentication Options */}
+          <div className="space-y-3">
+            {/* Sign In Option */}
+            <div className="space-y-3 p-4 bg-white/5 rounded-lg border border-white/10">
+              <h3 className="text-lg font-semibold text-white">Sign In</h3>
+              <form onSubmit={handleLogin} className="space-y-3">
+                <div>
+                  <Input 
+                    type="email" 
+                    placeholder="Email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="bg-white/90 border-0 text-black placeholder:text-gray-500 h-10 text-sm font-medium"
+                    data-testid="input-email"
+                  />
+                </div>
+                <div>
+                  <Input 
+                    type="password" 
+                    placeholder="Password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="bg-white/90 border-0 text-black placeholder:text-gray-500 h-10 text-sm font-medium"
+                    data-testid="input-password"
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="w-full h-10 text-sm font-bold bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white border-0 shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all duration-300"
+                  disabled={isLoading}
+                  data-testid="button-sign-in"
+                >
+                  {isLoading ? "Signing in..." : "Sign In"}
+                </Button>
+              </form>
             </div>
 
-            <Button 
-              type="submit" 
-              className="w-full h-12 text-md font-bold bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white border-0 shadow-[0_0_20px_rgba(59,130,246,0.5)] transition-all duration-300"
-              disabled={isLoading}
-            >
-              {isLoading ? "Signing in..." : "Login"}
-            </Button>
-          </form>
+            {/* Start Membership Option */}
+            <div className="space-y-3 p-4 bg-red-900/10 rounded-lg border border-red-900/30">
+              <h3 className="text-lg font-semibold text-white">Start Membership</h3>
+              <p className="text-sm text-gray-300">Create a new account and choose your subscription plan</p>
+              <Button 
+                onClick={() => setLocation('/signup')}
+                className="w-full h-10 text-sm font-bold bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white border-0 shadow-[0_0_20px_rgba(239,68,68,0.5)] transition-all duration-300"
+                data-testid="button-start-membership"
+              >
+                Create New Account
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Footer branding/copyright if needed */}
